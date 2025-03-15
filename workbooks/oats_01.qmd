@@ -1,0 +1,102 @@
+
+```{python}
+import numpy as np
+import pandas as pd
+import os
+from sklearn.datasets import load_iris
+
+data,target = load_iris(return_X_y=True,as_frame=True)
+print(type(target))
+# print(data['feature_names'])
+# print(data['target_names'])
+print(type(data))
+
+print(data.columns)
+print(target)
+
+target_decode_map = {0:'setosa',
+                     1:'versicolor',
+                     2:'virginica'}
+
+def visualize_dataframe(df,target,mapp):
+    # result = pd.merge(left=df,right=target,how="inner",left_index=True,right_index=True)
+    result = pd.concat([df,target],axis=1)
+    result.rename(columns={'target':'species'},inplace=True)
+    result.loc[:,'species'] = result.loc[:,'species'].map(mapp)
+    return result
+
+df_v = visualize_dataframe(data,target,target_decode_map)
+print(df_v.columns)
+```
+
+# Seaborn plots
+```{python}
+import seaborn as sns
+import matplotlib.pyplot as plt
+
+plt.figure()
+sns.pairplot(data=df_v,hue='species')
+plt.show()
+
+```
+
+# Correlation Matrix
+
+```{python}
+print(data.columns)
+```
+
+
+# Plot in 3D
+```{python}
+import plotly.express as px
+import plotly.graph_objects as go
+
+# First load data into numpy, what format is the input?
+columns = [#'sepal length (cm)',
+           'sepal width (cm)',
+           'petal length (cm)',
+           'petal width (cm)']
+
+
+# differentces in homogy? I doubt it
+selection1 = ['petal length (cm)', 'sepal width (cm)', 'petal width (cm)']
+selection2 = ['sepal length (cm)', 'sepal width (cm)', 'petal width (cm)'] 
+
+cloud = data[columns].to_numpy()
+
+trace   =   go.Scatter3d(x=cloud[:,0],y=cloud[:,1],z=cloud[:,2], mode="markers", marker = dict(opacity=1.0, size=3, color=cloud[:,1], colorscale="Peach"))
+fig     =   go.Figure(data=trace)
+fig.update_layout(
+    title=dict(text="Stanford dragon, 1000 points"),
+    template="plotly_dark",
+    width=1400,
+    height=1200,
+    )
+fig.show()
+```
+
+
+```{python}
+import oat_python as oat
+
+# the minimum enclosing radius; all homology vanishes above this filtration parameter
+enclosing               =   oat.dissimilarity.enclosing_from_cloud(cloud)
+
+# distance matrix with values over enclosing + 0.0000000001 removed; adding 0.0000000001 avoids problems due to numerical error
+dissimilairty_matrix    =   oat.dissimilarity.matrix_from_cloud(
+                                cloud                       =   cloud,
+                                dissimilarity_max           =   enclosing + 0.0000000001,
+                            )
+
+# build and factor the boundary matrix
+factored                =   oat.rust.FactoredBoundaryMatrixVr(
+                                dissimilarity_matrix        =   dissimilairty_matrix,
+                                homology_dimension_max      =   1,
+                            )
+```
+
+
+```{python}
+help(oat.rust.FactoredBoundaryMatrixVr)
+```
