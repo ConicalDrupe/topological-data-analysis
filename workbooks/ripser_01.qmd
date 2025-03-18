@@ -3,8 +3,94 @@
 import numpy as np
 import pandas as pd
 import os
+from pandas.core.reshape.merge import _left_join_on_index
 from sklearn.datasets import load_iris
 
-data = load_iris(return_frame=True)
+data,target = load_iris(return_X_y=True,as_frame=True)
+print(type(target))
+# print(data['feature_names'])
+# print(data['target_names'])
 print(type(data))
+
+print(data.columns)
+print(target)
+
+target_decode_map = {0:'setosa',
+                     1:'versicolor',
+                     2:'virginica'}
+
+def visualize_dataframe(df,target,mapp):
+    # result = pd.merge(left=df,right=target,how="inner",left_index=True,right_index=True)
+    result = pd.concat([df,target],axis=1)
+    result.rename(columns={'target':'species'},inplace=True)
+    result.loc[:,'species'] = result.loc[:,'species'].map(mapp)
+    return result
+
+df = visualize_dataframe(data,target,target_decode_map)
+print(df.columns)
+```
+
+```{python}
+import plotly.express as px
+
+fig = px.scatter(df,x='petal length (cm)',y='petal width (cm)',color='species')
+
+fig.show()
+```
+
+### Note
+- Looking at the historgrams of the species, they are rather distinct in each attribute.
+    The attribute that has the most overlap in frequency is sepal width! So a model created on this singular feature may not be vary good.
+    But when combined, when does it improve the classification? Does this feature fill cycles?
+
+    Follow up: Can you add a feature to a dataset to close more wholes -> show us "less of a gap". Yes, this is Simpson's paradox
+
+```{python}
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+plt.figure()
+sns.pairplot(df,hue='species')
+plt.show()
+```
+
+
+# Persistance Homology
+
+- $H_0$ all points birth at the same time, but are reabsorbed into larger dimension simplecies later on
+- $H_1$ Connected-ness become a 1-dimensional hole. Death time is soon after birth time (at the diagonal)
+
+```{python}
+import ripser
+import persim
+
+def diagram_sizes(dgms):
+    return ", ".join([f"|$H_{i}$|={len(d)}" for i, d in enumerate(dgms)])
+
+raw_rip = ripser.ripser(data)
+dgm = raw_rip['dgms']
+cocycles = raw_rip['cocycles']
+
+persim.plot_diagrams(dgm, show=True, title=f"Clean\n{diagram_sizes(dgm)}")
+```
+
+```{python}
+print(dgm[:10])
+```
+
+
+```{python}
+raw_rip.keys()
+```
+
+# Cocycles
+- Using ripser we cannot see the representative classes, just the reprasentative cocycles
+
+```{python}
+print(raw_rip['cocycles'][0])
+```
+
+# Try using oats
+
+```{python}
 ```
