@@ -68,7 +68,7 @@ cloud = data[columns].to_numpy()
 trace   =   go.Scatter3d(x=cloud[:,0],y=cloud[:,1],z=cloud[:,2], mode="markers", marker = dict(opacity=1.0, size=3, color=cloud[:,1], colorscale="Peach"))
 fig     =   go.Figure(data=trace)
 fig.update_layout(
-    title=dict(text="Stanford dragon, 1000 points"),
+    title=dict(text="sepal width,petal width & length"),
     template="plotly_dark",
     width=1400,
     height=1200,
@@ -77,6 +77,11 @@ fig.show()
 ```
 
 
+```{python}
+cloud.shape
+```
+
+- dissimilarity_matrix is $M(n^2)$ in space complexity, where n is number f rows
 ```{python}
 import oat_python as oat
 
@@ -96,7 +101,60 @@ factored                =   oat.rust.FactoredBoundaryMatrixVr(
                             )
 ```
 
+# Questions about the Factored Boundary Matrix
+- Observation: we can obtain the index of the matrix with self.indices_boundary_matrix()
+- Q1: what is the domain COMB? -> what does this matrix represent?
+- Numerically, what tricks can we use for sparse matrices? (mostly zeros)
 
 ```{python}
 help(oat.rust.FactoredBoundaryMatrixVr)
+```
+
+# Computing Homolgy
+
+factored.homolgy returns the hamology
+    - Can request return_cycle_reprasentatives
+    - As well as bounding chains
+    - By default computes persistent homolgy by vitori-rips complex
+    - Bounding chain optimization uses Jordan form and linear optimization?
+
+```{python}
+pd.options.display.max_rows=None
+pd.options.display.max_columns=None
+df = factored.homology(return_cycle_representatives=True,
+                       return_bounding_chains=True)
+print(df.head())
+print(df.shape)
+```
+
+
+## Checking what is returned
+
+```{python}
+print("Columns are:",list(df.columns))
+for col in list(df.columns):
+    print(col)
+    print(df[col].iloc[0])
+```
+
+# Plotting
+
+## Persistence Diagram
+
+```{python}
+fig_pd = oat.plot.pd(df)
+fig_pd.show()
+```
+## Persistence Barcode
+
+```{python}
+fig_barcode = oat.plot.barcode(df)
+fig_barcode.show()
+```
+
+# Find a representative to plot
+
+```{python}
+df["cycle representative"].shape
+df["cycle representative"]
 ```
