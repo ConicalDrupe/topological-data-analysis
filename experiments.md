@@ -218,19 +218,16 @@ Reusable across Experiments 1 and 3:
   dependency-free (plain `pandas`) per-class split, usable by any experiment whose
   cohort is too small, or too imbalanced relative to `valid.csv`, to evaluate reliably
   against CheXpert's own held-out split.
-- **Basic EDA / count analysis** — run immediately after cohort construction, before any
-  normalization/filtration/vectorization work, to sanity-check cohort size and
-  composition. For the Experiment 1 baseline cohort (train and valid computed
-  separately), report:
-  - Total record count and unique-patient count.
-  - Pneumothorax class balance (count/percentage of `0.0` vs `1.0`).
-  - Breakdown by `AP/PA`.
-  - Breakdown by `Frontal/Lateral` (sanity check — should be ~100% frontal after the
-    view-narrowing step above; anything else indicates a bug in the filter).
-  - Breakdown by `Sex`.
-  - `Age` distribution (summary stats and a histogram).
-  This is meant to catch cohort-construction bugs and surface class imbalance before any
-  compute is spent on the TDA pipeline itself.
+- **Basic EDA / count analysis** — run immediately after cohort/split construction,
+  before any normalization/filtration/vectorization work, to sanity-check size and
+  composition. The full Dataset Summary schema (record/patient/study counts, class
+  frequencies for *all* pathology columns, AP/PA, Frontal/Lateral, Sex, Age, missing
+  values, duplicate paths) now lives in `CLAUDE.md`'s "Automatic Exploratory Data
+  Analysis (EDA)" section, not duplicated here. Each run's artifacts (`summary.json` +
+  plots) are written to a versioned `results/<experiment>/eda/vN/` directory
+  (never overwritten), and the corresponding experiment log
+  (`logs/<experiment>_log.md`) records what was found — see `logs/exp1_log.md` for the
+  first entry.
 - **Normalization → filtration → vectorization pipeline** — built once, parameterized by
   which variant of each stage to use, so the Experiment 1 matrix and Experiment 3's
   per-study feature extraction share the same code path.

@@ -10,6 +10,23 @@ KAGGLE_ROOT = REPO_ROOT / "kaggle"
 
 _CSV_PATH_PREFIX = "CheXpert-v1.0-small/"
 
+PATHOLOGY_COLUMNS = [
+    "No Finding",
+    "Enlarged Cardiomediastinum",
+    "Cardiomegaly",
+    "Lung Opacity",
+    "Lung Lesion",
+    "Edema",
+    "Consolidation",
+    "Pneumonia",
+    "Atelectasis",
+    "Pneumothorax",
+    "Pleural Effusion",
+    "Pleural Other",
+    "Fracture",
+    "Support Devices",
+]
+
 _PATH_RE = re.compile(
     r"^(?P<split>train|valid)/"
     r"(?P<patient_id>patient\d+)/"

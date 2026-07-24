@@ -132,8 +132,54 @@ For every new experiment, follow this workflow unless explicitly instructed othe
 3. If creating a new dataset or transformed sample:
    - Run exploratory data analysis (EDA).
    - Save EDA artifacts.
-   - Update the experiment log. (ex. /logs/exp1.md)
+   - Update the experiment log. (ex. /logs/exp1_log.md)
 4. Implement the experiment.
 5. Evaluate the results.
 6. Record observations, limitations, and next steps.
 7. Never overwrite previous experiment outputs. Create new versioned directories instead.
+
+### Experiment Log
+
+Maintain a running markdown file. Keep this file minimal and factual.
+
+logs/<experiment>_log.md
+
+This file should always contain:
+
+- current experiment
+- preprocessing pipeline
+- dataset version
+- model version
+- random seed
+- feature extraction method
+- parameters for applicable preprocessing, model, etc.
+- evaluation metric
+- current status
+
+Each experiment entry should include:
+
+# Experiment 004
+
+## Goal
+
+...
+
+## Dataset
+
+...
+
+## Parameters
+
+...
+
+## Results
+
+...
+
+## Observations
+
+...
+
+## Next Steps
+
+...
