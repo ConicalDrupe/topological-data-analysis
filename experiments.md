@@ -1,7 +1,7 @@
 # Experiments
 
 This project runs three tracks of topological data analysis (TDA) experiments against the
-CheXpert-v1.0-small chest x-ray dataset (see [`AGENTS.md`](./AGENTS.md) for how the data is
+CheXpert-v1.0-small chest x-ray dataset (see [`CLAUDE.md`](./CLAUDE.md) for how the data is
 laid out and accessed). [`giotto-tda`](https://giotto-ai.github.io/gtda-docs/) is the
 primary TDA library for all new work described here.
 
@@ -26,18 +26,27 @@ of variants and compare, not to settle on one method up front.
 (alone, or alongside other features) to classify Pneumothorax presence/absence, comparing
 different normalization, filtration, and vectorization choices.
 
-**Label handling (open decision, see below):** CheXpert labels Pneumothorax as `1.0`
-(positive), `0.0` (negative), `-1.0` (uncertain), or blank (unmentioned). Standard
-CheXpert-literature policies for the uncertain/blank cases include U-Ignore (drop those
-rows), U-Ones (map uncertain → positive), and U-Zeros (map uncertain → negative). Pick one
-before training and note it in results — this is called out again in Open Questions.
+**Label handling (decided):** CheXpert labels Pneumothorax as `1.0` (positive), `0.0`
+(negative), `-1.0` (uncertain), or blank (unmentioned). This experiment uses only rows
+with a definite `0.0`/`1.0` label — `-1.0` and blank rows are dropped (effectively the
+U-Ignore policy). No uncertainty-mapping (U-Ones/U-Zeros) is used for this baseline.
 
 ### Pipeline
 
-1. **Cohort/label selection** — filter `train.csv`/`valid.csv` to the chosen view (see
-   Open Questions re: frontal vs. lateral), apply the uncertain/blank label policy, and
-   remap `Path` values to on-disk paths (strip the `CheXpert-v1.0-small/` prefix — see
-   `AGENTS.md`).
+1. **Cohort/label selection** — build the Experiment 1 baseline cohort as follows:
+   1. Filter `train.csv`/`valid.csv` to rows where `Pneumothorax` is exactly `0.0` or
+      `1.0` (drop `-1.0` and blank rows).
+   2. **Per-patient dedup**: for patients with multiple studies, keep only the patient's
+      **earliest (first) qualifying study** — the first study, in study-number order,
+      that has a 0/1 Pneumothorax label under the filter above. This yields at most one
+      study per patient for this cohort. (Note: this is an Experiment-1-specific rule —
+      Experiment 3 deliberately keeps *all* qualifying studies per patient; see Shared
+      Infrastructure below.)
+   3. **View narrowing**: within the chosen study, keep frontal view(s) only; drop
+      lateral. (Lateral could be revisited as a separate variant later — see Open
+      Questions.)
+   4. Remap `Path` values to on-disk paths (strip the `CheXpert-v1.0-small/` prefix — see
+      `CLAUDE.md`).
 2. **Normalization variants** (compare against each other and against no normalization):
    - Histogram Equalization (HE)
    - Adaptive Gamma Correction (AGC)
@@ -148,17 +157,42 @@ Reusable across Experiments 1 and 3:
 
 - **Label loading + path remapping** — a utility that reads `train.csv`/`valid.csv`,
   applies the chosen uncertain/blank label policy, and remaps `Path` to the actual
-  on-disk location (see `AGENTS.md` for the exact mismatch).
+  on-disk location (see `CLAUDE.md` for the exact mismatch).
+- **Cohort construction** — a single utility for turning the filtered (0/1-only) label
+  table into a per-patient cohort, parameterized by mode rather than hardcoding one rule,
+  since Experiments 1 and 3 need opposite dedup behavior:
+  - `first_qualifying` (Experiment 1): one row per patient — their earliest study with a
+    0/1 Pneumothorax label, frontal view(s) only.
+  - `all_ordered` (Experiment 3): all qualifying studies per patient, ordered by study
+    number/`Age`, view filtering left as-is (Experiment 3 doesn't narrow to frontal-only
+    by default).
+  Keeping this as one parameterized utility (rather than two separate ad hoc filters)
+  avoids the two experiments silently drifting onto inconsistent cohort logic.
+- **Basic EDA / count analysis** — run immediately after cohort construction, before any
+  normalization/filtration/vectorization work, to sanity-check cohort size and
+  composition. For the Experiment 1 baseline cohort (train and valid computed
+  separately), report:
+  - Total record count and unique-patient count.
+  - Pneumothorax class balance (count/percentage of `0.0` vs `1.0`).
+  - Breakdown by `AP/PA`.
+  - Breakdown by `Frontal/Lateral` (sanity check — should be ~100% frontal after the
+    view-narrowing step above; anything else indicates a bug in the filter).
+  - Breakdown by `Sex`.
+  - `Age` distribution (summary stats and a histogram).
+  This is meant to catch cohort-construction bugs and surface class imbalance before any
+  compute is spent on the TDA pipeline itself.
 - **Normalization → filtration → vectorization pipeline** — built once, parameterized by
   which variant of each stage to use, so the Experiment 1 matrix and Experiment 3's
   per-study feature extraction share the same code path.
 
 ## Open questions / decisions needed
 
-- **Uncertain/blank label policy** for Pneumothorax (and any other label used later):
-  U-Ignore vs. U-Ones vs. U-Zeros, or something else.
-- **Frontal vs. lateral views** — Experiment 1 doesn't yet specify whether to use frontal
-  only, lateral only, or both (potentially as separate feature sets).
+- ~~Uncertain/blank label policy~~ — **resolved for the Experiment 1 baseline**: U-Ignore
+  (drop `-1.0`/blank, keep only `0.0`/`1.0`). Revisit if a later target label or
+  experiment needs U-Ones/U-Zeros instead.
+- ~~Frontal vs. lateral views~~ — **resolved for the Experiment 1 baseline**: frontal
+  only. Lateral could be explored as a separate variant later, but isn't part of the
+  current cohort.
 - **Subsampling/compute strategy** — the full train set is ~223k images; decide whether
   to subsample for early iterations of the experiment matrix before scaling up.
 - **Experiment 2 embedding format** — exact shape/dimensionality and file format of the
