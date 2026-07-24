@@ -36,20 +36,34 @@ U-Ignore policy). No uncertainty-mapping (U-Ones/U-Zeros) is used for this basel
 1. **Cohort/label selection** — build the Experiment 1 baseline cohort as follows:
    1. Filter `train.csv`/`valid.csv` to rows where `Pneumothorax` is exactly `0.0` or
       `1.0` (drop `-1.0` and blank rows).
-   2. **Per-patient dedup**: for patients with multiple studies, keep only the patient's
+   2. **View narrowing — AP only**: keep `AP/PA == "AP"` rows only; drop `PA` and
+      lateral. AP is the preferred view for diagnosing pneumothorax (clinical
+      rationale), which is a stricter cut than "frontal only" — it also drops PA, not
+      just lateral. (`AP/PA` is only ever set on frontal rows — lateral rows always have
+      it blank — so this implies frontal-only as a side effect; there's no separate
+      frontal-only step.)
+   3. **No support devices**: keep only rows with `Support Devices == 0.0` (confirmed
+      absence). `-1.0` (uncertain) and blank (unmentioned) are excluded too, not treated
+      as "no device" — support devices (chest tubes, lines, etc.) visible on the film
+      could confound the topological features this experiment extracts, so the
+      strictest available label is used.
+   4. **Per-patient dedup**: for patients with multiple studies, keep only the patient's
       **earliest (first) qualifying study** — the first study, in study-number order,
-      that has a 0/1 Pneumothorax label under the filter above. This yields at most one
-      study per patient for this cohort. (Note: this is an Experiment-1-specific rule —
-      Experiment 3 deliberately keeps *all* qualifying studies per patient; see Shared
-      Infrastructure below.)
-   3. **View narrowing**: within the chosen study, keep frontal view(s) only; drop
-      lateral. (Lateral could be revisited as a separate variant later — see Open
-      Questions.)
-   4. Remap `Path` values to on-disk paths (strip the `CheXpert-v1.0-small/` prefix — see
+      that satisfies **all three** filters above *jointly* (0/1 Pneumothorax label, AP
+      view, and confirmed no support devices, all in the same study). This yields at
+      most one study per patient for this cohort. (Note: this is an
+      Experiment-1-specific rule — Experiment 3 deliberately keeps *all* qualifying
+      studies per patient; see Shared Infrastructure below.)
+   5. Remap `Path` values to on-disk paths (strip the `CheXpert-v1.0-small/` prefix — see
       `CLAUDE.md`).
+
+   **Resulting cohort size (verified against the real CSVs):** train 2,299 rows / 2,266
+   patients (Pneumothorax balance: 1,430 negative / 869 positive); valid 77 rows / 77
+   patients (76 negative / 1 positive).
+
 2. **Normalization variants** (compare against each other and against no normalization):
    - Histogram Equalization (HE)
-   - Adaptive Gamma Correction (AGC)
+   - Adaptive Gamma Correction (AGC) - We will skip this for now.
    - Contrast Limited Adaptive Histogram Equalization (CLAHE)
 3. **Filtration methods:**
    - **Baseline:** classical cubical persistence (sublevel-set filtration directly on
@@ -65,8 +79,34 @@ U-Ignore policy). No uncertainty-mapping (U-Ones/U-Zeros) is used for this basel
 5. **Classification** — feed vectorized features into classical ML models (logistic
    regression, random forest, SVM, gradient boosting) rather than a deep model, since the
    point is to evaluate the TDA features themselves.
-6. **Evaluation** — AUROC (the standard CheXpert benchmark metric) on the held-out
-   `valid.csv` split, plus accuracy/F1 as secondary metrics.
+6. **Evaluation** — AUROC (the standard CheXpert benchmark metric), plus accuracy/F1 as
+   secondary metrics, computed on **our own test split** (see Train/test split below),
+   which is the primary evaluation set for this experiment. The filtered `valid.csv`
+   cohort (77 rows, 1 positive case) is reported only as a secondary/supplementary check,
+   never as the primary metric — it's too small and too imbalanced to trust alone.
+
+### Train/test split (decided)
+
+CheXpert's own `valid.csv` is the standard held-out split for this dataset, but after the
+AP-only + no-support-devices filters above it shrinks to 77 rows with only **1** positive
+Pneumothorax case — unusable as a reliable evaluation set on its own. Instead, Experiment
+1 carves its own split out of the filtered *train* cohort:
+
+- **Method**: stratified 80/20 split by `Pneumothorax`, implemented as a plain per-class
+  `pandas` sample (`tda_chexpr.split.stratified_split`) rather than a `scikit-learn`
+  dependency — avoids adding a new package while `giotto-tda` already blocks normal
+  dependency resolution on Python 3.13 (see Open Questions).
+- **Split by patient, not by row**: `select_studies(mode="first_qualifying")` guarantees
+  one *study* per patient, but that study can still contribute more than one frontal AP
+  image (33 patients in the train cohort have 2 rows). The split is therefore done on
+  unique `patient_id` first, then every row belonging to a chosen patient follows that
+  patient into train or test — a naive row-level split was tried first and produced 8
+  patients leaking across both splits, which is why this two-step approach is needed.
+- **Output**: `data/exp1/pneumothorax_train_split.csv` and
+  `data/exp1/pneumothorax_test_split.csv`, written by
+  `src/preprocessing/exp1/split_cohort.py`.
+- The filtered `valid.csv` cohort (`pneumothorax_cohort_valid.csv`) is still produced and
+  kept as a secondary/supplementary check, not the primary evaluation set.
 
 ### Experiment matrix
 
@@ -168,6 +208,16 @@ Reusable across Experiments 1 and 3:
     by default).
   Keeping this as one parameterized utility (rather than two separate ad hoc filters)
   avoids the two experiments silently drifting onto inconsistent cohort logic.
+- **View/device filters** — `filter_ap_only` (AP view only) and
+  `filter_no_support_devices` (confirmed `Support Devices == 0.0` only) are optional
+  flags on the same cohort-construction utility (`ap_only`,
+  `require_no_support_devices`), applied before per-patient study selection so
+  "qualifying" is a joint condition across every active filter. Experiment 1 uses both;
+  Experiment 3 can opt in or out independently.
+- **Stratified train/test split** — `tda_chexpr.split.stratified_split` is a generic,
+  dependency-free (plain `pandas`) per-class split, usable by any experiment whose
+  cohort is too small, or too imbalanced relative to `valid.csv`, to evaluate reliably
+  against CheXpert's own held-out split.
 - **Basic EDA / count analysis** — run immediately after cohort construction, before any
   normalization/filtration/vectorization work, to sanity-check cohort size and
   composition. For the Experiment 1 baseline cohort (train and valid computed
@@ -190,11 +240,19 @@ Reusable across Experiments 1 and 3:
 - ~~Uncertain/blank label policy~~ — **resolved for the Experiment 1 baseline**: U-Ignore
   (drop `-1.0`/blank, keep only `0.0`/`1.0`). Revisit if a later target label or
   experiment needs U-Ones/U-Zeros instead.
-- ~~Frontal vs. lateral views~~ — **resolved for the Experiment 1 baseline**: frontal
-  only. Lateral could be explored as a separate variant later, but isn't part of the
-  current cohort.
-- **Subsampling/compute strategy** — the full train set is ~223k images; decide whether
-  to subsample for early iterations of the experiment matrix before scaling up.
+- ~~Frontal vs. lateral views~~ — **resolved for the Experiment 1 baseline**: superseded
+  by the AP-only decision below (AP implies frontal). Lateral (and PA) could be explored
+  as separate variants later, but aren't part of the current cohort.
+- ~~AP vs. PA view, and support-devices handling~~ — **resolved for the Experiment 1
+  baseline**: AP only, and `Support Devices == 0.0` (confirmed absence) only — see
+  Pipeline step 1. Note: this strict reading yields a much smaller cohort (train 2,299
+  rows) than an earlier ~6,000-row estimate based on a looser "no devices" reading;
+  revisit the strictness choice if 2,299 rows proves too limiting for the experiment
+  matrix.
+- ~~Subsampling/compute strategy~~ — **resolved for Experiment 1**: no subsampling
+  needed. The AP-only + no-support-devices cohort is already small (~2.3k rows), so the
+  full normalization × filtration × vectorization matrix can run against all of it. This
+  may still apply to Experiment 3, which doesn't share this filter set.
 - **Experiment 2 embedding format** — exact shape/dimensionality and file format of the
   supplied MedGemma embeddings isn't pinned down yet; confirm when the artifact arrives.
 - **Results tracking** — no mechanism is chosen yet for logging experiment-matrix runs

@@ -1,8 +1,8 @@
 """Build the Experiment 1 Pneumothorax classification cohort.
 
-Filters CheXpert train/valid to Pneumothorax in {0.0, 1.0}, keeps each
-patient's earliest qualifying study, and narrows to frontal view only.
-See experiments.md, Experiment 1.
+Filters CheXpert train/valid to Pneumothorax in {0.0, 1.0}, AP view only, and
+confirmed absence of support devices, then keeps each patient's earliest study
+that qualifies on all three criteria at once. See experiments.md, Experiment 1.
 """
 
 from tda_chexpr.cohort import build_cohort
@@ -16,7 +16,11 @@ def main() -> None:
     for split in ("train", "valid"):
         df = load_labels(split)
         cohort = build_cohort(
-            df, label="Pneumothorax", mode="first_qualifying", frontal_only=True
+            df,
+            label="Pneumothorax",
+            mode="first_qualifying",
+            ap_only=True,
+            require_no_support_devices=True,
         )
         out_path = OUTPUT_DIR / f"pneumothorax_cohort_{split}.csv"
         cohort.to_csv(out_path, index=False)

@@ -42,16 +42,45 @@ def filter_frontal_only(df: pd.DataFrame) -> pd.DataFrame:
     return df[df["Frontal/Lateral"] == "Frontal"].copy()
 
 
+def filter_ap_only(df: pd.DataFrame) -> pd.DataFrame:
+    """Keep AP view only (drop PA and lateral) -- AP is preferred for pneumothorax dx.
+
+    AP/PA is only ever set on frontal rows (lateral rows have it blank), so this
+    also implies frontal-only.
+    """
+    return df[df["AP/PA"] == "AP"].copy()
+
+
+def filter_no_support_devices(df: pd.DataFrame) -> pd.DataFrame:
+    """Keep only rows with confirmed absence of support devices (strict: == 0.0).
+
+    -1.0 (uncertain) and blank (unmentioned) are excluded too, not treated as
+    "no device" -- the cleanest label guarantee at the cost of a smaller cohort.
+    """
+    return df[df["Support Devices"] == 0.0].copy()
+
+
 def build_cohort(
     df: pd.DataFrame,
     label: str,
     mode: str,
     frontal_only: bool = False,
+    ap_only: bool = False,
+    require_no_support_devices: bool = False,
 ) -> pd.DataFrame:
-    """Full cohort construction pipeline: filter -> select studies -> narrow view."""
+    """Full cohort construction pipeline: filter -> narrow view/devices -> select studies.
+
+    View/device filters run *before* select_studies so that "qualifying" is a
+    joint condition -- a patient's earliest study must satisfy every active
+    filter at once, not just the label filter.
+    """
     df = add_path_components(df)
     df = filter_binary_label(df, label)
-    df = select_studies(df, mode=mode)
     if frontal_only:
         df = filter_frontal_only(df)
+    if ap_only:
+        df = filter_ap_only(df)
+    if require_no_support_devices:
+        df = filter_no_support_devices(df)
+    df = select_studies(df, mode=mode)
     return df.reset_index(drop=True)
