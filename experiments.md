@@ -91,25 +91,42 @@ U-Ignore policy). No uncertainty-mapping (U-Ones/U-Zeros) is used for this basel
    once the classification step exists (does restricting to clean negatives actually
    change measured AUROC, or was the comorbidity confound not material in practice?).
 
-2. **Normalization variants** (compare against each other and against no normalization):
+2. **ROI cropping** — crop each image to its region of interest *before*
+   normalization, to remove border text, lateral-view markers, and other burned-in
+   annotations that could otherwise be picked up as spurious topological features:
+   - **Baseline (implemented):** `torchxrayvision`'s own deterministic, no-inference
+     `XRayCenterCrop` (center-crop to a square using `min(height, width)`) +
+     `XRayResizer` (resize to a fixed 224×224). Tested on the Experiment 1
+     representative sample (`logs/exp1_log.md`, Experiment 003) — found **not** to
+     reliably remove border text/markers, since it only trims the width axis and most
+     annotations sit within the preserved height.
+   - **Candidate (pending decision):** PSPNet-based lung segmentation
+     (`torchxrayvision`'s `xrv.baseline_models.chestx_det.PSPNet`, already installed),
+     using the union of the Left Lung/Right Lung mask channels to compute a bounding
+     box. **Decided in advance:** crop to that bounding box only and keep all pixel
+     values inside it (heart/mediastinum included) — do **not** zero out pixels
+     outside the lung silhouette, since a hard mask edge would introduce an artificial
+     intensity discontinuity that sublevel-set cubical persistence (see step 4 below)
+     would pick up as a false topological feature.
+3. **Normalization variants** (compare against each other and against no normalization):
    - Histogram Equalization (HE)
    - Adaptive Gamma Correction (AGC) - We will skip this for now.
    - Contrast Limited Adaptive Histogram Equalization (CLAHE)
-3. **Filtration methods:**
+4. **Filtration methods:**
    - **Baseline:** classical cubical persistence (sublevel-set filtration directly on
      grayscale pixel intensities) — `gtda.homology.CubicalPersistence`.
    - **Candidates to experiment with:** height/eccentricity filtration, Vietoris-Rips on
      downsampled pixel coordinates or superpixel/keypoint coordinates, lower-star
      filtration on a distance transform (e.g. from a lung mask or edge map). Treat the
      filtration choice itself as an experimental variable, not a fixed step.
-4. **Vectorization of persistence diagrams** — compare multiple representations via
+5. **Vectorization of persistence diagrams** — compare multiple representations via
    `gtda.diagrams`: Persistence Images, Persistence Landscapes, Betti Curves, Persistence
    Entropy, Silhouettes. No single method is assumed best; this is itself an experimental
    axis.
-5. **Classification** — feed vectorized features into classical ML models (logistic
+6. **Classification** — feed vectorized features into classical ML models (logistic
    regression, random forest, SVM, gradient boosting) rather than a deep model, since the
    point is to evaluate the TDA features themselves.
-6. **Evaluation** — AUROC (the standard CheXpert benchmark metric), plus accuracy/F1 as
+7. **Evaluation** — AUROC (the standard CheXpert benchmark metric), plus accuracy/F1 as
    secondary metrics, computed on **our own test split** (see Train/test split below),
    which is the primary evaluation set for this experiment. The filtered `valid.csv`
    cohort (77 rows, 1 positive case) is reported only as a secondary/supplementary check,
@@ -145,9 +162,9 @@ Pneumothorax case — unusable as a reliable evaluation set on its own. Instead,
 
 ### Experiment matrix
 
-Treat this as a grid: **normalization × filtration × vectorization**, each combination
-trained and evaluated independently, with results logged so combinations can be compared
-directly (see Open Questions re: how results should be tracked).
+Treat this as a grid: **ROI crop × normalization × filtration × vectorization**, each
+combination trained and evaluated independently, with results logged so combinations
+can be compared directly (see Open Questions re: how results should be tracked).
 
 ---
 
@@ -211,8 +228,9 @@ human read would otherwise miss.
    cohort-extraction logic general enough to key on any label.
 2. **Order studies per patient** — by study number (and/or `Age`) to form a pseudo-
    timeline per patient.
-3. **Per-image TDA features** — reuse Experiment 1's normalization → filtration →
-   vectorization pipeline to produce a feature vector (or full diagram) per study image.
+3. **Per-image TDA features** — reuse Experiment 1's ROI crop → normalization →
+   filtration → vectorization pipeline to produce a feature vector (or full diagram)
+   per study image.
 4. **Track feature trajectories** — look at how scalar summaries (e.g. total persistence,
    count of features above a threshold, persistence entropy) change study-to-study for
    each patient.
@@ -263,9 +281,12 @@ Reusable across Experiments 1 and 3:
   (never overwritten), and the corresponding experiment log
   (`logs/<experiment>_log.md`) records what was found — see `logs/exp1_log.md` for the
   first entry.
-- **Normalization → filtration → vectorization pipeline** — built once, parameterized by
-  which variant of each stage to use, so the Experiment 1 matrix and Experiment 3's
-  per-study feature extraction share the same code path.
+- **ROI crop → normalization → filtration → vectorization pipeline** — built once,
+  parameterized by which variant of each stage to use, so the Experiment 1 matrix and
+  Experiment 3's per-study feature extraction share the same code path. The ROI crop
+  and normalization stages are implemented as of `logs/exp1_log.md` Experiments
+  002-003 (`tda_chexpr.roi.apply_roi_crop`, `tda_chexpr.preprocessing.apply_normalization`);
+  filtration and vectorization are not yet implemented.
 
 ## Open questions / decisions needed
 
@@ -295,3 +316,8 @@ Reusable across Experiments 1 and 3:
   `is_clean_negative == True` actually changes measured AUROC (i.e., whether the
   comorbidity confound was material in practice) is deferred until the classification
   step exists and both cohorts can be run side by side.
+- **ROI cropping method** — the center-crop + resize baseline (Pipeline step 2) was
+  tested on the Experiment 1 sample and found not to reliably remove border
+  text/markers (see `logs/exp1_log.md`, Experiment 003). Whether to adopt PSPNet-based
+  lung segmentation instead (bbox-only, no hard masking — see Pipeline step 2) is
+  undecided; test it on the same sample before committing it to the full pipeline.
