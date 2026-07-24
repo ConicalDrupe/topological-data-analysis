@@ -75,3 +75,65 @@ library** for all new experiment work described in `experiments.md`.
 TTK (Topology ToolKit) and RIVET are mentioned in `README.md` as possible tools for
 pointcloud visualization and two-parameter persistence, respectively. They're not set up
 or documented further here — treat them as future/optional, per `experiments.md`.
+
+## Automatic Exploratory Data Analysis (EDA)
+
+Whenever a new dataset, sample, split, preprocessing stage, or transformed dataset is created,
+automatically perform exploratory data analysis before training or evaluation.
+
+The EDA should include, where applicable:
+
+### Dataset Summary
+
+- Number of samples
+- Number of unique patients
+- Number of studies
+- Number of frontal vs lateral images
+- Number of AP vs PA views
+- Age statistics
+- Sex distribution
+- Missing values
+- Duplicate paths
+- Class frequencies for every pathology
+
+### Image Statistics
+Only relevant when we are pre-processing images or gathering representative class samples in classification.
+Compute:
+
+- image dimensions
+- aspect ratio distribution
+- pixel intensity statistics
+- histogram summaries
+- grayscale range
+- brightness statistics
+- contrast statistics
+
+If preprocessing has been applied (HE, CLAHE, AGC, etc.), compare before/after statistics.
+
+### Visualizations
+
+Generate figures whenever practical:
+
+- sample images
+- preprocessing comparison grids
+
+Store plots under
+
+results/<experiment>/eda/
+
+Never overwrite previous plots.
+
+## Research Workflow
+
+For every new experiment, follow this workflow unless explicitly instructed otherwise.
+
+1. Understand the experiment objective from `experiments.md`.
+2. Inspect the current codebase before implementing changes.
+3. If creating a new dataset or transformed sample:
+   - Run exploratory data analysis (EDA).
+   - Save EDA artifacts.
+   - Update the experiment log. (ex. /logs/exp1.md)
+4. Implement the experiment.
+5. Evaluate the results.
+6. Record observations, limitations, and next steps.
+7. Never overwrite previous experiment outputs. Create new versioned directories instead.
