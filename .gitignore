@@ -11,3 +11,4 @@ archive.zip
 !/plots/**/.gitkeep
 
 __pycache__/
+*.pyc
