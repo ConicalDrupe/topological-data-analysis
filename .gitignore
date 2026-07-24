@@ -10,4 +10,4 @@ archive.zip
 !/plots/**/
 !/plots/**/.gitkeep
 
-/__pycache__/*
+__pycache__/
