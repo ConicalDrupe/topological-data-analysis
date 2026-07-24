@@ -94,8 +94,7 @@ Pneumothorax case — unusable as a reliable evaluation set on its own. Instead,
 
 - **Method**: stratified 80/20 split by `Pneumothorax`, implemented as a plain per-class
   `pandas` sample (`tda_chexpr.split.stratified_split`) rather than a `scikit-learn`
-  dependency — avoids adding a new package while `giotto-tda` already blocks normal
-  dependency resolution on Python 3.13 (see Open Questions).
+  dependency.
 - **Split by patient, not by row**: `select_studies(mode="first_qualifying")` guarantees
   one *study* per patient, but that study can still contribute more than one frontal AP
   image (33 patients in the train cohort have 2 rows). The split is therefore done on

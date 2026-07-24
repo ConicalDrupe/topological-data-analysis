@@ -73,5 +73,3 @@ filters are applied.
   AGC explicitly skipped per `experiments.md`). Once images are loaded/preprocessed,
   add Image Statistics EDA (dimensions, aspect ratio, pixel intensity, contrast,
   brightness, before/after comparison) per `CLAUDE.md`.
-- Resolve `giotto-tda`'s Python 3.13 install blocker (see `experiments.md` Open
-  Questions) before filtration/vectorization work can start.
