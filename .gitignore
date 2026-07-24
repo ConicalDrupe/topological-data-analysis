@@ -1,3 +1,11 @@
 .venv
 archive.zip
 /kaggle/
+
+/data/**
+!/data/**/
+!/data/**/.gitkeep
+
+/plots/**
+!/plots/**/
+!/plots/**/.gitkeep
