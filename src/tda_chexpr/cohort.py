@@ -7,7 +7,9 @@ infrastructure".
 
 import pandas as pd
 
-from tda_chexpr.data import parse_path_components
+from tda_chexpr.data import PATHOLOGY_COLUMNS, parse_path_components
+
+_NON_DISEASE_COLUMNS = ("No Finding", "Support Devices")
 
 
 def add_path_components(df: pd.DataFrame) -> pd.DataFrame:
@@ -58,6 +60,40 @@ def filter_no_support_devices(df: pd.DataFrame) -> pd.DataFrame:
     "no device" -- the cleanest label guarantee at the cost of a smaller cohort.
     """
     return df[df["Support Devices"] == 0.0].copy()
+
+
+def add_comorbidity_count(df: pd.DataFrame, target_label: str) -> pd.DataFrame:
+    """Count of OTHER confirmed-positive (==1.0) pathology columns per row --
+    excludes target_label itself and non-disease columns (No Finding, Support
+    Devices). Uncertain (-1.0) values are not counted -- strict/confirmed-only
+    convention, matching filter_no_support_devices.
+    """
+    other_cols = [
+        c for c in PATHOLOGY_COLUMNS
+        if c != target_label and c not in _NON_DISEASE_COLUMNS
+    ]
+    df = df.copy()
+    df["comorbidity_count"] = (df[other_cols] == 1.0).sum(axis=1)
+    return df
+
+
+def add_clean_negative_flag(df: pd.DataFrame) -> pd.DataFrame:
+    """True where the labeler found nothing at all (No Finding == 1.0) -- the
+    strictest available "truly healthy" signal.
+    """
+    df = df.copy()
+    df["is_clean_negative"] = df["No Finding"] == 1.0
+    return df
+
+
+def filter_clean_negatives(df: pd.DataFrame, target_label: str) -> pd.DataFrame:
+    """Keep all target_label positives, but only clean (is_clean_negative) negatives.
+
+    Requires add_clean_negative_flag to have been run already. Isolates the
+    target-vs-healthy contrast from comorbid-disease confounds on the negative
+    side, without discarding positive rows for having comorbidities too.
+    """
+    return df[(df[target_label] == 1.0) | df["is_clean_negative"]].copy()
 
 
 def build_cohort(

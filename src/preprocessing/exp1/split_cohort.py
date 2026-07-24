@@ -3,7 +3,11 @@
 CheXpert's valid.csv is too small after the AP/no-devices filters (77 rows, 1
 positive case) to serve as a reliable held-out set for this cohort, so this
 experiment carves its own stratified split out of the filtered train cohort.
-See experiments.md, Experiment 1.
+
+Sourced from the clean-negatives cohort (positives kept regardless of
+comorbidities, negatives restricted to No Finding == 1.0) rather than the full
+cohort, since Experiment 1 uses the clean cohort as its primary/active dataset
+-- see experiments.md, Experiment 1.
 """
 
 import pandas as pd
@@ -16,7 +20,7 @@ DATA_DIR = REPO_ROOT / "data" / "exp1"
 
 
 def main() -> None:
-    df = pd.read_csv(DATA_DIR / "pneumothorax_cohort_train.csv")
+    df = pd.read_csv(DATA_DIR / "pneumothorax_cohort_train_clean_negatives.csv")
     train_df, test_df = stratified_split(df, label="Pneumothorax", test_frac=0.2, random_state=42)
 
     train_df.to_csv(DATA_DIR / "pneumothorax_train_split.csv", index=False)

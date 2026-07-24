@@ -15,6 +15,8 @@ RESULTS_DIR = REPO_ROOT / "results" / "exp1" / "eda"
 DATASETS = [
     "pneumothorax_cohort_train",
     "pneumothorax_cohort_valid",
+    "pneumothorax_cohort_train_clean_negatives",
+    "pneumothorax_cohort_valid_clean_negatives",
     "pneumothorax_train_split",
     "pneumothorax_test_split",
 ]

@@ -15,7 +15,7 @@ def summarize_cohort(df: pd.DataFrame, label: str) -> dict:
     """CLAUDE.md's "Dataset Summary" schema: counts, breakdowns, and data-quality
     checks (missing values, duplicate paths) for a cohort/split CSV.
     """
-    return {
+    summary = {
         "n_records": len(df),
         "n_patients": df["patient_id"].nunique(),
         "n_studies": df[["patient_id", "study_number"]].drop_duplicates().shape[0],
@@ -32,6 +32,12 @@ def summarize_cohort(df: pd.DataFrame, label: str) -> dict:
         "missing_value_counts": df.isna().sum().to_dict(),
         "duplicate_path_count": int(df["Path"].duplicated().sum()),
     }
+    if "comorbidity_count" in df.columns:
+        summary["comorbidity_count_counts"] = df["comorbidity_count"].value_counts().sort_index().to_dict()
+        summary["comorbidity_count_stats"] = df["comorbidity_count"].describe().to_dict()
+    if "is_clean_negative" in df.columns:
+        summary["is_clean_negative_counts"] = df["is_clean_negative"].value_counts(dropna=False).to_dict()
+    return summary
 
 
 def print_summary(summary: dict, title: str) -> None:

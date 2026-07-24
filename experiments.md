@@ -61,6 +61,36 @@ U-Ignore policy). No uncertainty-mapping (U-Ones/U-Zeros) is used for this basel
    patients (Pneumothorax balance: 1,430 negative / 869 positive); valid 77 rows / 77
    patients (76 negative / 1 positive).
 
+   **Comorbidity confound check and "clean negatives" cohort (decided):** many
+   Pneumothorax-negative rows still have *other* confirmed pathologies (Cardiomegaly,
+   Lung Opacity, Effusion, etc.). Since cubical persistence is sensitive to any
+   structural change in the lung field, a "negative" with a different disease could
+   produce a topological signature that looks similarly abnormal to a true pneumothorax
+   case — muddying the target-vs-healthy contrast. Two columns are added to every cohort
+   CSV to make this visible and actionable:
+   - **`comorbidity_count`** — how many of the 11 *other* pathology columns
+     (all `PATHOLOGY_COLUMNS` minus `Pneumothorax`, `No Finding`, `Support Devices`) are
+     confirmed-positive (`== 1.0`) for that row. Uncertain (`-1.0`) values are not
+     counted — the strict/confirmed-only convention used throughout this cohort.
+   - **`is_clean_negative`** — `No Finding == 1.0`: the labeler's own explicit "nothing
+     found at all" signal, chosen over the looser `comorbidity_count == 0` (which still
+     allows unmentioned/uncertain findings on other columns) as the strictest available
+     "truly healthy" indicator.
+
+   A **clean-negatives cohort variant** is then derived: keep every `Pneumothorax == 1.0`
+   row (positives are kept regardless of their own comorbidities — only the negative
+   side of the contrast is being cleaned up), but restrict `Pneumothorax == 0.0` rows to
+   `is_clean_negative == True` only. Verified counts: train 869 positive + 320 clean
+   negative = **1,189 rows** (`pneumothorax_cohort_train_clean_negatives.csv`); valid 1
+   positive + 12 clean negative = **13 rows**
+   (`pneumothorax_cohort_valid_clean_negatives.csv`).
+
+   **This clean-negatives cohort is Experiment 1's primary/active dataset** — see
+   Train/test split below. The original, unfiltered cohort (with both new columns) is
+   still written and kept on disk as "the larger dataset," to revisit for comparison
+   once the classification step exists (does restricting to clean negatives actually
+   change measured AUROC, or was the comorbidity confound not material in practice?).
+
 2. **Normalization variants** (compare against each other and against no normalization):
    - Histogram Equalization (HE)
    - Adaptive Gamma Correction (AGC) - We will skip this for now.
@@ -92,20 +122,26 @@ AP-only + no-support-devices filters above it shrinks to 77 rows with only **1**
 Pneumothorax case — unusable as a reliable evaluation set on its own. Instead, Experiment
 1 carves its own split out of the filtered *train* cohort:
 
+- **Source (updated)**: `pneumothorax_cohort_train_clean_negatives.csv` (1,189 rows),
+  not the full unfiltered cohort — Experiment 1 uses the clean-negatives cohort as its
+  primary/active dataset (see Pipeline step 1). The full cohort remains on disk, unused
+  by the split, for the future clean-vs-full comparison.
 - **Method**: stratified 80/20 split by `Pneumothorax`, implemented as a plain per-class
   `pandas` sample (`tda_chexpr.split.stratified_split`) rather than a `scikit-learn`
   dependency.
 - **Split by patient, not by row**: `select_studies(mode="first_qualifying")` guarantees
   one *study* per patient, but that study can still contribute more than one frontal AP
-  image (33 patients in the train cohort have 2 rows). The split is therefore done on
+  image (33 patients in the original cohort have 2 rows). The split is therefore done on
   unique `patient_id` first, then every row belonging to a chosen patient follows that
   patient into train or test — a naive row-level split was tried first and produced 8
   patients leaking across both splits, which is why this two-step approach is needed.
-- **Output**: `data/exp1/pneumothorax_train_split.csv` and
-  `data/exp1/pneumothorax_test_split.csv`, written by
-  `src/preprocessing/exp1/split_cohort.py`.
-- The filtered `valid.csv` cohort (`pneumothorax_cohort_valid.csv`) is still produced and
-  kept as a secondary/supplementary check, not the primary evaluation set.
+- **Output** (verified against the real CSVs): `data/exp1/pneumothorax_train_split.csv`
+  (953 rows / 932 patients: 698 positive / 255 clean negative) and
+  `data/exp1/pneumothorax_test_split.csv` (236 rows / 234 patients: 171 positive / 65
+  clean negative), written by `src/preprocessing/exp1/split_cohort.py`.
+- The filtered `valid.csv` cohorts (`pneumothorax_cohort_valid.csv` and its
+  `_clean_negatives` variant) are still produced and kept as a secondary/supplementary
+  check, not the primary evaluation set.
 
 ### Experiment matrix
 
@@ -254,3 +290,8 @@ Reusable across Experiments 1 and 3:
 - **Results tracking** — no mechanism is chosen yet for logging experiment-matrix runs
   (e.g. a results CSV/Parquet per run, or a lightweight tracking tool). Decide before
   Experiment 1's matrix grows large enough to lose track of manually.
+- **Clean-negatives vs. full cohort comparison** — Experiment 1 now trains/evaluates on
+  the clean-negatives cohort only (see Pipeline step 1). Whether restricting negatives to
+  `is_clean_negative == True` actually changes measured AUROC (i.e., whether the
+  comorbidity confound was material in practice) is deferred until the classification
+  step exists and both cohorts can be run side by side.
