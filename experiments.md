@@ -100,14 +100,17 @@ U-Ignore policy). No uncertainty-mapping (U-Ones/U-Zeros) is used for this basel
      representative sample (`logs/exp1_log.md`, Experiment 003) — found **not** to
      reliably remove border text/markers, since it only trims the width axis and most
      annotations sit within the preserved height.
-   - **Candidate (pending decision):** PSPNet-based lung segmentation
-     (`torchxrayvision`'s `xrv.baseline_models.chestx_det.PSPNet`, already installed),
-     using the union of the Left Lung/Right Lung mask channels to compute a bounding
-     box. **Decided in advance:** crop to that bounding box only and keep all pixel
-     values inside it (heart/mediastinum included) — do **not** zero out pixels
-     outside the lung silhouette, since a hard mask edge would introduce an artificial
-     intensity discontinuity that sublevel-set cubical persistence (see step 4 below)
-     would pick up as a false topological feature.
+   - **Implemented, recommended:** PSPNet-based lung segmentation
+     (`torchxrayvision`'s `xrv.baseline_models.chestx_det.PSPNet`), using the union of
+     the Left Lung/Right Lung mask channels to compute a bounding box, cropped from
+     the raw (not center-cropped) image, keeping all pixel values inside the box
+     (heart/mediastinum included) — no pixel masking outside the lung silhouette,
+     since a hard mask edge would introduce an artificial intensity discontinuity
+     that sublevel-set cubical persistence (see step 4 below) would pick up as a false
+     topological feature. Tested on the Experiment 1 representative sample
+     (`logs/exp1_log.md`, Experiment 004): 0/8 segmentation failures, and
+     substantially better at removing border text/markers than the center-crop
+     baseline. Final adoption decision pending review.
 3. **Normalization variants** (compare against each other and against no normalization):
    - Histogram Equalization (HE)
    - Adaptive Gamma Correction (AGC) - We will skip this for now.
@@ -285,7 +288,7 @@ Reusable across Experiments 1 and 3:
   parameterized by which variant of each stage to use, so the Experiment 1 matrix and
   Experiment 3's per-study feature extraction share the same code path. The ROI crop
   and normalization stages are implemented as of `logs/exp1_log.md` Experiments
-  002-003 (`tda_chexpr.roi.apply_roi_crop`, `tda_chexpr.preprocessing.apply_normalization`);
+  002-004 (`tda_chexpr.roi.apply_roi_crop`, `tda_chexpr.preprocessing.apply_normalization`);
   filtration and vectorization are not yet implemented.
 
 ## Open questions / decisions needed
@@ -318,6 +321,8 @@ Reusable across Experiments 1 and 3:
   step exists and both cohorts can be run side by side.
 - **ROI cropping method** — the center-crop + resize baseline (Pipeline step 2) was
   tested on the Experiment 1 sample and found not to reliably remove border
-  text/markers (see `logs/exp1_log.md`, Experiment 003). Whether to adopt PSPNet-based
-  lung segmentation instead (bbox-only, no hard masking — see Pipeline step 2) is
-  undecided; test it on the same sample before committing it to the full pipeline.
+  text/markers (see `logs/exp1_log.md`, Experiment 003). PSPNet-based lung
+  segmentation (bbox-only, no hard masking) was then implemented and compared on the
+  same sample (Experiment 004): 0/8 failures, substantially better text/marker
+  removal — recommended for adoption, but final confirmation and a full-dataset
+  timing check are still pending before it's wired into the full pipeline.
