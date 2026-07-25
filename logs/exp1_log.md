@@ -1,35 +1,37 @@
 # Experiment 1 Log
 
-- **Current experiment:** Experiment 002 (image preprocessing: normalization + ROI
-  crop) is done pending your review — PSPNet lung-mask cropping is adopted as the
-  ROI-crop method (substantially better than center-crop at removing border
-  text/markers, 0/8 segmentation failures). Filtration/vectorization/classification
-  not started (Experiment 003 next).
+- **Current experiment:** Experiment 003 (finalize ROI crop + CLAHE clip_limit grid
+  search) is done pending your review — final pipeline is
+  `Raw -> lung-mask crop -> direct resize to 224x224 (aspect ratio warped, no padding)
+  -> CLAHE (kernel_size=8, clip_limit=0.02 recommended)`. Filtration/vectorization/
+  classification not started (Experiment 004 next).
 - **Preprocessing pipeline:** `build_cohort.py` (filter + dedup + comorbidity_count/
   is_clean_negative + clean-negatives variant) -> `split_cohort.py` (train/test split
   from the clean-negatives cohort) -> `select_preprocessing_sample.py` (sample
   selection) -> ROI crop (`tda_chexpr.roi.apply_roi_crop`, methods `none`/
-  `center_crop`/`lung_mask`) -> normalization (`tda_chexpr.preprocessing.
-  apply_normalization`, methods `none`/`he`/`clahe`). No full-dataset batch run of
-  any stage yet — that lands with the filtration step.
+  `center_crop`/`lung_mask`; `lung_mask` now defaults to `size=224`, direct resize, no
+  padding) -> normalization (`tda_chexpr.preprocessing.apply_normalization`, methods
+  `none`/`he`/`clahe`). No full-dataset batch run of any stage yet — that lands with
+  the filtration step.
 - **Dataset version:** primary/active: `data/exp1/pneumothorax_cohort_{train,valid}_clean_negatives.csv`
   -> `pneumothorax_{train,test}_split.csv`. Full (unfiltered) cohort
   `pneumothorax_cohort_{train,valid}.csv` retained on disk for a future clean-vs-full
   comparison, not currently used by the split. EDA'd at `results/exp1/eda/v1/` (all six
   CSVs). Preprocessing/ROI-crop comparison sample: `data/exp1/preprocessing_sample.csv`
-  (8 rows, 4 positive / 4 negative, drawn from `pneumothorax_train_split.csv`; reused
-  unchanged across Experiment 002).
+  (10 rows, 5 positive / 5 negative, drawn from `pneumothorax_train_split.csv`; bumped
+  from 8 rows in Experiment 003).
 - **Model version:** `torchxrayvision` PSPNet (`pspnet_chestxray_best_model_4.pth`,
   ChestX-Det-trained, cached at `~/.torchxrayvision/models_data/`) for lung
   segmentation. No classification model yet.
 - **Random seed:** 42 (train/test split, and preprocessing sample selection).
 - **Feature extraction method:** not yet implemented (filtration/vectorization pending).
-- **Parameters:** see Experiment 001/002 below.
+- **Parameters:** see Experiment 001-003 below.
 - **Evaluation metric:** AUROC (planned primary), accuracy/F1 (planned secondary) — not
   yet computed, no model trained.
-- **Current status:** clean-negatives cohort + split built and EDA'd; ROI crop and
-  normalization pipeline implemented, PSPNet lung-mask crop adopted pending your
-  review; filtration/vectorization not started.
+- **Current status:** clean-negatives cohort + split built and EDA'd; full
+  ROI-crop + normalization pipeline finalized (lung-mask crop, direct resize to
+  224x224, CLAHE clip_limit=0.02 recommended) pending your review; filtration/
+  vectorization not started.
 
 ---
 
@@ -217,3 +219,91 @@ Confirmed CheXpert-small images are single-channel grayscale (PIL mode `L`, `uin
   1,189 clean-negatives-cohort images.
 - Experiment 1 pipeline step 3 (filtration) not started — the next major pipeline
   stage once ROI cropping is finalized. (Followed by Experiment 003.)
+
+---
+
+# Experiment 003
+
+## Goal
+
+Finalize the preprocessing pipeline ahead of filtration: bring the lung-mask crop to a
+fixed size (open question from Experiment 002), and grid search CLAHE's `clip_limit`
+at a smaller, more locally-aggressive `kernel_size=8` (Experiment 002 used
+`kernel_size=32`).
+
+## Dataset
+
+`data/exp1/preprocessing_sample.csv`, bumped from 8 to 10 rows (5 `Pneumothorax==1.0`
+/ 5 `==0.0`, `random_state=42`, same `select_preprocessing_sample.py`, drawn from
+`pneumothorax_train_split.csv`) — the extra 2 rows (1 pos, 1 neg) added for more
+visual evidence in the clip_limit grid.
+
+## Parameters
+
+- `tda_chexpr.roi.apply_roi_crop(image, "lung_mask", margin_frac=0.05, threshold=0.5,
+  size=224)` — PSPNet bbox crop, then **direct `resize()` to 224x224** (aspect ratio
+  warped, no padding/cropping to square).
+- `tda_chexpr.preprocessing.apply_normalization(image, "clahe", kernel_size=8,
+  clip_limit=clip)` for `clip in [0.01, 0.02, 0.03, 0.04, 0.05]`; HE at defaults
+  (`nbins=256`) for reference.
+
+## Results
+
+**Squaring method (course correction):** first attempt padded the non-square lung-mask
+bbox crop to square with edge-replication (`roi.pad_to_square(mode="edge")`) before
+resizing, to avoid warping lung proportions. Bboxes need up to ~30% padding on their
+short axis in this sample (aspect ratios 0.68-1.06, per Experiment 002's stats), and
+edge-replicating a single row/column of real rib texture across that much padding
+produced visible fake vertical "stripe" artifacts in 3/10 images
+(`results/exp1/eda/v5/clahe_grid_search/clahe_grid_comparison.png`). Rejected in favor
+of a **direct resize (aspect-ratio warp, no pad/crop)** — reasoning, given these images
+also feed a separate image-features/CNN baseline for comparison:
+  - No fabricated pixels (unlike edge- or constant-pad) and no lost content (unlike
+    cropping the longer axis down to match, which would cut into the lung's
+    lateral/apex margins — exactly where pneumothorax findings appear).
+  - An affine (anisotropic) resize is a homeomorphism of the image domain, so it
+    provably can't create or destroy sublevel-set topological features, up to ordinary
+    discretization noise present in every option.
+  - Plain non-aspect-preserving resize is standard/unremarkable for CNN pipelines
+    (equivalent to `torchvision.transforms.Resize((H, W))`).
+  - `roi.pad_to_square()` is kept in the codebase (supports `mode="edge"` or
+    `mode="constant"`) as a documented, currently-unused alternative — not deleted.
+    Cropping the longer axis to match was discussed and rejected (loses
+    pneumothorax-relevant peripheral lung content) but is trivial to reconstruct later.
+
+**Final result** (`results/exp1/eda/v6/clahe_grid_search/`: `clahe_grid_comparison.png`,
+`image_stats.json`, `intensity_histogram_comparison_{positive,negative}.png`):
+0/10 empty-mask failures (no `center_crop` fallbacks triggered). Visual review of the
+clip_limit grid: `clip=0.01`-`0.02` give a clear local-contrast boost (sharper rib/
+vessel/lung-marking detail) without much visible grain; `clip=0.03` starts introducing
+mild speckle noise in flat soft-tissue/mediastinum regions; `clip=0.04`-`0.05`
+over-amplify noticeably (clearly grainy in multiple samples). Global intensity `std`
+across the grid was roughly flat (~0.24, occasionally dipping at `clip=0.04`-`0.05`)
+— it doesn't discriminate the grain increase, since CLAHE's local normalization
+doesn't necessarily raise whole-image variance even as local/high-frequency noise
+increases; visual inspection was the deciding factor here, not `image_stats.json`.
+**Recommended default: `clip_limit=0.02`, `kernel_size=8`** — a modest step up from
+Experiment 002's `kernel_size=32` default, more locally aggressive but still short of
+the grain onset seen at `clip=0.03`+.
+
+## Observations
+
+- Border text/markers still occasionally survive at the very edge of the lung-mask
+  bbox (e.g. an "L" or "PORT/AP" marker in a corner) — expected, not a regression:
+  Experiment 002 already established bbox-only cropping (no hard masking) as a
+  deliberate tradeoff, and the 5% margin can include a sliver of a corner marker.
+- The pad-to-square attempt is a useful cautionary example for this project generally:
+  an intuition borrowed from general image-processing practice ("don't warp aspect
+  ratio") turned out to be the wrong default for a sublevel-set persistent-homology
+  pipeline, where fabricating pixels is a strictly worse failure mode than a
+  topology-preserving geometric transform.
+
+## Next Steps
+
+- Confirm `clip_limit=0.02`, `kernel_size=8` as Experiment 1's normalization default
+  (or pick a different point on the grid after your own review of
+  `clahe_grid_comparison.png`).
+- Check full-dataset PSPNet inference time before committing to a batch run over all
+  1,189 clean-negatives-cohort images (still untested beyond this 10-image sample).
+- Experiment 1 pipeline step 3 (filtration) not started — the next major pipeline
+  stage once normalization is confirmed. (Followed by Experiment 004.)

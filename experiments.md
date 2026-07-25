@@ -97,24 +97,32 @@ U-Ignore policy). No uncertainty-mapping (U-Ones/U-Zeros) is used for this basel
    - **Baseline (implemented):** `torchxrayvision`'s own deterministic, no-inference
      `XRayCenterCrop` (center-crop to a square using `min(height, width)`) +
      `XRayResizer` (resize to a fixed 224×224). Tested on the Experiment 1
-     representative sample (`logs/exp1_log.md`, Experiment 003) — found **not** to
+     representative sample (`logs/exp1_log.md`, Experiment 002) — found **not** to
      reliably remove border text/markers, since it only trims the width axis and most
      annotations sit within the preserved height.
-   - **Implemented, recommended:** PSPNet-based lung segmentation
-     (`torchxrayvision`'s `xrv.baseline_models.chestx_det.PSPNet`), using the union of
-     the Left Lung/Right Lung mask channels to compute a bounding box, cropped from
-     the raw (not center-cropped) image, keeping all pixel values inside the box
-     (heart/mediastinum included) — no pixel masking outside the lung silhouette,
-     since a hard mask edge would introduce an artificial intensity discontinuity
-     that sublevel-set cubical persistence (see step 4 below) would pick up as a false
-     topological feature. Tested on the Experiment 1 representative sample
-     (`logs/exp1_log.md`, Experiment 004): 0/8 segmentation failures, and
+   - **Finalized:** PSPNet-based lung segmentation (`torchxrayvision`'s
+     `xrv.baseline_models.chestx_det.PSPNet`), using the union of the Left Lung/Right
+     Lung mask channels to compute a bounding box, cropped from the raw (not
+     center-cropped) image, keeping all pixel values inside the box (heart/
+     mediastinum included) — no pixel masking outside the lung silhouette, since a
+     hard mask edge would introduce an artificial intensity discontinuity that
+     sublevel-set cubical persistence (see step 4 below) would pick up as a false
+     topological feature. Adopted after Experiment 002 (0/8 segmentation failures,
      substantially better at removing border text/markers than the center-crop
-     baseline. Final adoption decision pending review.
+     baseline). The crop is then resized **directly** to 224×224 (aspect ratio
+     warped, no pad-to-square/crop-to-square step) — a pad-to-square attempt
+     (edge-replication) was tried and rejected in Experiment 003 after it fabricated
+     repeated-texture stripe artifacts on high-aspect-ratio crops; a direct affine
+     resize is provably topology-safe (a homeomorphism of the image domain) and
+     doesn't lose the lung-periphery content a crop-to-square would. See
+     `logs/exp1_log.md`, Experiment 003, and `tda_chexpr.roi.apply_roi_crop`.
 3. **Normalization variants** (compare against each other and against no normalization):
    - Histogram Equalization (HE)
    - Adaptive Gamma Correction (AGC) - We will skip this for now.
-   - Contrast Limited Adaptive Histogram Equalization (CLAHE)
+   - Contrast Limited Adaptive Histogram Equalization (CLAHE) — grid-searched
+     `clip_limit` at `kernel_size=8` in `logs/exp1_log.md` Experiment 003;
+     `clip_limit=0.02` recommended (visible local-contrast gain without the grain/
+     speckle noise seen from `clip_limit=0.03` upward), pending your confirmation.
 4. **Filtration methods:**
    - **Baseline:** classical cubical persistence (sublevel-set filtration directly on
      grayscale pixel intensities) — `gtda.homology.CubicalPersistence`.
@@ -287,8 +295,8 @@ Reusable across Experiments 1 and 3:
 - **ROI crop → normalization → filtration → vectorization pipeline** — built once,
   parameterized by which variant of each stage to use, so the Experiment 1 matrix and
   Experiment 3's per-study feature extraction share the same code path. The ROI crop
-  and normalization stages are implemented as of `logs/exp1_log.md` Experiments
-  002-004 (`tda_chexpr.roi.apply_roi_crop`, `tda_chexpr.preprocessing.apply_normalization`);
+  and normalization stages are finalized as of `logs/exp1_log.md` Experiments 002-003
+  (`tda_chexpr.roi.apply_roi_crop`, `tda_chexpr.preprocessing.apply_normalization`);
   filtration and vectorization are not yet implemented.
 
 ## Open questions / decisions needed
@@ -319,10 +327,12 @@ Reusable across Experiments 1 and 3:
   `is_clean_negative == True` actually changes measured AUROC (i.e., whether the
   comorbidity confound was material in practice) is deferred until the classification
   step exists and both cohorts can be run side by side.
-- **ROI cropping method** — the center-crop + resize baseline (Pipeline step 2) was
-  tested on the Experiment 1 sample and found not to reliably remove border
-  text/markers (see `logs/exp1_log.md`, Experiment 003). PSPNet-based lung
-  segmentation (bbox-only, no hard masking) was then implemented and compared on the
-  same sample (Experiment 004): 0/8 failures, substantially better text/marker
-  removal — recommended for adoption, but final confirmation and a full-dataset
-  timing check are still pending before it's wired into the full pipeline.
+- ~~ROI cropping method~~ — **resolved for Experiment 1**: the center-crop + resize
+  baseline (Pipeline step 2) was tested on the Experiment 1 sample and found not to
+  reliably remove border text/markers (`logs/exp1_log.md`, Experiment 002). PSPNet-
+  based lung segmentation (bbox-only, no hard masking) was adopted instead (0/8
+  failures, substantially better text/marker removal), and its final squaring/resize
+  step was pinned down in Experiment 003 (direct resize to 224×224, no padding — see
+  Pipeline step 2 above). Still pending: a full-dataset PSPNet timing check before
+  committing to a batch run over all 1,189 clean-negatives-cohort images, and final
+  confirmation of the recommended `clip_limit=0.02` CLAHE default.

@@ -94,6 +94,36 @@ def plot_method_comparison(
     plt.close(fig)
 
 
+def plot_stage_grid(
+    rows: list[tuple[str, list[tuple[str, np.ndarray]]]],
+    out_path: Path,
+    title: str,
+) -> None:
+    """Grid of arbitrary named stages, one row per (row_label, stages) pair, where
+    `stages` is an ordered list of (stage_name, image) columns. Generalizes
+    plot_method_comparison's fixed [Original, HE, CLAHE] triple to any number/labeling
+    of stages (e.g. a CLAHE clip_limit grid search).
+    """
+    n_rows = len(rows)
+    n_cols = len(rows[0][1])
+    fig, axes = plt.subplots(n_rows, n_cols, figsize=(2.5 * n_cols, 2.5 * n_rows))
+    for row, (label, stages) in enumerate(rows):
+        for col, (name, image) in enumerate(stages):
+            ax = axes[row, col]
+            ax.imshow(image, cmap="gray", vmin=0, vmax=1)
+            ax.set_xticks([])
+            ax.set_yticks([])
+            if row == 0:
+                ax.set_title(name)
+            if col == 0:
+                ax.set_ylabel(label)
+    fig.suptitle(title)
+    fig.tight_layout(rect=(0, 0, 1, 0.97))
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    fig.savefig(out_path, dpi=150)
+    plt.close(fig)
+
+
 def plot_clahe_parameter_grid(image: np.ndarray, out_path: Path) -> None:
     n_cols = 1 + max(len(CLAHE_CLIP_LIMITS), len(CLAHE_KERNEL_SIZES))
     fig, axes = plt.subplots(2, n_cols, figsize=(3 * n_cols, 6))

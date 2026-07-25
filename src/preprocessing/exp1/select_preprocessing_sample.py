@@ -1,7 +1,7 @@
 """Select a small representative image sample for the normalization (HE/CLAHE)
 comparison. See experiments.md, Experiment 1 pipeline step 2.
 
-Stratified 4 positive / 4 negative sample, seed=42 (matching the split's seed
+Stratified 5 positive / 5 negative sample, seed=42 (matching the split's seed
 convention), drawn from the train split so the sample is disjoint from the test split.
 """
 
@@ -10,7 +10,7 @@ import pandas as pd
 from tda_chexpr.data import REPO_ROOT
 
 DATA_DIR = REPO_ROOT / "data" / "exp1"
-N_PER_CLASS = 4
+N_PER_CLASS = 5
 RANDOM_STATE = 42
 
 

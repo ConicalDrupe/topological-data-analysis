@@ -12,7 +12,7 @@ from torchxrayvision.datasets import XRayCenterCrop, XRayResizer
 ROI_VARIANTS: list[tuple[str, dict]] = [
     ("none", {}),
     ("center_crop", {"size": 224}),
-    ("lung_mask", {"margin_frac": 0.05, "threshold": 0.5}),
+    ("lung_mask", {"margin_frac": 0.05, "threshold": 0.5, "size": 224}),
 ]
 
 _CENTER_CROP = XRayCenterCrop()
@@ -60,6 +60,26 @@ def crop_to_bbox(image: np.ndarray, bbox: tuple[int, int, int, int]) -> np.ndarr
     return image[top:bottom, left:right]
 
 
+def pad_to_square(image: np.ndarray, mode: str = "edge") -> np.ndarray:
+    """Pad the shorter axis so `image` becomes square, centering the original content.
+
+    Not currently used by `apply_roi_crop`'s default "lung_mask" path (see its
+    docstring) -- kept as a documented alternative. `mode="edge"` was tried and
+    rejected: for lung-mask bboxes needing a large pad (~30% of the square side seen
+    in practice), it replicates a single row/column of real anatomical texture across
+    the whole padded strip, fabricating a repeated fake structure (visible as vertical
+    stripe artifacts). `mode="constant"` (flat fill, e.g. black) is a milder untried
+    alternative -- a single synthetic flat region rather than repeated texture.
+    """
+    height, width = image.shape
+    size = max(height, width)
+    pad_top = (size - height) // 2
+    pad_bottom = size - height - pad_top
+    pad_left = (size - width) // 2
+    pad_right = size - width - pad_left
+    return np.pad(image, ((pad_top, pad_bottom), (pad_left, pad_right)), mode=mode)
+
+
 def apply_roi_crop(image: np.ndarray, method: str, **params) -> np.ndarray:
     """Apply an ROI-crop variant to a grayscale image in [0, 1].
 
@@ -69,7 +89,9 @@ def apply_roi_crop(image: np.ndarray, method: str, **params) -> np.ndarray:
       - "lung_mask": PSPNet-based lung segmentation -> bounding box -> crop (keeps
         all pixel values inside the box, no pixel masking). params: margin_frac
         (default 0.05), threshold (default 0.5), size (default None -- leave at
-        natural bbox size; if given, resize() the crop afterward).
+        natural bbox size; if given, resize() the crop directly to size x size,
+        warping the aspect ratio -- see roi module docstring / logs/exp1_log.md
+        Experiment 003 for why this is preferred over padding to square).
     """
     if method == "none":
         return image
