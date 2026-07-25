@@ -5,9 +5,8 @@ actual research plan — this file covers data access and tooling only.
 
 ## Data access
 
-The dataset (CheXpert-v1.0-small) lives at **`kaggle/`, relative to the repo root**
-(`/home/boon/Projects/topological-data-analysis/kaggle/`) — there is no dataset at an
-absolute `/kaggle/` path on the filesystem. Always reference it relative to the repo root.
+Dataset (CheXpert-v1.0-small) lives at **`kaggle/`, relative to the repo root** — always
+reference it relatively; there is no dataset at an absolute `/kaggle/` path.
 
 ### Layout
 
@@ -19,19 +18,16 @@ kaggle/
 └── valid.csv         per-image metadata + labels for valid/
 ```
 
-Each patient folder nests further by study (visit) and view:
+Nesting: `kaggle/train/patient00001/study1/view1_frontal.jpg`, `view2_lateral.jpg`, etc.
 
-```
-kaggle/train/patient00001/study1/view1_frontal.jpg
-                                 /view2_lateral.jpg
-                         /study2/view1_frontal.jpg
-                         ...
-```
-
-Many patients have more than one `studyN` — this is real multi-visit data (some patients
-have dozens of studies) and is what Experiment 3 in `experiments.md` uses. There is no
-absolute date field; only an `Age` column per study row, so ordering studies means sorting
-by study number and/or `Age`, not a calendar timestamp.
+- Many patients have multiple `studyN` (multi-visit data, some with dozens of studies) —
+  this is what Experiment 3 in `experiments.md` uses. No date field exists; order studies
+  by study number and/or the per-row `Age` column, not a timestamp.
+- **Path prefix gotcha:** `Path` column values are prefixed
+  `CheXpert-v1.0-small/train/...`, but the on-disk layout under `kaggle/` is not — strip
+  the prefix before resolving a CSV row to a file.
+- `archive.zip` (~11.5GB, repo root) is the original download `kaggle/` was extracted
+  from — not needed once `kaggle/` exists.
 
 ### CSV schema (`train.csv` / `valid.csv`, identical columns)
 
@@ -44,24 +40,12 @@ Pleural Other, Fracture, Support Devices
 
 The 14 pathology columns use the standard CheXpert label convention:
 
-| Value  | Meaning              |
-|--------|-----------------------|
+| Value  | Meaning                |
+|--------|------------------------|
 | `1.0`  | Positive               |
 | `0.0`  | Negative               |
 | `-1.0` | Uncertain              |
 | blank  | Not mentioned in report |
-
-### Known gotcha: path prefix mismatch
-
-The `Path` column values look like `CheXpert-v1.0-small/train/patientXXXXX/studyN/...`,
-but the actual on-disk layout under `kaggle/` **does not have that
-`CheXpert-v1.0-small/` prefix** — it's just `train/patientXXXXX/studyN/...`. Any code that
-joins CSV rows to image files needs to strip that prefix before resolving the path.
-
-### Other files at repo root
-
-- `archive.zip` (~11.5GB) — the original dataset download that `kaggle/` was extracted
-  from. Not needed once `kaggle/` exists.
 
 ## Environment & libraries
 
@@ -78,10 +62,9 @@ or documented further here — treat them as future/optional, per `experiments.m
 
 ## Automatic Exploratory Data Analysis (EDA)
 
-Whenever a new dataset, sample, split, preprocessing stage, or transformed dataset is created,
-automatically perform exploratory data analysis before training or evaluation.
-
-The EDA should include, where applicable:
+Whenever a new dataset, sample, split, preprocessing stage, or transformed dataset is
+created, run EDA (below) before training or evaluation, and before implementing the
+experiment (see Research Workflow step 3).
 
 ### Dataset Summary
 
@@ -97,8 +80,9 @@ The EDA should include, where applicable:
 - Class frequencies for every pathology
 
 ### Image Statistics
-Only relevant when we are pre-processing images or gathering representative class samples in classification.
-Compute:
+
+Only relevant when preprocessing images or gathering representative class samples for
+classification. Compute:
 
 - image dimensions
 - aspect ratio distribution
@@ -112,16 +96,8 @@ If preprocessing has been applied (HE, CLAHE, AGC, etc.), compare before/after s
 
 ### Visualizations
 
-Generate figures whenever practical:
-
-- sample images
-- preprocessing comparison grids
-
-Store plots under
-
-results/<experiment>/eda/
-
-Never overwrite previous plots.
+Generate figures whenever practical (sample images, preprocessing comparison grids).
+Store under `results/<experiment>/eda/`. Never overwrite previous plots.
 
 ## Research Workflow
 
@@ -129,14 +105,12 @@ For every new experiment, follow this workflow unless explicitly instructed othe
 
 1. Understand the experiment objective from `experiments.md`.
 2. Inspect the current codebase before implementing changes.
-3. If creating a new dataset or transformed sample:
-   - Run exploratory data analysis (EDA).
-   - Save EDA artifacts.
-   - Update the experiment log. (ex. /logs/exp1_log.md)
+3. If creating a new dataset or transformed sample, run EDA (above) and update the
+   experiment log before implementing.
 4. Implement the experiment.
 5. Evaluate the results.
 6. Record observations, limitations, and next steps.
-7. Never overwrite previous experiment outputs. Create new versioned directories instead.
+7. Never overwrite previous experiment outputs — create new versioned directories instead.
 
 ### Experiment Log
 

@@ -1,42 +1,35 @@
 # Experiment 1 Log
 
-- **Current experiment:** PSPNet-based lung segmentation for ROI cropping — Experiment
-  1 pipeline step 2 — implemented and compared against the center-crop baseline
-  (Experiment 003) on the representative sample. Result: lung-mask bounding-box
-  cropping is **substantially better** at removing border text/markers than
-  center-crop alone, with 0/8 segmentation failures on the sample (see Experiment
-  004). Recommended as the adopted ROI-crop method going forward, pending your
-  review of the plots. Filtration/vectorization/classification not started.
+- **Current experiment:** Experiment 002 (image preprocessing: normalization + ROI
+  crop) is done pending your review — PSPNet lung-mask cropping is adopted as the
+  ROI-crop method (substantially better than center-crop at removing border
+  text/markers, 0/8 segmentation failures). Filtration/vectorization/classification
+  not started (Experiment 003 next).
 - **Preprocessing pipeline:** `build_cohort.py` (filter + dedup + comorbidity_count/
-  is_clean_negative + clean-negatives variant) -> `split_cohort.py` (train/test split,
-  sourced from the clean-negatives cohort) -> `select_preprocessing_sample.py` (sample
-  selection) -> `compare_roi_crop.py` (ROI crop: center-crop + resize to 224x224) /
-  `compare_lung_segmentation.py` (ROI crop: PSPNet lung-mask bbox) ->
-  `compare_preprocessing.py` (HE/CLAHE normalization). Reusable pipeline functions:
-  `tda_chexpr.roi.apply_roi_crop(image, method, **params)` (methods: `none`,
-  `center_crop`, `lung_mask`), `tda_chexpr.segmentation.predict_lung_mask(image)`
-  (PSPNet), and `tda_chexpr.preprocessing.apply_normalization(image, method,
-  **params)` (methods: `none`, `he`, `clahe`). No full-dataset batch run of any stage
-  yet — that lands with the filtration step.
+  is_clean_negative + clean-negatives variant) -> `split_cohort.py` (train/test split
+  from the clean-negatives cohort) -> `select_preprocessing_sample.py` (sample
+  selection) -> ROI crop (`tda_chexpr.roi.apply_roi_crop`, methods `none`/
+  `center_crop`/`lung_mask`) -> normalization (`tda_chexpr.preprocessing.
+  apply_normalization`, methods `none`/`he`/`clahe`). No full-dataset batch run of
+  any stage yet — that lands with the filtration step.
 - **Dataset version:** primary/active: `data/exp1/pneumothorax_cohort_{train,valid}_clean_negatives.csv`
   -> `pneumothorax_{train,test}_split.csv`. Full (unfiltered) cohort
   `pneumothorax_cohort_{train,valid}.csv` retained on disk for a future clean-vs-full
   comparison, not currently used by the split. EDA'd at `results/exp1/eda/v1/` (all six
   CSVs). Preprocessing/ROI-crop comparison sample: `data/exp1/preprocessing_sample.csv`
   (8 rows, 4 positive / 4 negative, drawn from `pneumothorax_train_split.csv`; reused
-  unchanged across Experiments 002-004).
+  unchanged across Experiment 002).
 - **Model version:** `torchxrayvision` PSPNet (`pspnet_chestxray_best_model_4.pth`,
   ChestX-Det-trained, cached at `~/.torchxrayvision/models_data/`) for lung
   segmentation. No classification model yet.
 - **Random seed:** 42 (train/test split, and preprocessing sample selection).
 - **Feature extraction method:** not yet implemented (filtration/vectorization pending).
-- **Parameters:** see Experiment 001/002/003/004 below.
+- **Parameters:** see Experiment 001/002 below.
 - **Evaluation metric:** AUROC (planned primary), accuracy/F1 (planned secondary) — not
   yet computed, no model trained.
-- **Current status:** clean-negatives cohort + split built and EDA'd; HE/CLAHE
-  normalization implemented; center-crop ROI baseline tested and found insufficient;
-  PSPNet lung-mask ROI cropping implemented and found substantially better — final
-  adoption decision pending your review; filtration/vectorization not started.
+- **Current status:** clean-negatives cohort + split built and EDA'd; ROI crop and
+  normalization pipeline implemented, PSPNet lung-mask crop adopted pending your
+  review; filtration/vectorization not started.
 
 ---
 
@@ -125,7 +118,7 @@ use as a held-out set once these filters are applied.
 - Once classification exists, run both the clean-negatives and full-cohort splits
   through the same pipeline to check whether the comorbidity confound was material in
   practice.
-- (Superseded by Experiment 002 below for the normalization step.)
+- (Followed by Experiment 002 below: normalization + ROI crop.)
 
 ---
 
@@ -133,286 +126,94 @@ use as a held-out set once these filters are applied.
 
 ## Goal
 
-Implement image loading and the two normalization variants from `experiments.md`
-pipeline step 2 (Histogram Equalization, CLAHE — AGC explicitly skipped), and compare
-them — against each other and against no normalization — on a small representative
-image sample, including a parameter sweep for each method. Designed as a reusable,
-parameterized function (not a one-off script) so it seeds the future normalization axis
-of the normalization × filtration × vectorization experiment matrix and is directly
-reusable by Experiment 3.
+Build the preprocessing pipeline before filtration: normalization (HE, CLAHE — AGC
+skipped) and a ROI-crop stage to strip border text/lateral-view markers/other
+burned-in annotations that could corrupt downstream topological features. Tried
+progressively smarter ROI methods — none, then a deterministic center-crop baseline,
+then content-aware PSPNet lung segmentation — to find one that actually works, and
+compared HE vs. CLAHE independently along the way.
 
 ## Dataset
 
-- Source: `data/exp1/pneumothorax_train_split.csv` (953 rows).
-- Representative sample: `data/exp1/preprocessing_sample.csv` — 4 `Pneumothorax==1.0` +
-  4 `Pneumothorax==0.0` rows, `random_state=42`
-  (`src/preprocessing/exp1/select_preprocessing_sample.py`).
-- Confirmed by inspection: CheXpert-small images are single-channel grayscale (PIL mode
-  `L`, `uint8`) — no color-channel handling needed.
+Reused `data/exp1/preprocessing_sample.csv` throughout (8 rows, 4 `Pneumothorax==1.0`
+/ 4 `==0.0`, `random_state=42`, drawn from `pneumothorax_train_split.csv` via
+`src/preprocessing/exp1/select_preprocessing_sample.py`) — no new sampling per stage.
+Confirmed CheXpert-small images are single-channel grayscale (PIL mode `L`, `uint8`).
 
 ## Parameters
 
-- `tda_chexpr.preprocessing.load_image_grayscale(path)` — loads to a 2D `float64` array
-  in `[0, 1]` (`skimage.util.img_as_float`).
-- `tda_chexpr.preprocessing.apply_normalization(image, method, **params)`:
-  - `he`: `skimage.exposure.equalize_hist`, param `nbins`.
-  - `clahe`: `skimage.exposure.equalize_adapthist`, params `clip_limit`, `kernel_size`.
-- `NORMALIZATION_VARIANTS` (default comparison set): `none`; `he` (`nbins=256`); `clahe`
-  (`clip_limit=0.01`, `kernel_size=32`).
-- Parameter sweeps (`src/preprocessing/exp1/compare_preprocessing.py`), run on one
-  representative positive-case image:
-  - CLAHE: `clip_limit` in `{0.005, 0.01, 0.02, 0.05}` (fixed `kernel_size=32`); and
-    `kernel_size` in `{8, 16, 32, 64}` (fixed `clip_limit=0.01`).
-  - HE: `nbins` in `{32, 64, 128, 256}`.
+- `tda_chexpr.preprocessing.load_image_grayscale(path)` -> 2D `float64` array in
+  `[0, 1]`.
+- `tda_chexpr.preprocessing.apply_normalization(image, method, **params)`: `he`
+  (`skimage.exposure.equalize_hist`, param `nbins`, default 256); `clahe`
+  (`skimage.exposure.equalize_adapthist`, params `clip_limit`=0.01, `kernel_size`=32).
+- `tda_chexpr.roi.apply_roi_crop(image, method, **params)`: `none`; `center_crop`
+  (`torchxrayvision.datasets.XRayCenterCrop` + `XRayResizer`, `size=224`); `lung_mask`
+  (PSPNet bbox, `margin_frac=0.05`) — bbox-only, no hard pixel masking outside the
+  silhouette, to avoid introducing an artificial intensity edge that sublevel-set
+  cubical persistence would pick up as a false topological feature.
+- `tda_chexpr.segmentation.predict_lung_mask(image, threshold=0.5)` —
+  `torchxrayvision` PSPNet (`xrv.baseline_models.chestx_det.PSPNet`,
+  `pspnet_chestxray_best_model_4.pth`, cached at `~/.torchxrayvision/models_data/`):
+  center-crop -> normalize to `[-1024,1024]` -> PSPNet forward (auto-resize 512x512)
+  -> sigmoid -> union of `'Left Lung'`/`'Right Lung'` channels -> resize back down ->
+  threshold -> paste into the original (non-square) image's coordinate frame.
 
-## Results
+## Results / decision trail
 
-Artifacts written to `results/exp1/eda/v2/preprocessing/`:
-- `method_comparison.png` — Original/HE/CLAHE grid, one row per sampled image (8 rows).
-- `clahe_parameter_grid.png`, `he_parameter_grid.png` — parameter sweeps.
-- `image_stats.json` — Image Statistics EDA (dimensions, aspect ratio, min/max/mean/std,
-  histogram) for all 8 sampled images x 3 methods (24 records).
-- `intensity_histogram_comparison_{positive,negative}.png` — before/after pixel
-  intensity distribution overlays.
-
-Sample image dimensions: height fixed at 320px; width 389-390px within the 8-image
-sample. A wider check across 100 random `pneumothorax_train_split.csv` rows: height
-always 320px, width ranges 320-415px (mean ~385px) — confirms images are **not** a
-fixed size across the dataset.
-
-## Observations
-
-- HE (global histogram equalization) produces a subtle, mostly-imperceptible contrast
-  change on these images — visually and in the intensity histogram, the "before" and
-  "after HE" curves nearly overlap. Its only real parameter (`nbins`) has minimal visual
-  effect across the swept range. This is expected for global HE on images that already
-  span most of the intensity range, not a bug.
-- CLAHE produces a much stronger, spatially local contrast change — anatomical detail
-  (rib structure, lung markings) becomes visibly sharper. The intensity histogram shows
-  CLAHE redistributing pixel mass into two separated modes rather than HE's near-uniform
-  flattening.
-- CLAHE parameter sweep: low `clip_limit` (0.005) and small `kernel_size` (8) both
-  produce visible over-amplification artifacts (blown-out patches, blocky noise) on
-  large flat regions — expected CLAHE behavior when contextual regions are small
-  relative to local structure, not a defect in the implementation. `clip_limit=0.01`,
-  `kernel_size=32` (the chosen default) sits in a visually reasonable middle ground.
-- **Image size varies across the dataset** (width 320-415px at fixed height 320px, per
-  the 100-row check above). Not resolved in this iteration — no resizing/padding was
-  applied. `CubicalPersistence` (the planned baseline filtration) and any
-  `kernel_size`-style spatial parameter downstream may need a resizing/padding decision
-  before the full experiment matrix runs; deferred to be revisited once this iteration
-  is reviewed.
-- Both `scikit-image` and `opencv-python` are now project dependencies; this phase uses
-  only `scikit-image` (`exposure.equalize_hist`/`equalize_adapthist`) for its
-  float-array, keyword-parameterized API. `opencv-python` remains available, unused so
-  far, for a possible later filtration candidate (edge maps / distance transforms).
-
-## Next Steps
-
-- Decide the image-size handling policy (resize to a common shape vs. pad vs. leave
-  per-image and handle inside the filtration step) before running normalization across
-  the full train/test split.
-- Experiment 1 pipeline step 3: filtration methods, starting with the baseline
-  `gtda.homology.CubicalPersistence` sublevel-set filtration on (optionally normalized)
-  grayscale intensities.
-- Once filtration exists, wire `NORMALIZATION_VARIANTS` into the full
-  normalization x filtration matrix and run it across the whole train/test split
-  (not just the 8-image sample used for this comparison).
-- (Superseded/reordered by Experiment 003 below: a ROI-crop stage is now inserted
-  before normalization in the pipeline.)
-
----
-
-# Experiment 003
-
-## Goal
-
-Insert a region-of-interest (ROI) crop stage **before** normalization in the pipeline
-(`Raw -> ROI crop -> Normalize`), to remove border text, lateral-view markers, and
-other burned-in annotations that could corrupt the topological features extracted
-downstream. Start with a deterministic, no-inference baseline
-(`torchxrayvision`'s `XRayCenterCrop` + `XRayResizer`) rather than committing to
-PSPNet-based lung segmentation up front, and use the result to decide whether PSPNet
-is actually needed.
-
-## Dataset
-
-- Reused `data/exp1/preprocessing_sample.csv` unchanged (same 8-image, 4 positive / 4
-  negative sample from Experiment 002, seed 42) — no new sampling step.
-
-## Parameters
-
-- `tda_chexpr.roi.center_crop(image)` — `torchxrayvision.datasets.XRayCenterCrop`,
-  crops to a centered square using `min(height, width)`.
-- `tda_chexpr.roi.resize(image, size=224)` — `torchxrayvision.datasets.XRayResizer`.
-- `tda_chexpr.roi.apply_roi_crop(image, method, **params)` — dispatcher mirroring
-  `apply_normalization`'s shape (`none`, `center_crop`). `ROI_VARIANTS = [("none",
-  {}), ("center_crop", {"size": 224})]`.
-- Decision recorded for later (not yet implemented): if/when a lung-mask-based crop
-  variant (PSPNet) is added, crop to the mask's bounding box only and keep all pixel
-  values inside it — no hard pixel masking outside the lung silhouette, to avoid
-  introducing an artificial intensity edge that sublevel-set cubical persistence would
-  pick up as a false topological feature.
-
-## Results
-
-Artifacts written to `results/exp1/eda/v3/roi_crop/`:
-- `roi_crop_comparison.png` — `[Raw, Center-cropped, Resized]` grid, one row per
-  sampled image.
-- `method_comparison_cropped.png` — the Experiment 002 HE/CLAHE comparison, re-run on
-  the cropped images (reusing `tda_chexpr.preprocessing.plot_method_comparison`, moved
-  there from `compare_preprocessing.py` in this iteration so both scripts share it).
-- `roi_crop_stats.json` — Image Statistics EDA (dimensions, mean/std, histogram) for
-  all 8 images x 3 stages (raw / center_cropped / resized; 24 records).
-
-Confirmed: every sampled image's raw shape (height fixed 320px, width 389-390px in
-this sample) becomes exactly 320x320 after center-crop and exactly 224x224 after
-resize — 100% consistent across the sample.
+1. **Center-crop baseline** (`results/exp1/eda/v3/roi_crop/`: `roi_crop_comparison.png`,
+   `method_comparison_cropped.png`, `roi_crop_stats.json`) — did **not** reliably
+   remove border text: it only trims the width axis (height, 320px, is already the
+   smaller dimension), so markers like "PORT"/"AP"/"ERECT"/"L" survived in 6/8 sampled
+   images. Useful side effect: forcing a 224x224 resize resolved the separate
+   "images aren't a fixed size" problem (raw widths vary 320-415px at fixed 320px
+   height, confirmed across 100 rows).
+2. **PSPNet lung-mask crop** (`results/exp1/eda/v4/lung_segmentation/`:
+   `lung_mask_pipeline.png`, `roi_method_comparison.png`,
+   `method_comparison_lung_cropped.png`, `lung_mask_stats.json`) — substantially
+   better at removing border text since the crop follows actual lung content instead
+   of a fixed geometric rule. **0/8 segmentation failures**, mask fraction 0.21-0.39
+   across the sample, bboxes all reasonably sized (~195-300px/side), masks
+   anatomically correct on visual inspection. **Adopted** as Experiment 1's ROI-crop
+   method, pending final review.
+3. **HE vs. CLAHE normalization** (`results/exp1/eda/v2/preprocessing/`:
+   `method_comparison.png`, `clahe_parameter_grid.png`, `he_parameter_grid.png`,
+   `image_stats.json`, `intensity_histogram_comparison_{positive,negative}.png`),
+   tested independently of ROI method and re-confirmed on both cropped variants — HE
+   gives a subtle, near-imperceptible global contrast shift; CLAHE gives a much
+   stronger local contrast boost (sharper rib/lung detail) but over-amplifies flat
+   regions at low `clip_limit`/small `kernel_size`. Defaults `clip_limit=0.01`,
+   `kernel_size=32` chosen as a reasonable middle ground; holds consistently across
+   raw, center-cropped, and lung-mask-cropped inputs.
 
 ## Observations
 
-- **Center-crop + resize does not reliably remove border text/markers.** It only
-  trims the width axis (since height, at 320px, is already the smaller dimension for
-  every image in this cohort); most burned-in text (e.g. "PORT", "AP", "ERECT",
-  "UPRIGHT", "L" orientation markers) sits within the vertical extent that the crop
-  leaves untouched, so it's still clearly visible in `roi_crop_comparison.png`'s
-  "Center-cropped"/"Resized" columns for 6 of the 8 sampled images. Only one image
-  (row 1, positive) had its markers positioned near a trimmed corner and lost them.
-  This is the key finding this test was designed to surface.
-  This is expected once you look at *why* it happens, not a bug: `XRayCenterCrop` is
-  a fixed geometric crop with no awareness of image content (lungs vs. text) — it
-  can't distinguish "text near the lung field" from "text in the margin."
-- The center-crop also isn't guaranteed to remove the raw image's black letterbox
-  padding either, when that padding isn't symmetric around the image's own center
-  (visible as a residual dark bar on one side in several cropped outputs) — same root
-  cause: no content-awareness.
-- Re-running the HE/CLAHE comparison on cropped images (`method_comparison_cropped.png`)
-  shows the same qualitative HE/CLAHE behavior documented in Experiment 002 (HE:
-  subtle global shift; CLAHE: strong local contrast, still picking up whatever
-  border text survived the crop) — confirms the pipeline composes correctly stage to
-  stage, independent of the crop-quality finding above.
-- Useful side effect, unrelated to the border-text goal: resizing to a fixed 224x224
-  resolves Experiment 002's deferred "images aren't a fixed size" observation — every
-  output is now uniformly sized, which the eventual full-dataset normalization x
-  filtration matrix will need anyway.
-- Fixed a plot-rendering bug while building this: `fig.suptitle()` combined with
-  `fig.tight_layout()` on multi-row 3-column grids caused the title to visually
-  overlap the column headers (`Raw`/`Center-cropped`/`Resized`, and
-  `Original`/`HE`/`CLAHE`); fixed via `tight_layout(rect=(0, 0, 1, 0.97))` in both
-  `plot_method_comparison` and `plot_roi_crop_comparison`. Re-ran
-  `compare_preprocessing.py` afterward and confirmed its output is otherwise
-  unchanged (identical `image_stats.json`, identical PNG file sizes) — the plotting-
-  helper refactor didn't alter Experiment 002's results, only fixed this rendering
-  issue.
+- Bbox-only cropping (no hard masking) intentionally keeps some non-lung tissue
+  (rib cage, shoulder) — a deliberate tradeoff to avoid a false topological edge
+  feature (see Parameters), not a defect.
+- One bbox touched the raw image's top edge (`patient36302/study5`, lung apex near
+  the boundary) — not a failure, but worth watching if it recurs at full-dataset
+  scale (the 5% margin may not always be enough headroom).
+- PSPNet performs well despite the domain shift (trained on ChestX-Det, applied to
+  this cohort's AP portable films) — likely helped by the "no support devices"
+  cohort filter excluding images with heavy tube/line clutter.
+- Runtime: PSPNet model load ~9s once per run + sub-second inference/image on CPU at
+  this 8-image scale; full-dataset timing (~1,189 images) is untested.
+- `scikit-image` and `opencv-python` are both project dependencies; only
+  `scikit-image` (`equalize_hist`/`equalize_adapthist`) is used so far.
+  `opencv-python` remains available, unused, for a possible later filtration
+  candidate (edge maps / distance transforms).
 
 ## Next Steps
 
-- **Decide on PSPNet-based lung segmentation** (`xrv.baseline_models.chestx_det.PSPNet`,
-  already available via the installed `torchxrayvision` package) given the finding
-  above that center-crop+resize alone leaves most border text intact. A lung mask's
-  bounding box would be content-aware and should remove markers that a fixed
-  geometric crop can't reach — worth testing on the same 8-image sample before
-  committing to it for the full dataset.
-- If PSPNet is adopted: add a `"lung_mask"` entry to `ROI_VARIANTS`
-  (`tda_chexpr/roi.py`), implementing the bbox-only/no-hard-masking decision recorded
-  above.
-- Still open from Experiment 002: the image-size-varies issue is now moot for any
-  pipeline that includes the `center_crop` ROI stage (output is always 224x224), but
-  would still need a decision if ROI cropping is ever skipped (`method="none"`).
-- Experiment 1 pipeline step 3 (filtration) remains not started.
-- (Superseded by Experiment 004 below: PSPNet-based lung segmentation implemented.)
-
----
-
-# Experiment 004
-
-## Goal
-
-Implement content-aware ROI cropping via PSPNet-based lung segmentation
-(`torchxrayvision`'s `xrv.baseline_models.chestx_det.PSPNet`), producing
-`Raw -> Lung mask -> Bounding box -> Crop`, and compare it directly against the
-Experiment 003 center-crop baseline on the same sample to decide which method to
-adopt.
-
-## Dataset
-
-- Reused `data/exp1/preprocessing_sample.csv` unchanged (same 8-image, 4 positive / 4
-  negative sample, seed 42) — no new sampling step.
-
-## Parameters
-
-- `tda_chexpr.segmentation.get_pspnet_model()` — lazy singleton; `PSPNet()` auto-
-  downloads its checkpoint (`pspnet_chestxray_best_model_4.pth`, 273MB) to
-  `~/.torchxrayvision/models_data/` on first use, then loads from cache (~9s either
-  way, dominated by model construction, not the download once cached).
-- `tda_chexpr.segmentation.predict_lung_mask(image, threshold=0.5)` — center-crops
-  internally (`tda_chexpr.roi.center_crop`, to satisfy PSPNet's square-input
-  requirement) -> `xrv.utils.normalize(img, 255)` (maps `[0,255]` to
-  `[-1024,1024]`) -> `PSPNet` forward (auto-resizes to its native 512x512) ->
-  `sigmoid` -> per-pixel max of the `'Left Lung'`/`'Right Lung'` channels (union) ->
-  bilinear-resize the probability map back down to the crop's native resolution ->
-  threshold -> paste back into the original (non-square) image's coordinate frame.
-- `tda_chexpr.roi.mask_to_bbox(mask, margin_frac=0.05)` — bounding box of the mask,
-  expanded 5% of its own height/width on each side, clipped to image bounds.
-- `tda_chexpr.roi.crop_to_bbox(image, bbox)` — crops the **raw** image (not the
-  center-cropped one) to that box, keeping all pixel values inside it (no hard pixel
-  masking) — per the decision recorded in Experiment 003's context.
-- `ROI_VARIANTS` now: `[("none", {}), ("center_crop", {"size": 224}), ("lung_mask",
-  {"margin_frac": 0.05, "threshold": 0.5})]`.
-
-## Results
-
-Artifacts written to `results/exp1/eda/v4/lung_segmentation/`:
-- `lung_mask_pipeline.png` — `[Raw, Mask+bbox overlay, Cropped]`, one row per image.
-- `roi_method_comparison.png` — `[Raw, Center-crop, Lung-mask crop]` side by side.
-- `method_comparison_lung_cropped.png` — the HE/CLAHE comparison re-run on the
-  lung-mask-cropped images.
-- `lung_mask_stats.json` — per-image bbox, mask fraction, and dimensions.
-
-**0/8 segmentation failures** (no empty masks). Mask fraction (share of raw image
-that's lung) ranged **0.21-0.39** across the 8 images — consistent, no outliers.
-Bounding boxes were all reasonably sized rectangles (roughly 195-300px per side out of
-the 320x390 raw images), none degenerate.
-
-## Observations
-
-- **Lung-mask cropping is substantially better than center-crop at removing border
-  text/markers**, visible directly in `roi_method_comparison.png`: most burned-in
-  annotations ("PORT", "AP", "ERECT", "L" markers, etc.) that survived center-crop in
-  Experiment 003 are absent or much reduced in the lung-mask crop column, because the
-  crop is now driven by actual lung content rather than a fixed geometric rule.
-- Predicted masks look anatomically correct on visual inspection for all 8 images —
-  two clearly lung-shaped regions, no scattered noise or spurious blobs — despite this
-  cohort being a different domain (AP portable films) than PSPNet's ChestX-Det
-  training set. The Experiment 1 cohort filter (confirmed no support devices) likely
-  helps here by excluding images with heavy tube/line clutter that could otherwise
-  confuse the segmentation.
-- One image's bbox touched the raw image's top edge (`top=0`,
-  `patient36302/study5`) — the lung apex sits right at/near the image boundary in that
-  film. Not a failure, but worth watching: if this recurs often across the full
-  dataset, the 5% margin may occasionally not be enough headroom at the image edge.
-- Bounding boxes still include a modest amount of non-lung tissue (rib cage, some
-  shoulder/soft tissue) by design (bbox-only, not a hard mask) — this is intentional
-  per the earlier decision, not a defect.
-- Re-running the HE/CLAHE comparison on the lung-mask-cropped images
-  (`method_comparison_lung_cropped.png`) shows the same qualitative HE/CLAHE behavior
-  documented in Experiments 002-003 — confirms the pipeline composes correctly with
-  this new ROI method too.
-- Runtime: model load ~9s (once per script run, not per image) + sub-second inference
-  per image on CPU for this 8-image sample — fine at this scale; full-dataset timing
-  (~1,189 images) is untested and would need checking before a full batch run.
-
-## Next Steps
-
-- **Review the plots and confirm adoption of `"lung_mask"` as Experiment 1's ROI-crop
-  method.** Based on the results above this is the recommendation, but final call is
-  yours before it's wired into the full pipeline.
-- If adopted: decide whether to also resize lung-mask crops to a fixed size (like
+- **Review the plots and confirm adoption of `"lung_mask"`** as Experiment 1's
+  ROI-crop method — recommended based on the results above, final call pending.
+- If adopted: decide whether to resize lung-mask crops to a fixed size (like
   `center_crop`'s 224x224) for full-dataset consistency — currently left at natural
-  bbox size (varies per image) since that was more diagnostic for this comparison.
-  `apply_roi_crop(..., "lung_mask", size=...)` already supports this via the existing
-  `resize()` helper, just needs a size decision.
+  bbox size (varies per image), which was more diagnostic for this comparison.
+  `apply_roi_crop(..., "lung_mask", size=...)` already supports this via the
+  existing `resize()` helper.
 - Check full-dataset PSPNet inference time before committing to a batch run over all
-  1,189 clean-negatives-cohort images (currently only tested on 8).
-- Experiment 1 pipeline step 3 (filtration) remains not started — the next major
-  pipeline stage once ROI cropping is finalized.
+  1,189 clean-negatives-cohort images.
+- Experiment 1 pipeline step 3 (filtration) not started — the next major pipeline
+  stage once ROI cropping is finalized. (Followed by Experiment 003.)
