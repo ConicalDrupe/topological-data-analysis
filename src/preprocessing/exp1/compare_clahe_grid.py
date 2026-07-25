@@ -1,7 +1,6 @@
-"""Finalize the Experiment 1 preprocessing pipeline (Raw -> lung-mask crop ->
-pad-to-square -> resize to 224x224 -> CLAHE) and grid search CLAHE's clip_limit at a
-fixed, smaller kernel_size=8. See experiments.md, Experiment 1 pipeline, and
-logs/exp1_log.md, Experiment 003.
+"""Finalize the Experiment 1 preprocessing pipeline (Raw -> lung-mask crop -> direct
+resize to 224x224 -> CLAHE) and grid search CLAHE's clip_limit at kernel_size 8 and 16.
+See experiments.md, Experiment 1 pipeline, and logs/exp1_log.md, Experiment 003.
 """
 
 import json
@@ -17,8 +16,8 @@ from tda_chexpr.roi import apply_roi_crop
 DATA_DIR = REPO_ROOT / "data" / "exp1"
 RESULTS_DIR = REPO_ROOT / "results" / "exp1" / "eda"
 
-CLIP_LIMIT_GRID = [0.01, 0.02, 0.03, 0.04, 0.05]
-FIXED_KERNEL_SIZE = 8
+CLIP_LIMIT_GRID = [0.002, 0.004, 0.006, 0.008, 0.01, 1.0]
+KERNEL_SIZES = [8, 16]
 FIXED_SIZE = 224
 
 
@@ -32,9 +31,8 @@ def main() -> None:
     out_dir = version_dir / "clahe_grid_search"
     out_dir.mkdir(parents=True, exist_ok=True)
 
-    grid_rows = []
+    base_images = []
     stats_records = []
-    representative = {}
 
     for _, record in sample.iterrows():
         label = "pos" if record["Pneumothorax"] == 1.0 else "neg"
@@ -49,50 +47,75 @@ def main() -> None:
             cropped = apply_roi_crop(raw, "center_crop", size=FIXED_SIZE)
 
         he = apply_normalization(cropped, "he")
-        clahe_variants = [
-            (clip, apply_normalization(cropped, "clahe", clip_limit=clip, kernel_size=FIXED_KERNEL_SIZE))
-            for clip in CLIP_LIMIT_GRID
-        ]
+        base_images.append({"path": path, "label": label, "raw": raw, "cropped": cropped, "he": he})
 
-        stages = [("Raw", raw), ("Cropped+Resized", cropped), ("HE", he)]
-        stages += [(f"CLAHE clip={clip}", im) for clip, im in clahe_variants]
-        grid_rows.append((label, stages))
-
-        for stage_name, image in stages:
+        for stage_name, image in [("Raw", raw), ("Cropped+Resized", cropped), ("HE", he)]:
             stats_records.append(
                 {
                     "path": path,
                     "label": label,
                     "stage": stage_name,
+                    "kernel_size": None,
                     "roi_crop_fallback": roi_failed,
                     **image_stats(image),
                 }
             )
 
-        if label not in representative:
-            representative[label] = {"cropped": cropped, "he": he, "clahe_variants": clahe_variants}
+    n_fallback = sum(1 for r in stats_records if r["roi_crop_fallback"] and r["stage"] == "Raw")
 
-    plot_stage_grid(
-        grid_rows,
-        out_dir / "clahe_grid_comparison.png",
-        title="ROI crop + CLAHE clip_limit grid search (kernel_size=8)",
-    )
+    for kernel_size in KERNEL_SIZES:
+        grid_rows = []
+        representative = {}
+
+        for entry in base_images:
+            clahe_variants = [
+                (clip, apply_normalization(entry["cropped"], "clahe", clip_limit=clip, kernel_size=kernel_size))
+                for clip in CLIP_LIMIT_GRID
+            ]
+
+            stages = [("Raw", entry["raw"]), ("Cropped+Resized", entry["cropped"]), ("HE", entry["he"])]
+            stages += [(f"CLAHE clip={clip}", im) for clip, im in clahe_variants]
+            grid_rows.append((entry["label"], stages))
+
+            for clip, im in clahe_variants:
+                stats_records.append(
+                    {
+                        "path": entry["path"],
+                        "label": entry["label"],
+                        "stage": f"CLAHE clip={clip}",
+                        "kernel_size": kernel_size,
+                        "roi_crop_fallback": False,
+                        **image_stats(im),
+                    }
+                )
+
+            if entry["label"] not in representative:
+                representative[entry["label"]] = {
+                    "cropped": entry["cropped"],
+                    "he": entry["he"],
+                    "clahe_variants": clahe_variants,
+                }
+
+        plot_stage_grid(
+            grid_rows,
+            out_dir / f"clahe_grid_comparison_kernel{kernel_size}.png",
+            title=f"ROI crop + CLAHE clip_limit grid search (kernel_size={kernel_size})",
+        )
+
+        for label, stages in representative.items():
+            images = {"Cropped (no eq.)": stages["cropped"], "HE": stages["he"]}
+            for clip, im in stages["clahe_variants"]:
+                if clip in (CLIP_LIMIT_GRID[0], CLIP_LIMIT_GRID[-2], CLIP_LIMIT_GRID[-1]):
+                    images[f"CLAHE clip={clip}"] = im
+            plot_intensity_histogram_comparison(
+                images,
+                out_dir / f"intensity_histogram_comparison_{label}_kernel{kernel_size}.png",
+                title=f"Intensity histogram comparison ({label} example, kernel_size={kernel_size})",
+            )
 
     with open(out_dir / "image_stats.json", "w") as f:
         json.dump(stats_records, f, indent=2)
 
-    for label, stages in representative.items():
-        images = {"Cropped (no eq.)": stages["cropped"], "HE": stages["he"]}
-        for clip, im in stages["clahe_variants"]:
-            if clip in (CLIP_LIMIT_GRID[0], CLIP_LIMIT_GRID[len(CLIP_LIMIT_GRID) // 2], CLIP_LIMIT_GRID[-1]):
-                images[f"CLAHE clip={clip}"] = im
-        plot_intensity_histogram_comparison(
-            images,
-            out_dir / f"intensity_histogram_comparison_{label}.png",
-            title=f"Intensity histogram comparison ({label} example)",
-        )
-
-    n_fallback = sum(1 for r in stats_records if r["roi_crop_fallback"] and r["stage"] == "Raw")
     print(f"ROI-crop fallbacks (empty lung mask -> center_crop): {n_fallback}/{len(sample)}")
     print(f"CLAHE grid search artifacts written to {out_dir}")
 

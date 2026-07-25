@@ -3,7 +3,8 @@
 - **Current experiment:** Experiment 003 (finalize ROI crop + CLAHE clip_limit grid
   search) is done pending your review — final pipeline is
   `Raw -> lung-mask crop -> direct resize to 224x224 (aspect ratio warped, no padding)
-  -> CLAHE (kernel_size=8, clip_limit=0.02 recommended)`. Filtration/vectorization/
+  -> CLAHE`, with `(kernel_size, clip_limit)` narrowed to two candidates: `(8, 0.01)` or
+  `(16, 0.006)` — final pick pending your review. Filtration/vectorization/
   classification not started (Experiment 004 next).
 - **Preprocessing pipeline:** `build_cohort.py` (filter + dedup + comorbidity_count/
   is_clean_negative + clean-negatives variant) -> `split_cohort.py` (train/test split
@@ -30,8 +31,8 @@
   yet computed, no model trained.
 - **Current status:** clean-negatives cohort + split built and EDA'd; full
   ROI-crop + normalization pipeline finalized (lung-mask crop, direct resize to
-  224x224, CLAHE clip_limit=0.02 recommended) pending your review; filtration/
-  vectorization not started.
+  224x224, CLAHE `(kernel_size, clip_limit)` narrowed to `(8, 0.01)` or `(16, 0.006)`)
+  pending your review; filtration/vectorization not started.
 
 ---
 
@@ -228,7 +229,7 @@ Confirmed CheXpert-small images are single-channel grayscale (PIL mode `L`, `uin
 
 Finalize the preprocessing pipeline ahead of filtration: bring the lung-mask crop to a
 fixed size (open question from Experiment 002), and grid search CLAHE's `clip_limit`
-at a smaller, more locally-aggressive `kernel_size=8` (Experiment 002 used
+at smaller, more locally-aggressive `kernel_size` values (8 and 16; Experiment 002 used
 `kernel_size=32`).
 
 ## Dataset
@@ -243,9 +244,14 @@ visual evidence in the clip_limit grid.
 - `tda_chexpr.roi.apply_roi_crop(image, "lung_mask", margin_frac=0.05, threshold=0.5,
   size=224)` — PSPNet bbox crop, then **direct `resize()` to 224x224** (aspect ratio
   warped, no padding/cropping to square).
-- `tda_chexpr.preprocessing.apply_normalization(image, "clahe", kernel_size=8,
-  clip_limit=clip)` for `clip in [0.01, 0.02, 0.03, 0.04, 0.05]`; HE at defaults
-  (`nbins=256`) for reference.
+- `tda_chexpr.preprocessing.apply_normalization(image, "clahe", kernel_size=ks,
+  clip_limit=clip)` for `ks in [8, 16]` x `clip in [0.002, 0.004, 0.006, 0.008, 0.01,
+  1.0]` (final grid — narrowed from two earlier, wider sweeps at your request: first
+  `[0.01..0.05]`, then `[0.01, 0.05, 0.1, 0.5, 1.0, 2.0]` which showed anything ≥0.01
+  is too aggressive at `kernel_size=8`; `1.0` kept as the fixed saturation reference
+  point). Produces one grid plot per `kernel_size`
+  (`clahe_grid_comparison_kernel{8,16}.png`). HE at defaults (`nbins=256`) for
+  reference.
 
 ## Results
 
@@ -271,20 +277,62 @@ also feed a separate image-features/CNN baseline for comparison:
     Cropping the longer axis to match was discussed and rejected (loses
     pneumothorax-relevant peripheral lung content) but is trivial to reconstruct later.
 
-**Final result** (`results/exp1/eda/v6/clahe_grid_search/`: `clahe_grid_comparison.png`,
-`image_stats.json`, `intensity_histogram_comparison_{positive,negative}.png`):
-0/10 empty-mask failures (no `center_crop` fallbacks triggered). Visual review of the
-clip_limit grid: `clip=0.01`-`0.02` give a clear local-contrast boost (sharper rib/
-vessel/lung-marking detail) without much visible grain; `clip=0.03` starts introducing
-mild speckle noise in flat soft-tissue/mediastinum regions; `clip=0.04`-`0.05`
-over-amplify noticeably (clearly grainy in multiple samples). Global intensity `std`
-across the grid was roughly flat (~0.24, occasionally dipping at `clip=0.04`-`0.05`)
-— it doesn't discriminate the grain increase, since CLAHE's local normalization
-doesn't necessarily raise whole-image variance even as local/high-frequency noise
-increases; visual inspection was the deciding factor here, not `image_stats.json`.
-**Recommended default: `clip_limit=0.02`, `kernel_size=8`** — a modest step up from
-Experiment 002's `kernel_size=32` default, more locally aggressive but still short of
-the grain onset seen at `clip=0.03`+.
+**`clip_limit` range/saturation finding:** `skimage.exposure.equalize_adapthist`'s
+`clip_limit` is only meaningful in `[0, 1]` — internally it computes
+`clim = int(clip(clip_limit * kernel_elements, 1, None))` (`kernel_elements =
+kernel_size**2`), and per the library's own docstring "a clip limit of 0 or larger
+than or equal to 1 results in standard (non-contrast-limited) AHE." Verified directly:
+`clip_limit=1.0` and `clip_limit=2.0` produce byte-identical output (`np.array_equal`
+on a test array) — this is why `1.0` alone is kept as the grid's saturation reference
+point instead of also re-testing `2.0`.
+
+**`clim` quantization finding (explains the final grid's shape):** because `clim` is
+cast to `int`, its value is quantized in steps of `1/kernel_elements`. Computed
+directly for this experiment's grid:
+
+  | `clip_limit` | `clim` @ `kernel_size=8` (64 elements) | `clim` @ `kernel_size=16` (256 elements) |
+  |---|---|---|
+  | 0.002 | 1 | 1 |
+  | 0.004 | 1 | 1 |
+  | 0.006 | 1 | 1 |
+  | 0.008 | 1 | 2 |
+  | 0.01  | 1 | 2 |
+  | 1.0   | 64 (unclipped) | 256 (unclipped) |
+
+  At `kernel_size=8`, every `clip_limit` from `0.002` to `0.01` rounds down to the same
+  `clim=1` — the whole range you asked to sweep is a **single degenerate plateau**;
+  `clahe_grid_comparison_kernel8.png` confirms this visually (those 5 columns are
+  indistinguishable from each other), then jumps straight to the fully-saturated
+  `clip=1.0` column. The next `clim` step up (`clim=2`) only starts at
+  `clip_limit >= 1/64 ≈ 0.0156` — outside this grid, but consistent with the earlier
+  wider sweep, where `clim` was 1/1/1/2/3 at `clip=0.01/0.02/0.03/0.04/0.05` and visible
+  grain onset tracked that `clim=1 -> 2` transition around `clip=0.04`.
+  At `kernel_size=16`, the larger `kernel_elements` gives finer-grained `clim` steps —
+  this grid actually resolves a real transition (`clim` 1 -> 2 between `clip=0.006` and
+  `0.008`), and `clahe_grid_comparison_kernel16.png` shows a correspondingly mild but
+  visible grain increase starting at `clip=0.008`.
+
+**Final result** (`results/exp1/eda/v6/clahe_grid_search/`:
+`clahe_grid_comparison_kernel{8,16}.png`, `image_stats.json`,
+`intensity_histogram_comparison_{positive,negative}_kernel{8,16}.png`): 0/10 empty-mask
+failures (no `center_crop` fallbacks triggered).
+- **`kernel_size=8`:** `clip_limit` anywhere in `[0.002, 0.01]` gives the same result
+  (see `clim` finding above) — a clean, modest local-contrast boost with no visible
+  grain. Since the whole tested range is equivalent, **`clip_limit=0.01`** is the
+  natural default (simplest to reason about, matches the "at most 0.01" ceiling you
+  set), not because it's better than `0.002` — it isn't, measurably.
+- **`kernel_size=16`:** `clip_limit=0.002`-`0.006` are clean; `0.008`-`0.01` show the
+  beginning of mild grain. **`clip_limit=0.006`** is the recommended default — the
+  largest value still on the `clim=1` plateau.
+Global intensity `std` across the grid was roughly flat regardless of `clip_limit`
+(consistent with Experiment 003's earlier finding that it doesn't discriminate grain) —
+visual inspection plus the `clim` quantization math were the deciding factors, not
+`image_stats.json`.
+**Recommended default: `clip_limit=0.01`, `kernel_size=8`** (or, if the slightly larger
+tile size is preferred, `clip_limit=0.006`, `kernel_size=16` — both sit at the largest
+`clip_limit` still inside their respective `clim=1` plateau, i.e. maximum safe local
+contrast before any grain onset). Final choice between the two kernel sizes themselves
+is still pending your review of the two grid images.
 
 ## Observations
 
@@ -297,12 +345,21 @@ the grain onset seen at `clip=0.03`+.
   ratio") turned out to be the wrong default for a sublevel-set persistent-homology
   pipeline, where fabricating pixels is a strictly worse failure mode than a
   topology-preserving geometric transform.
+- `clip_limit` grid points at/above `1.0` are not distinct experimental conditions —
+  they're all the same "unclipped AHE" result by construction (see Results).
+- `clip_limit`'s effect is quantized by `kernel_size` (`clim = int(clip_limit *
+  kernel_size**2)`, clipped to a minimum of 1) — a fine sweep can silently be a no-op
+  across its whole range if every point rounds to the same integer `clim`. Any future
+  `clip_limit` sweep should either pick points that straddle a `clim` integer boundary
+  for the `kernel_size` in use, or compute `clim` upfront to check the sweep will
+  actually differentiate.
 
 ## Next Steps
 
-- Confirm `clip_limit=0.02`, `kernel_size=8` as Experiment 1's normalization default
-  (or pick a different point on the grid after your own review of
-  `clahe_grid_comparison.png`).
+- Confirm a `(kernel_size, clip_limit)` default for Experiment 1's normalization step —
+  `(8, 0.01)` and `(16, 0.006)` are the two candidates recommended above (each the
+  largest `clip_limit` still on their `clim=1` plateau); pick one after reviewing
+  `clahe_grid_comparison_kernel8.png` and `_kernel16.png`.
 - Check full-dataset PSPNet inference time before committing to a batch run over all
   1,189 clean-negatives-cohort images (still untested beyond this 10-image sample).
 - Experiment 1 pipeline step 3 (filtration) not started — the next major pipeline

@@ -120,9 +120,10 @@ U-Ignore policy). No uncertainty-mapping (U-Ones/U-Zeros) is used for this basel
    - Histogram Equalization (HE)
    - Adaptive Gamma Correction (AGC) - We will skip this for now.
    - Contrast Limited Adaptive Histogram Equalization (CLAHE) — grid-searched
-     `clip_limit` at `kernel_size=8` in `logs/exp1_log.md` Experiment 003;
-     `clip_limit=0.02` recommended (visible local-contrast gain without the grain/
-     speckle noise seen from `clip_limit=0.03` upward), pending your confirmation.
+     `clip_limit` at `kernel_size` 8 and 16 in `logs/exp1_log.md` Experiment 003;
+     `(kernel_size, clip_limit)` narrowed to two candidates, `(8, 0.01)` or
+     `(16, 0.006)` (each the largest `clip_limit` before visible grain onset for that
+     `kernel_size`), pending your confirmation of the final pick.
 4. **Filtration methods:**
    - **Baseline:** classical cubical persistence (sublevel-set filtration directly on
      grayscale pixel intensities) — `gtda.homology.CubicalPersistence`.
@@ -335,4 +336,5 @@ Reusable across Experiments 1 and 3:
   step was pinned down in Experiment 003 (direct resize to 224×224, no padding — see
   Pipeline step 2 above). Still pending: a full-dataset PSPNet timing check before
   committing to a batch run over all 1,189 clean-negatives-cohort images, and final
-  confirmation of the recommended `clip_limit=0.02` CLAHE default.
+  confirmation of the CLAHE `(kernel_size, clip_limit)` default between the two
+  candidates above.
