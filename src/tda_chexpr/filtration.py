@@ -3,9 +3,9 @@ preprocessing-level parameters. See experiments.md, Experiment 1 pipeline step 4
 logs/exp1_log.md, Experiment 004.
 
 CubicalPersistence itself has almost no tunable filtration-shaping parameters -- the
-real levers are preprocessing choices applied to the image before it: how much noise
-is smoothed out, and which structures (dark vs bright) are born first in the
-filtration.
+real lever is which structures (dark vs bright) are born first in the filtration. No
+smoothing/denoising is applied before filtration -- persistence is computed directly on
+the postprocessing pipeline's CLAHE output.
 """
 
 from pathlib import Path
@@ -13,22 +13,10 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 import numpy as np
 from gtda.homology import CubicalPersistence
-from scipy.ndimage import gaussian_filter
 
-SMOOTHING_SIGMAS: list[float] = [0, 0.5, 1, 2, 4]
 FILTRATION_DIRECTIONS: list[str] = ["sublevel", "superlevel"]
 
 _HOMOLOGY_DIM_COLORS = {0: "tab:blue", 1: "tab:orange"}
-
-
-def apply_smoothing(image: np.ndarray, sigma: float) -> np.ndarray:
-    """Gaussian-blur `image` to suppress pixel-level noise before filtration.
-
-    `sigma=0` is a no-op passthrough (not a zero-width `gaussian_filter` call).
-    """
-    if sigma == 0:
-        return image
-    return gaussian_filter(image, sigma=sigma)
 
 
 def apply_direction(image: np.ndarray, direction: str) -> np.ndarray:

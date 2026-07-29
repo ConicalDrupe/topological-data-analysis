@@ -125,15 +125,14 @@ U-Ignore policy). No uncertainty-mapping (U-Ones/U-Zeros) is used for this basel
      (`tda_chexpr.preprocessing.DEFAULT_CLAHE_PARAMS`).
 4. **Filtration methods:**
    - **Baseline (implemented):** classical cubical persistence (filtration directly on
-     grayscale pixel intensities) — `gtda.homology.CubicalPersistence`. Since the class
-     itself has almost no filtration-shaping parameters, the actual experimental knobs
-     live in preprocessing applied before it: Gaussian smoothing (`sigma`, to suppress
-     pixel-level/CLAHE-grain noise — found to cut diagram point count by ~70x from
-     `sigma=0` to `sigma=4` while preserving high-persistence structure) and filtration
-     direction (sublevel = dark-first vs superlevel = bright-first, `1 - image`).
-     Explored in `logs/exp1_log.md`, Experiment 004; `sigma=1.0` recommended as a
-     working default, pending confirmation. Both directions kept as separate candidate
-     feature axes rather than resolved to one.
+     grayscale pixel intensities) — `gtda.homology.CubicalPersistence`, applied directly
+     to the CLAHE output with **no smoothing/denoising step**. Since the class itself
+     has almost no filtration-shaping parameters, the only experimental knob applied
+     before it is filtration direction (sublevel = dark-first vs superlevel =
+     bright-first, `1 - image`) — both directions kept as separate candidate feature
+     axes rather than resolved to one. Diagrams are noisy as a result (~8,600
+     birth-death points per 224x224 image); this is intentional for now, not yet
+     addressed. Explored in `logs/exp1_log.md`, Experiment 004.
    - **Candidates to experiment with:** height/eccentricity filtration, Vietoris-Rips on
      downsampled pixel coordinates or superpixel/keypoint coordinates, lower-star
      filtration on a distance transform (e.g. from a lung mask or edge map). Treat the
