@@ -1,0 +1,123 @@
+{
+  "n_records": 13,
+  "n_patients": 13,
+  "n_studies": 13,
+  "Pneumothorax_counts": {
+    "0.0": 12,
+    "1.0": 1
+  },
+  "pathology_counts": {
+    "No Finding": {
+      "1.0": 12,
+      "0.0": 1
+    },
+    "Enlarged Cardiomediastinum": {
+      "0.0": 13
+    },
+    "Cardiomegaly": {
+      "0.0": 13
+    },
+    "Lung Opacity": {
+      "0.0": 12,
+      "1.0": 1
+    },
+    "Lung Lesion": {
+      "0.0": 13
+    },
+    "Edema": {
+      "0.0": 13
+    },
+    "Consolidation": {
+      "0.0": 13
+    },
+    "Pneumonia": {
+      "0.0": 13
+    },
+    "Atelectasis": {
+      "0.0": 13
+    },
+    "Pneumothorax": {
+      "0.0": 12,
+      "1.0": 1
+    },
+    "Pleural Effusion": {
+      "0.0": 13
+    },
+    "Pleural Other": {
+      "0.0": 13
+    },
+    "Fracture": {
+      "0.0": 13
+    },
+    "Support Devices": {
+      "0.0": 13
+    }
+  },
+  "ap_pa_counts": {
+    "AP": 13
+  },
+  "frontal_lateral_counts": {
+    "Frontal": 13
+  },
+  "sex_counts": {
+    "Female": 7,
+    "Male": 6
+  },
+  "age_stats": {
+    "count": 13.0,
+    "mean": 43.07692307692308,
+    "std": 22.15649467786492,
+    "min": 19.0,
+    "25%": 25.0,
+    "50%": 31.0,
+    "75%": 67.0,
+    "max": 81.0
+  },
+  "missing_value_counts": {
+    "Path": 0,
+    "Sex": 0,
+    "Age": 0,
+    "Frontal/Lateral": 0,
+    "AP/PA": 0,
+    "No Finding": 0,
+    "Enlarged Cardiomediastinum": 0,
+    "Cardiomegaly": 0,
+    "Lung Opacity": 0,
+    "Lung Lesion": 0,
+    "Edema": 0,
+    "Consolidation": 0,
+    "Pneumonia": 0,
+    "Atelectasis": 0,
+    "Pneumothorax": 0,
+    "Pleural Effusion": 0,
+    "Pleural Other": 0,
+    "Fracture": 0,
+    "Support Devices": 0,
+    "split": 0,
+    "patient_id": 0,
+    "study_number": 0,
+    "view": 0,
+    "orientation": 0,
+    "comorbidity_count": 0,
+    "is_clean_negative": 0
+  },
+  "duplicate_path_count": 0,
+  "comorbidity_count_counts": {
+    "0": 12,
+    "1": 1
+  },
+  "comorbidity_count_stats": {
+    "count": 13.0,
+    "mean": 0.07692307692307693,
+    "std": 0.2773500981126146,
+    "min": 0.0,
+    "25%": 0.0,
+    "50%": 0.0,
+    "75%": 0.0,
+    "max": 1.0
+  },
+  "is_clean_negative_counts": {
+    "true": 12,
+    "false": 1
+  }
+}

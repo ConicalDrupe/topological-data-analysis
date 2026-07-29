@@ -1,0 +1,152 @@
+{
+  "n_records": 236,
+  "n_patients": 234,
+  "n_studies": 234,
+  "Pneumothorax_counts": {
+    "1.0": 171,
+    "0.0": 65
+  },
+  "pathology_counts": {
+    "No Finding": {
+      "NaN": 171,
+      "1.0": 65
+    },
+    "Enlarged Cardiomediastinum": {
+      "NaN": 203,
+      "0.0": 15,
+      "-1.0": 12,
+      "1.0": 6
+    },
+    "Cardiomegaly": {
+      "NaN": 223,
+      "0.0": 8,
+      "1.0": 5
+    },
+    "Lung Opacity": {
+      "NaN": 146,
+      "1.0": 82,
+      "0.0": 5,
+      "-1.0": 3
+    },
+    "Lung Lesion": {
+      "NaN": 233,
+      "1.0": 2,
+      "-1.0": 1
+    },
+    "Edema": {
+      "NaN": 222,
+      "0.0": 6,
+      "1.0": 6,
+      "-1.0": 2
+    },
+    "Consolidation": {
+      "NaN": 212,
+      "-1.0": 15,
+      "0.0": 5,
+      "1.0": 4
+    },
+    "Pneumonia": {
+      "NaN": 232,
+      "-1.0": 3,
+      "0.0": 1
+    },
+    "Atelectasis": {
+      "NaN": 173,
+      "1.0": 42,
+      "-1.0": 19,
+      "0.0": 2
+    },
+    "Pneumothorax": {
+      "1.0": 171,
+      "0.0": 65
+    },
+    "Pleural Effusion": {
+      "NaN": 160,
+      "1.0": 46,
+      "0.0": 23,
+      "-1.0": 7
+    },
+    "Pleural Other": {
+      "NaN": 234,
+      "1.0": 2
+    },
+    "Fracture": {
+      "NaN": 231,
+      "1.0": 4,
+      "0.0": 1
+    },
+    "Support Devices": {
+      "0.0": 236
+    }
+  },
+  "ap_pa_counts": {
+    "AP": 236
+  },
+  "frontal_lateral_counts": {
+    "Frontal": 236
+  },
+  "sex_counts": {
+    "Male": 141,
+    "Female": 95
+  },
+  "age_stats": {
+    "count": 236.0,
+    "mean": 54.686440677966104,
+    "std": 19.242549993595972,
+    "min": 18.0,
+    "25%": 40.0,
+    "50%": 56.0,
+    "75%": 70.25,
+    "max": 90.0
+  },
+  "missing_value_counts": {
+    "Path": 0,
+    "Sex": 0,
+    "Age": 0,
+    "Frontal/Lateral": 0,
+    "AP/PA": 0,
+    "No Finding": 171,
+    "Enlarged Cardiomediastinum": 203,
+    "Cardiomegaly": 223,
+    "Lung Opacity": 146,
+    "Lung Lesion": 233,
+    "Edema": 222,
+    "Consolidation": 212,
+    "Pneumonia": 232,
+    "Atelectasis": 173,
+    "Pneumothorax": 0,
+    "Pleural Effusion": 160,
+    "Pleural Other": 234,
+    "Fracture": 231,
+    "Support Devices": 0,
+    "split": 0,
+    "patient_id": 0,
+    "study_number": 0,
+    "view": 0,
+    "orientation": 0,
+    "comorbidity_count": 0,
+    "is_clean_negative": 0
+  },
+  "duplicate_path_count": 0,
+  "comorbidity_count_counts": {
+    "0": 117,
+    "1": 57,
+    "2": 45,
+    "3": 16,
+    "4": 1
+  },
+  "comorbidity_count_stats": {
+    "count": 236.0,
+    "mean": 0.8432203389830508,
+    "std": 0.9875806512551274,
+    "min": 0.0,
+    "25%": 0.0,
+    "50%": 1.0,
+    "75%": 2.0,
+    "max": 4.0
+  },
+  "is_clean_negative_counts": {
+    "false": 171,
+    "true": 65
+  }
+}

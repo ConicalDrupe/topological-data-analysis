@@ -1,0 +1,137 @@
+{
+  "n_records": 77,
+  "n_patients": 77,
+  "n_studies": 77,
+  "Pneumothorax_counts": {
+    "0.0": 76,
+    "1.0": 1
+  },
+  "pathology_counts": {
+    "No Finding": {
+      "0.0": 65,
+      "1.0": 12
+    },
+    "Enlarged Cardiomediastinum": {
+      "1.0": 51,
+      "0.0": 26
+    },
+    "Cardiomegaly": {
+      "0.0": 45,
+      "1.0": 32
+    },
+    "Lung Opacity": {
+      "1.0": 51,
+      "0.0": 26
+    },
+    "Lung Lesion": {
+      "0.0": 77
+    },
+    "Edema": {
+      "0.0": 60,
+      "1.0": 17
+    },
+    "Consolidation": {
+      "0.0": 61,
+      "1.0": 16
+    },
+    "Pneumonia": {
+      "0.0": 72,
+      "1.0": 5
+    },
+    "Atelectasis": {
+      "0.0": 44,
+      "1.0": 33
+    },
+    "Pneumothorax": {
+      "0.0": 76,
+      "1.0": 1
+    },
+    "Pleural Effusion": {
+      "0.0": 49,
+      "1.0": 28
+    },
+    "Pleural Other": {
+      "0.0": 77
+    },
+    "Fracture": {
+      "0.0": 77
+    },
+    "Support Devices": {
+      "0.0": 77
+    }
+  },
+  "ap_pa_counts": {
+    "AP": 77
+  },
+  "frontal_lateral_counts": {
+    "Frontal": 77
+  },
+  "sex_counts": {
+    "Male": 40,
+    "Female": 37
+  },
+  "age_stats": {
+    "count": 77.0,
+    "mean": 61.74025974025974,
+    "std": 19.82117594193445,
+    "min": 19.0,
+    "25%": 48.0,
+    "50%": 65.0,
+    "75%": 79.0,
+    "max": 90.0
+  },
+  "missing_value_counts": {
+    "Path": 0,
+    "Sex": 0,
+    "Age": 0,
+    "Frontal/Lateral": 0,
+    "AP/PA": 0,
+    "No Finding": 0,
+    "Enlarged Cardiomediastinum": 0,
+    "Cardiomegaly": 0,
+    "Lung Opacity": 0,
+    "Lung Lesion": 0,
+    "Edema": 0,
+    "Consolidation": 0,
+    "Pneumonia": 0,
+    "Atelectasis": 0,
+    "Pneumothorax": 0,
+    "Pleural Effusion": 0,
+    "Pleural Other": 0,
+    "Fracture": 0,
+    "Support Devices": 0,
+    "split": 0,
+    "patient_id": 0,
+    "study_number": 0,
+    "view": 0,
+    "orientation": 0,
+    "comorbidity_count": 0,
+    "is_clean_negative": 0
+  },
+  "duplicate_path_count": 0,
+  "comorbidity_count_counts": {
+    "0": 13,
+    "1": 6,
+    "2": 15,
+    "3": 10,
+    "4": 14,
+    "5": 8,
+    "6": 7,
+    "7": 3,
+    "8": 1
+  },
+  "comorbidity_count_stats": {
+    "count": 77.0,
+    "mean": 3.0259740259740258,
+    "std": 2.10871640911084,
+    "min": 0.0,
+    "25%": 2.0,
+    "50%": 3.0,
+    "75%": 4.0,
+    "max": 8.0
+  },
+  "is_clean_negative_counts": {
+    "false": 65,
+    "true": 12
+  }
+}

@@ -1,0 +1,130 @@
+[
+  {
+    "path": "train/patient17908/study3/view1_frontal.jpg",
+    "label": "pos",
+    "raw_height": 320,
+    "raw_width": 390,
+    "empty_mask": false,
+    "mask_fraction": 0.2910176282051282,
+    "bbox": [
+      3,
+      101,
+      233,
+      367
+    ],
+    "cropped_height": 230,
+    "cropped_width": 266
+  },
+  {
+    "path": "train/patient09494/study5/view1_frontal.jpg",
+    "label": "pos",
+    "raw_height": 320,
+    "raw_width": 390,
+    "empty_mask": false,
+    "mask_fraction": 0.39395032051282053,
+    "bbox": [
+      26,
+      43,
+      313,
+      348
+    ],
+    "cropped_height": 287,
+    "cropped_width": 305
+  },
+  {
+    "path": "train/patient09693/study2/view1_frontal.jpg",
+    "label": "pos",
+    "raw_height": 320,
+    "raw_width": 390,
+    "empty_mask": false,
+    "mask_fraction": 0.2436698717948718,
+    "bbox": [
+      36,
+      30,
+      239,
+      313
+    ],
+    "cropped_height": 203,
+    "cropped_width": 283
+  },
+  {
+    "path": "train/patient43562/study1/view1_frontal.jpg",
+    "label": "pos",
+    "raw_height": 320,
+    "raw_width": 390,
+    "empty_mask": false,
+    "mask_fraction": 0.35999198717948716,
+    "bbox": [
+      17,
+      49,
+      316,
+      332
+    ],
+    "cropped_height": 299,
+    "cropped_width": 283
+  },
+  {
+    "path": "train/patient48862/study2/view1_frontal.jpg",
+    "label": "neg",
+    "raw_height": 320,
+    "raw_width": 390,
+    "empty_mask": false,
+    "mask_fraction": 0.2128846153846154,
+    "bbox": [
+      69,
+      22,
+      264,
+      307
+    ],
+    "cropped_height": 195,
+    "cropped_width": 285
+  },
+  {
+    "path": "train/patient36302/study5/view1_frontal.jpg",
+    "label": "neg",
+    "raw_height": 320,
+    "raw_width": 389,
+    "empty_mask": false,
+    "mask_fraction": 0.3426654884318766,
+    "bbox": [
+      0,
+      20,
+      264,
+      337
+    ],
+    "cropped_height": 264,
+    "cropped_width": 317
+  },
+  {
+    "path": "train/patient14589/study3/view1_frontal.jpg",
+    "label": "neg",
+    "raw_height": 320,
+    "raw_width": 390,
+    "empty_mask": false,
+    "mask_fraction": 0.2790625,
+    "bbox": [
+      40,
+      58,
+      281,
+      326
+    ],
+    "cropped_height": 241,
+    "cropped_width": 268
+  },
+  {
+    "path": "train/patient45193/study2/view1_frontal.jpg",
+    "label": "neg",
+    "raw_height": 320,
+    "raw_width": 390,
+    "empty_mask": false,
+    "mask_fraction": 0.3113701923076923,
+    "bbox": [
+      4,
+      32,
+      268,
+      315
+    ],
+    "cropped_height": 264,
+    "cropped_width": 283
+  }
+]

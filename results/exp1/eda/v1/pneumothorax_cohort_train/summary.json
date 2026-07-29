@@ -1,0 +1,159 @@
+{
+  "n_records": 2299,
+  "n_patients": 2266,
+  "n_studies": 2266,
+  "Pneumothorax_counts": {
+    "0.0": 1430,
+    "1.0": 869
+  },
+  "pathology_counts": {
+    "No Finding": {
+      "NaN": 1979,
+      "1.0": 320
+    },
+    "Enlarged Cardiomediastinum": {
+      "NaN": 1957,
+      "-1.0": 147,
+      "0.0": 113,
+      "1.0": 82
+    },
+    "Cardiomegaly": {
+      "NaN": 2084,
+      "1.0": 131,
+      "-1.0": 43,
+      "0.0": 41
+    },
+    "Lung Opacity": {
+      "NaN": 1209,
+      "1.0": 1023,
+      "0.0": 39,
+      "-1.0": 28
+    },
+    "Lung Lesion": {
+      "NaN": 2231,
+      "1.0": 61,
+      "-1.0": 6,
+      "0.0": 1
+    },
+    "Edema": {
+      "NaN": 1949,
+      "1.0": 220,
+      "0.0": 93,
+      "-1.0": 37
+    },
+    "Consolidation": {
+      "NaN": 1970,
+      "-1.0": 175,
+      "0.0": 86,
+      "1.0": 68
+    },
+    "Pneumonia": {
+      "NaN": 2189,
+      "-1.0": 97,
+      "1.0": 8,
+      "0.0": 5
+    },
+    "Atelectasis": {
+      "NaN": 1562,
+      "1.0": 457,
+      "-1.0": 269,
+      "0.0": 11
+    },
+    "Pneumothorax": {
+      "0.0": 1430,
+      "1.0": 869
+    },
+    "Pleural Effusion": {
+      "NaN": 1257,
+      "1.0": 777,
+      "0.0": 195,
+      "-1.0": 70
+    },
+    "Pleural Other": {
+      "NaN": 2259,
+      "1.0": 28,
+      "-1.0": 11,
+      "0.0": 1
+    },
+    "Fracture": {
+      "NaN": 2226,
+      "1.0": 64,
+      "0.0": 8,
+      "-1.0": 1
+    },
+    "Support Devices": {
+      "0.0": 2299
+    }
+  },
+  "ap_pa_counts": {
+    "AP": 2299
+  },
+  "frontal_lateral_counts": {
+    "Frontal": 2299
+  },
+  "sex_counts": {
+    "Male": 1353,
+    "Female": 946
+  },
+  "age_stats": {
+    "count": 2299.0,
+    "mean": 57.38451500652457,
+    "std": 17.620924847652326,
+    "min": 0.0,
+    "25%": 46.0,
+    "50%": 59.0,
+    "75%": 71.0,
+    "max": 90.0
+  },
+  "missing_value_counts": {
+    "Path": 0,
+    "Sex": 0,
+    "Age": 0,
+    "Frontal/Lateral": 0,
+    "AP/PA": 0,
+    "No Finding": 1979,
+    "Enlarged Cardiomediastinum": 1957,
+    "Cardiomegaly": 2084,
+    "Lung Opacity": 1209,
+    "Lung Lesion": 2231,
+    "Edema": 1949,
+    "Consolidation": 1970,
+    "Pneumonia": 2189,
+    "Atelectasis": 1562,
+    "Pneumothorax": 0,
+    "Pleural Effusion": 1257,
+    "Pleural Other": 2259,
+    "Fracture": 2226,
+    "Support Devices": 0,
+    "split": 0,
+    "patient_id": 0,
+    "study_number": 0,
+    "view": 0,
+    "orientation": 0,
+    "comorbidity_count": 0,
+    "is_clean_negative": 0
+  },
+  "duplicate_path_count": 0,
+  "comorbidity_count_counts": {
+    "0": 662,
+    "1": 684,
+    "2": 661,
+    "3": 258,
+    "4": 31,
+    "5": 3
+  },
+  "comorbidity_count_stats": {
+    "count": 2299.0,
+    "mean": 1.2696824706394085,
+    "std": 1.046107807082925,
+    "min": 0.0,
+    "25%": 0.0,
+    "50%": 1.0,
+    "75%": 2.0,
+    "max": 5.0
+  },
+  "is_clean_negative_counts": {
+    "false": 1979,
+    "true": 320
+  }
+}
