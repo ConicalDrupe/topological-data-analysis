@@ -1,9 +1,10 @@
 # Experiment 1 Log
 
-- **Current experiment:** Experiment 004 (cubical persistence, no smoothing/denoising,
-  filtration direction sweep, persistence diagrams) is done — both sublevel/superlevel
-  directions kept as live axes; raw point counts are noisy (~8,600/image) and
-  un-denoised by design. Vectorization not started.
+- **Current experiment:** Experiment 005 (denoising comparison for cubical persistence
+  diagrams: Anscombe+wavelet denoise, persistence thresholding, confidence-set
+  bootstrap) is done — no single method picked as default yet; confidence-set cutoff
+  found to be very aggressive (2-7 points/image). DTM filtration dropped from scope
+  (no cubical-grid implementation available). Vectorization not started.
 - **Preprocessing pipeline:** `build_cohort.py` (filter + dedup + comorbidity_count/
   is_clean_negative + clean-negatives variant) -> `split_cohort.py` (train/test split
   from the clean-negatives cohort) -> `select_preprocessing_sample.py` (sample
@@ -12,9 +13,12 @@
   padding) -> normalization (`tda_chexpr.preprocessing.apply_normalization`, methods
   `none`/`he`/`clahe`, `clahe` default `kernel_size=16`/`clip_limit=0.01`) ->
   filtration (`tda_chexpr.filtration.compute_persistence_diagram`, applied directly to
-  the CLAHE output with no denoising step; `apply_direction` is the only preprocessing
-  knob). No full-dataset batch run of any stage yet — that lands with
-  vectorization/classification.
+  the CLAHE output with no denoising step by default; `apply_direction` is the only
+  preprocessing knob) -> optional denoising (`tda_chexpr.denoising`: Anscombe+wavelet
+  image-space denoise, `tda_chexpr.filtration.threshold_diagram` fixed-cutoff
+  thresholding, `tda_chexpr.denoising.bottleneck_confidence_cutoff` data-driven
+  cutoff), none yet selected as the pipeline default. No full-dataset batch run of any
+  stage yet — that lands with vectorization/classification.
 - **Dataset version:** primary/active: `data/exp1/pneumothorax_cohort_{train,valid}_clean_negatives.csv`
   -> `pneumothorax_{train,test}_split.csv`. Full (unfiltered) cohort
   `pneumothorax_cohort_{train,valid}.csv` retained on disk for a future clean-vs-full
@@ -25,16 +29,17 @@
 - **Model version:** `torchxrayvision` PSPNet (`pspnet_chestxray_best_model_4.pth`,
   ChestX-Det-trained, cached at `~/.torchxrayvision/models_data/`) for lung
   segmentation. No classification model yet.
-- **Random seed:** 42 (train/test split, and preprocessing sample selection).
+- **Random seed:** 42 (train/test split, preprocessing sample selection, and
+  Experiment 005's block-bootstrap RNG).
 - **Feature extraction method:** not yet implemented (filtration/vectorization pending).
-- **Parameters:** see Experiment 001-004 below.
+- **Parameters:** see Experiment 001-005 below.
 - **Evaluation metric:** AUROC (planned primary), accuracy/F1 (planned secondary) — not
   yet computed, no model trained.
 - **Current status:** clean-negatives cohort + split built and EDA'd; ROI-crop +
   normalization pipeline finalized (lung-mask crop, direct resize to 224x224, CLAHE
   `kernel_size=16`, `clip_limit=0.01`); cubical-persistence filtration implemented and
-  explored (no smoothing/denoising, direction kept as a live axis); vectorization not
-  started.
+  explored (direction kept as a live axis); three denoising strategies explored and
+  compared, no default chosen yet; vectorization not started.
 
 ---
 
@@ -443,5 +448,136 @@ image content, not just a relabeling of the same features.
   method choice (and whether it's noise-robust) especially relevant.
 - Other filtration methods (height/eccentricity, Vietoris-Rips, distance-transform)
   remain unexplored candidates per `experiments.md`.
+- Still no full-dataset batch run of any pipeline stage — everything so far is the
+  10-image sample.
+
+---
+
+# Experiment 005
+
+## Goal
+
+Explore denoising strategies for the noisy cubical persistence diagrams found in
+Experiment 004 (~8,600 points/image, un-denoised), per
+`human_notes/DeNoisingForPersitenceDiagrams.md`. Compare three methods against the raw
+baseline: Anscombe transform + denoise + inverse (image-space), persistence
+thresholding (diagram-space, fixed cutoff), and confidence sets / bottleneck bootstrap
+(diagram-space, data-driven cutoff). **DTM filtration was dropped from scope** per your
+instruction — verified hands-on that `gtda` only ships DTM via
+`gtda.homology.WeightedRipsPersistence(weights="DTM")`, a point-cloud/Vietoris-Rips
+method requiring the image to be converted to a point cloud first, not directly
+comparable to our cubical pipeline. No cubical-grid DTM exists out of the box in
+`gtda`.
+
+## Dataset
+
+`data/exp1/preprocessing_sample.csv` (same 10 rows), through
+`Raw -> lung-mask crop -> resize to 224x224`, then two branches:
+- `baseline = CLAHE(cropped)` (identical to Experiment 004 — the shared reference for
+  thresholding and confidence-set methods).
+- `anscombe_image = CLAHE(denoise_anscombe(cropped))` — denoising applied **before**
+  CLAHE, since CLAHE's local contrast reshaping breaks the Poisson-noise assumption
+  Anscombe relies on.
+
+Sublevel filtration only (scope decision, not asked as a separate question — dark
+air-lucency topology is the more pneumothorax-relevant of the two directions, and
+doubling all three methods across both directions added limited insight for this
+pass).
+
+## Parameters
+
+- **Anscombe + denoise + inverse** (`tda_chexpr.denoising.denoise_anscombe`): forward
+  `2*sqrt(x + 3/8)`, `skimage.restoration.denoise_wavelet(rescale_sigma=True)`, inverse
+  `(y/2)**2 - 3/8` (algebraic inverse, not the exact-unbiased Makitalo-Foi inverse — a
+  documented simplification). Initially implemented with `denoise_nl_means` since
+  `pywt` (required by `denoise_wavelet` and by skimage's own `estimate_sigma`) was not
+  installed; switched to `denoise_wavelet` after you added `pywavelets` as a project
+  dependency (`pyproject.toml`).
+- **Persistence thresholding** (`tda_chexpr.filtration.threshold_diagram`, wrapping
+  `gtda.diagrams.Filtering`): fixed `epsilon in [0.02, 0.05, 0.1]`, applied to the raw
+  baseline diagram.
+- **Confidence sets / bottleneck bootstrap**
+  (`tda_chexpr.denoising.bottleneck_confidence_cutoff`): since a single image is not an
+  i.i.d. point-cloud sample (unlike Fasy et al.'s original setting), bootstrap
+  replicates are generated by a **spatial block bootstrap**
+  (`tda_chexpr.denoising.block_bootstrap_image`) — the image is partitioned into
+  non-overlapping 16x16 patches (matching CLAHE's kernel size) and reassembled by
+  sampling patches with replacement. `n_bootstrap=20` replicates per image, bottleneck
+  distance from each replicate's diagram to the original via
+  `gtda.diagrams.PairwiseDistance(metric="bottleneck")` (default `delta=0.01`,
+  approximate algorithm), `c_n` = the 0.95 empirical quantile of those distances,
+  final cutoff `epsilon = 2 * c_n` per the Fasy et al. convention. `random_state=42`.
+
+**Important caveat, logged explicitly**: CheXpert-small images are pre-processed 8-bit
+JPEGs, not raw detector counts — true Poisson statistics are already only an
+approximation in this dataset (JPEG compression and prior windowing/leveling reshape
+the real sensor noise). The Anscombe transform here is applied directly to the
+[0, 1]-normalized intensity as a heuristic VST, not a calibrated photon-count
+transform.
+
+## Results
+
+Mean values across all 10 images (sublevel, `denoising_stats.json`):
+
+| Method | mean `n_points` | reduction vs. raw |
+|---|---|---|
+| Raw baseline | 8,511.8 | — |
+| Anscombe + wavelet denoise | 6,937.1 | 18.5% |
+| Threshold (eps=0.02) | 4,140.9 | 51.4% |
+| Threshold (eps=0.05) | 1,621.1 | 81.0% |
+| Threshold (eps=0.1) | 449.1 | 94.7% |
+| Confidence-set (bottleneck bootstrap) | 4.1 | ~99.95% |
+
+`c_n` ranged 0.231-0.382 across the 10 images (mean 0.291), giving an effective
+threshold `epsilon = 2*c_n` in roughly [0.46, 0.76] — far more aggressive than any of
+the fixed thresholds tested, since it exceeds most images' `max_persistence` from
+Experiment 004 (~0.5-0.6). Visually (`persistence_diagram_method_comparison.png`), the
+raw and Anscombe-denoised columns look similar in density (the wavelet step trims the
+near-diagonal cloud only modestly); the fixed threshold at eps=0.05 visibly thins the
+cloud while keeping a substantial mid-persistence band; the confidence-set column
+retains only 2-7 of the very highest-persistence points per image.
+
+**Anscombe+denoise visibly smooths pixel-level speckle before CLAHE**
+(`anscombe_denoise_before_after.png`) without erasing rib/vessel edges, but the
+resulting ~18.5% point-count reduction is modest compared to the diagram-space
+methods — most of the raw diagram's noise apparently survives CLAHE's own local
+contrast amplification even after image-space denoising.
+
+## Observations
+
+- **The confidence-set bootstrap, as specified here, is extremely aggressive** — it
+  collapses each diagram to a handful of points (2-7), which is likely too sparse to
+  be useful for downstream vectorization on its own, though it may be a legitimate way
+  to identify the small number of "statistically certain" topological features per
+  image. The block-bootstrap's patch-shuffling (which destroys global anatomical
+  layout while preserving local texture) may itself inflate estimated bottleneck
+  distances beyond what a true noise-only perturbation would produce — this is a
+  candidate explanation worth revisiting if the cutoff seems too strict for practical
+  use.
+- **Fixed persistence thresholding is the most controllable of the three**: a
+  continuous dial (`epsilon`) trading off noise removal against retained
+  low-persistence structure, with `eps=0.05` retaining a visually reasonable amount of
+  detail while cutting ~81% of points.
+- **Anscombe+wavelet denoising is the mildest intervention** and the only one that
+  changes the input image itself rather than post-processing the diagram — useful if
+  the denoised image also needs to be visually/perceptually reasonable (e.g. for
+  comparison against a separate CNN baseline), but it leaves far more diagram noise
+  than either diagram-space method.
+- No single "best" method is picked here — each targets a different point in the
+  noise/detail trade-off, and the right choice likely depends on the downstream
+  vectorization method (Pipeline step 5), which is still unexplored.
+- DTM filtration remains unexplored (dropped this pass, see Goal).
+
+## Next Steps
+
+- Decide whether any of these three methods (or a combination, e.g. Anscombe-denoise
+  the image *and* threshold the resulting diagram) should become the pipeline default
+  before vectorization, or whether to carry multiple forward as parallel candidates.
+- If the confidence-set cutoff continues to look too aggressive, consider tuning
+  `alpha`, `n_bootstrap`, or `block_size`, or trying a resampling scheme that
+  preserves more global structure than block-shuffling.
+- Vectorization of persistence diagrams (Pipeline step 5) is next — compare
+  Persistence Images, Landscapes, Betti Curves, Persistence Entropy, Silhouettes via
+  `gtda.diagrams`, now with denoised/thresholded diagrams as candidate inputs.
 - Still no full-dataset batch run of any pipeline stage — everything so far is the
   10-image sample.

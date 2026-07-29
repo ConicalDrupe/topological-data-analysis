@@ -1,17 +1,21 @@
 """Cubical persistence filtration (gtda.homology.CubicalPersistence) and its
 preprocessing-level parameters. See experiments.md, Experiment 1 pipeline step 4, and
-logs/exp1_log.md, Experiment 004.
+logs/exp1_log.md, Experiments 004-005.
 
 CubicalPersistence itself has almost no tunable filtration-shaping parameters -- the
 real lever is which structures (dark vs bright) are born first in the filtration. No
 smoothing/denoising is applied before filtration -- persistence is computed directly on
 the postprocessing pipeline's CLAHE output.
+
+`threshold_diagram` is a diagram-space denoising primitive (Experiment 005) -- image-
+space denoising and the confidence-set bootstrap live in `tda_chexpr.denoising`.
 """
 
 from pathlib import Path
 
 import matplotlib.pyplot as plt
 import numpy as np
+from gtda.diagrams import Filtering
 from gtda.homology import CubicalPersistence
 
 FILTRATION_DIRECTIONS: list[str] = ["sublevel", "superlevel"]
@@ -56,6 +60,15 @@ def diagram_summary_stats(diagram: np.ndarray, persistence_threshold: float = 0.
         "max_persistence": float(persistence.max()) if persistence.size else 0.0,
         "n_points_persistence_above_0.1": int((persistence > persistence_threshold).sum()),
     }
+
+
+def threshold_diagram(diagram: np.ndarray, epsilon: float) -> np.ndarray:
+    """Discard points from `diagram` with persistence <= `epsilon` (persistence
+    thresholding / topological simplification). Thin wrapper around
+    `gtda.diagrams.Filtering`, reused for both a fixed cutoff and a data-driven
+    cutoff (e.g. `2 * c_n` from a confidence-set bootstrap).
+    """
+    return Filtering(epsilon=epsilon).fit_transform(diagram[None, :, :])[0]
 
 
 def plot_persistence_diagram(ax: plt.Axes, diagram: np.ndarray, title: str) -> None:

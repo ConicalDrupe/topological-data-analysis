@@ -133,6 +133,24 @@ U-Ignore policy). No uncertainty-mapping (U-Ones/U-Zeros) is used for this basel
      axes rather than resolved to one. Diagrams are noisy as a result (~8,600
      birth-death points per 224x224 image); this is intentional for now, not yet
      addressed. Explored in `logs/exp1_log.md`, Experiment 004.
+   - **Denoising (explored):** three diagram-noise-reduction strategies compared
+     against the raw baseline in `logs/exp1_log.md`, Experiment 005 —
+     Anscombe-transform + wavelet denoise + inverse (image-space, applied before CLAHE
+     to keep the Poisson-noise assumption meaningful; `pywavelets` added as a project
+     dependency for this), persistence thresholding (`gtda.diagrams.Filtering`, fixed
+     cutoff), and a confidence-set / bottleneck-bootstrap cutoff
+     (`tda_chexpr.denoising.bottleneck_confidence_cutoff`, using a spatial block
+     bootstrap since a single image isn't an i.i.d. point-cloud sample). Sublevel
+     filtration only for this comparison. No single method chosen as best — each
+     trades off noise removal against retained detail differently (mean point-count
+     reduction vs. raw: ~19% Anscombe+wavelet, ~81% fixed threshold at eps=0.05, ~99.95%
+     confidence-set — the last found to be very aggressive, see Experiment 005).
+   - **DTM filtration (deferred):** `gtda` only ships distance-to-measure weighting via
+     `gtda.homology.WeightedRipsPersistence(weights="DTM")`, a point-cloud/
+     Vietoris-Rips method — not directly applicable to the cubical (pixel-grid)
+     filtration used elsewhere in this pipeline without converting images to point
+     clouds first. Not pursued in Experiment 005; would need a from-scratch cubical-grid
+     DTM implementation or a pipeline change to a point-cloud representation.
    - **Candidates to experiment with:** height/eccentricity filtration, Vietoris-Rips on
      downsampled pixel coordinates or superpixel/keypoint coordinates, lower-star
      filtration on a distance transform (e.g. from a lung mask or edge map). Treat the
