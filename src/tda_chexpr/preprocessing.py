@@ -16,11 +16,11 @@ from skimage import exposure, img_as_float, io
 NORMALIZATION_VARIANTS: list[tuple[str, dict]] = [
     ("none", {}),
     ("he", {"nbins": 256}),
-    ("clahe", {"clip_limit": 0.01, "kernel_size": 32}),
+    ("clahe", {"clip_limit": 0.01, "kernel_size": 16}),
 ]
 
 DEFAULT_HE_PARAMS = {"nbins": 256}
-DEFAULT_CLAHE_PARAMS = {"clip_limit": 0.01, "kernel_size": 32}
+DEFAULT_CLAHE_PARAMS = {"clip_limit": 0.01, "kernel_size": 16}
 
 CLAHE_CLIP_LIMITS = [0.005, 0.01, 0.02, 0.05]
 CLAHE_KERNEL_SIZES = [8, 16, 32, 64]
@@ -106,10 +106,10 @@ def plot_stage_grid(
     """
     n_rows = len(rows)
     n_cols = len(rows[0][1])
-    fig, axes = plt.subplots(n_rows, n_cols, figsize=(2.5 * n_cols, 2.5 * n_rows))
+    fig, axes = plt.subplots(n_rows, n_cols, figsize=(2.5 * n_cols, 2.5 * n_rows), squeeze=False)
     for row, (label, stages) in enumerate(rows):
         for col, (name, image) in enumerate(stages):
-            ax = axes[row, col]
+            ax = axes[row][col]
             ax.imshow(image, cmap="gray", vmin=0, vmax=1)
             ax.set_xticks([])
             ax.set_yticks([])

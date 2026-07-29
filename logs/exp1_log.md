@@ -1,19 +1,20 @@
 # Experiment 1 Log
 
-- **Current experiment:** Experiment 003 (finalize ROI crop + CLAHE clip_limit grid
-  search) is done pending your review — final pipeline is
-  `Raw -> lung-mask crop -> direct resize to 224x224 (aspect ratio warped, no padding)
-  -> CLAHE`, with `(kernel_size, clip_limit)` narrowed to two candidates: `(8, 0.01)` or
-  `(16, 0.006)` — final pick pending your review. Filtration/vectorization/
-  classification not started (Experiment 004 next).
+- **Current experiment:** Experiment 004 (cubical persistence: smoothing sigma x
+  filtration direction sweep, persistence diagrams) is done pending your review —
+  `sigma=1.0` recommended as a working default (~5x point-count reduction with no
+  visible detail loss), both sublevel/superlevel directions kept as live axes.
+  Vectorization not started.
 - **Preprocessing pipeline:** `build_cohort.py` (filter + dedup + comorbidity_count/
   is_clean_negative + clean-negatives variant) -> `split_cohort.py` (train/test split
   from the clean-negatives cohort) -> `select_preprocessing_sample.py` (sample
   selection) -> ROI crop (`tda_chexpr.roi.apply_roi_crop`, methods `none`/
   `center_crop`/`lung_mask`; `lung_mask` now defaults to `size=224`, direct resize, no
   padding) -> normalization (`tda_chexpr.preprocessing.apply_normalization`, methods
-  `none`/`he`/`clahe`). No full-dataset batch run of any stage yet — that lands with
-  the filtration step.
+  `none`/`he`/`clahe`, `clahe` default `kernel_size=16`/`clip_limit=0.01`) ->
+  filtration (`tda_chexpr.filtration.compute_persistence_diagram`, with
+  `apply_smoothing`/`apply_direction` preprocessing knobs). No full-dataset batch run
+  of any stage yet — that lands with vectorization/classification.
 - **Dataset version:** primary/active: `data/exp1/pneumothorax_cohort_{train,valid}_clean_negatives.csv`
   -> `pneumothorax_{train,test}_split.csv`. Full (unfiltered) cohort
   `pneumothorax_cohort_{train,valid}.csv` retained on disk for a future clean-vs-full
@@ -26,13 +27,14 @@
   segmentation. No classification model yet.
 - **Random seed:** 42 (train/test split, and preprocessing sample selection).
 - **Feature extraction method:** not yet implemented (filtration/vectorization pending).
-- **Parameters:** see Experiment 001-003 below.
+- **Parameters:** see Experiment 001-004 below.
 - **Evaluation metric:** AUROC (planned primary), accuracy/F1 (planned secondary) — not
   yet computed, no model trained.
-- **Current status:** clean-negatives cohort + split built and EDA'd; full
-  ROI-crop + normalization pipeline finalized (lung-mask crop, direct resize to
-  224x224, CLAHE `(kernel_size, clip_limit)` narrowed to `(8, 0.01)` or `(16, 0.006)`)
-  pending your review; filtration/vectorization not started.
+- **Current status:** clean-negatives cohort + split built and EDA'd; ROI-crop +
+  normalization pipeline finalized (lung-mask crop, direct resize to 224x224, CLAHE
+  `kernel_size=16`, `clip_limit=0.01`); cubical-persistence filtration implemented and
+  explored (`sigma=1.0` recommended, pending your confirmation); vectorization not
+  started.
 
 ---
 
@@ -328,11 +330,13 @@ Global intensity `std` across the grid was roughly flat regardless of `clip_limi
 (consistent with Experiment 003's earlier finding that it doesn't discriminate grain) —
 visual inspection plus the `clim` quantization math were the deciding factors, not
 `image_stats.json`.
-**Recommended default: `clip_limit=0.01`, `kernel_size=8`** (or, if the slightly larger
-tile size is preferred, `clip_limit=0.006`, `kernel_size=16` — both sit at the largest
-`clip_limit` still inside their respective `clim=1` plateau, i.e. maximum safe local
-contrast before any grain onset). Final choice between the two kernel sizes themselves
-is still pending your review of the two grid images.
+**Confirmed default: `kernel_size=16`, `clip_limit=0.01`** — your final call, taken over
+both the `kernel_size=8`/`clip_limit=0.01` and `kernel_size=16`/`clip_limit=0.006`
+candidates above. Note this sits at `clim=2` (not the more conservative `clim=1`
+plateau capped at `clip_limit=0.006`), i.e. it's just past the point where mild grain
+starts appearing in `clahe_grid_comparison_kernel16.png` — a deliberate choice of
+slightly more local contrast over the strictly-cleanest option. `tda_chexpr.
+preprocessing.DEFAULT_CLAHE_PARAMS` / `NORMALIZATION_VARIANTS` updated accordingly.
 
 ## Observations
 
@@ -356,11 +360,106 @@ is still pending your review of the two grid images.
 
 ## Next Steps
 
-- Confirm a `(kernel_size, clip_limit)` default for Experiment 1's normalization step —
-  `(8, 0.01)` and `(16, 0.006)` are the two candidates recommended above (each the
-  largest `clip_limit` still on their `clim=1` plateau); pick one after reviewing
-  `clahe_grid_comparison_kernel8.png` and `_kernel16.png`.
 - Check full-dataset PSPNet inference time before committing to a batch run over all
   1,189 clean-negatives-cohort images (still untested beyond this 10-image sample).
-- Experiment 1 pipeline step 3 (filtration) not started — the next major pipeline
-  stage once normalization is confirmed. (Followed by Experiment 004.)
+- Filtration (Pipeline step 4) is next — see Experiment 004.
+
+---
+
+# Experiment 004
+
+## Goal
+
+Implement the filtration pipeline stage (Pipeline step 4), starting with the baseline
+method named in `experiments.md`: classical cubical persistence
+(`gtda.homology.CubicalPersistence`, sublevel-set filtration on grayscale pixel
+intensities). Identify and sweep the parameters that actually shape the resulting
+persistence diagrams, and produce the diagrams themselves.
+
+## Dataset
+
+`data/exp1/preprocessing_sample.csv` (10 rows, unchanged from Experiment 003), run
+through the now-finalized pipeline: `Raw -> lung-mask crop -> direct resize to 224x224
+-> CLAHE (kernel_size=16, clip_limit=0.01)`.
+
+## Parameters
+
+- `CubicalPersistence` itself has almost no filtration-shaping parameters
+  (`homology_dimensions=(0, 1)` fixed for this experiment, `coeff=2` default) — the
+  filtration function is just the image's own pixel intensities. The actual swept
+  parameters are applied to the image beforehand:
+  - `tda_chexpr.filtration.apply_smoothing(image, sigma)` —
+    `scipy.ndimage.gaussian_filter`, `sigma in [0, 0.5, 1, 2, 4]` (`sigma=0` = no-op).
+  - `tda_chexpr.filtration.apply_direction(image, direction)` — `"sublevel"`
+    (passthrough, dark structures born first) or `"superlevel"` (`1.0 - image`, bright
+    structures born first), swept independently of `sigma`.
+- Full sweep: 10 images x 5 sigmas x 2 directions = 100 combinations for the
+  quantitative stats; persistence-diagram plots limited to 2 representative images (1
+  positive, 1 negative) per your direction, to keep the figures readable.
+
+## Results
+
+**Cubical persistence on the current pipeline output is extremely noisy before any
+smoothing.** One representative image at `sigma=0` produced 8,607 birth-death points
+(3,239 H0 + 5,368 H1) — consistent with 8,511/8,452 mean points across all 10 images
+at `sigma=0` (sublevel/superlevel respectively, `filtration_stats.json`). Most of these
+are short-persistence points hugging the diagonal in
+`persistence_diagram_sigma_grid.png` — pixel-level noise, not real anatomical
+structure (partly inherited from CLAHE's own local-contrast grain, see Experiment 003).
+
+**Gaussian smoothing sharply reduces point count while preserving high-persistence
+structure.** Mean `n_points` across all 10 images drops monotonically and consistently
+across both directions:
+
+| `sigma` | mean `n_points` (sublevel) | mean `n_points` (superlevel) |
+|---|---|---|
+| 0   | 8,511.8 | 8,451.7 |
+| 0.5 | 5,871.5 | 5,703.5 |
+| 1   | 1,593.2 | 1,463.0 |
+| 2   | 396.2   | 346.1   |
+| 4   | 119.1   | 98.3    |
+
+Visually (`persistence_diagram_sigma_grid.png`), the cloud of near-diagonal
+(low-persistence) points thins out dramatically from `sigma=0` to `sigma=4`, while a
+small number of far-from-diagonal (high-persistence) points survive across every
+`sigma` value for both classes — consistent with those points corresponding to real,
+large-scale anatomical structure rather than noise. `smoothing_sigma_grid.png` shows
+the corresponding image blur directly: `sigma=0.5`-`1` are barely visually different
+from the unsmoothed CLAHE output; `sigma=2`-`4` visibly blur real rib/vessel detail.
+
+**Filtration direction (sublevel vs superlevel) also changes the diagram**, though
+more modestly than smoothing (`persistence_diagram_direction_comparison.png`, fixed
+`sigma=1.0`): sublevel gives more points than superlevel for both classes (mean 1,593
+vs 1,463 across the full 10-image sweep) — expected, since dark structures (lung
+fields, air) and bright structures (ribs, mediastinum, any pleural line) are
+genuinely different image content, not just a relabeling of the same features.
+
+## Observations
+
+- `sigma=1` looks like a reasonable working default going into vectorization: it
+  cuts point count by ~5x from the unsmoothed baseline (8,511 -> 1,593 mean) without
+  visibly blurring real anatomical detail in `smoothing_sigma_grid.png`, and the
+  high-persistence points visible at `sigma=0` are still present at `sigma=1`. `sigma=2`
+  is a more aggressive alternative if a sparser diagram is preferred for vectorization
+  speed, at the cost of some visible detail loss. This is a recommendation, not a final
+  pick — pending your review of the two grid images.
+- Direction is kept as a live experimental axis (not resolved to one choice here) —
+  both sublevel and superlevel may carry independent diagnostic signal for
+  pneumothorax (air lucency vs pleural line), consistent with `experiments.md`
+  treating filtration choice as an experimental variable rather than a fixed step.
+- This experiment stops at the persistence diagram — no vectorization
+  (`gtda.diagrams`: Persistence Images/Landscapes/Betti Curves/etc., Pipeline step 5)
+  yet, and no other filtration methods (height/radial/distance-transform) yet.
+
+## Next Steps
+
+- Confirm a default smoothing `sigma` (and whether to carry both filtration
+  directions forward as separate feature sets, or pick one) before moving to
+  vectorization.
+- Vectorization of persistence diagrams (Pipeline step 5) is next — compare
+  Persistence Images, Landscapes, Betti Curves, Persistence Entropy, Silhouettes via
+  `gtda.diagrams`.
+- Other filtration methods (height/eccentricity, Vietoris-Rips, distance-transform)
+  remain unexplored candidates per `experiments.md`.
+- Still no full-dataset batch run of any pipeline stage — everything so far is the
+  10-image sample.

@@ -121,12 +121,19 @@ U-Ignore policy). No uncertainty-mapping (U-Ones/U-Zeros) is used for this basel
    - Adaptive Gamma Correction (AGC) - We will skip this for now.
    - Contrast Limited Adaptive Histogram Equalization (CLAHE) — grid-searched
      `clip_limit` at `kernel_size` 8 and 16 in `logs/exp1_log.md` Experiment 003;
-     `(kernel_size, clip_limit)` narrowed to two candidates, `(8, 0.01)` or
-     `(16, 0.006)` (each the largest `clip_limit` before visible grain onset for that
-     `kernel_size`), pending your confirmation of the final pick.
+     **finalized default: `kernel_size=16`, `clip_limit=0.01`**
+     (`tda_chexpr.preprocessing.DEFAULT_CLAHE_PARAMS`).
 4. **Filtration methods:**
-   - **Baseline:** classical cubical persistence (sublevel-set filtration directly on
-     grayscale pixel intensities) — `gtda.homology.CubicalPersistence`.
+   - **Baseline (implemented):** classical cubical persistence (filtration directly on
+     grayscale pixel intensities) — `gtda.homology.CubicalPersistence`. Since the class
+     itself has almost no filtration-shaping parameters, the actual experimental knobs
+     live in preprocessing applied before it: Gaussian smoothing (`sigma`, to suppress
+     pixel-level/CLAHE-grain noise — found to cut diagram point count by ~70x from
+     `sigma=0` to `sigma=4` while preserving high-persistence structure) and filtration
+     direction (sublevel = dark-first vs superlevel = bright-first, `1 - image`).
+     Explored in `logs/exp1_log.md`, Experiment 004; `sigma=1.0` recommended as a
+     working default, pending confirmation. Both directions kept as separate candidate
+     feature axes rather than resolved to one.
    - **Candidates to experiment with:** height/eccentricity filtration, Vietoris-Rips on
      downsampled pixel coordinates or superpixel/keypoint coordinates, lower-star
      filtration on a distance transform (e.g. from a lung mask or edge map). Treat the
@@ -298,7 +305,8 @@ Reusable across Experiments 1 and 3:
   Experiment 3's per-study feature extraction share the same code path. The ROI crop
   and normalization stages are finalized as of `logs/exp1_log.md` Experiments 002-003
   (`tda_chexpr.roi.apply_roi_crop`, `tda_chexpr.preprocessing.apply_normalization`);
-  filtration and vectorization are not yet implemented.
+  cubical-persistence filtration is implemented (`tda_chexpr.filtration`, Experiment
+  004); other filtration methods and vectorization are not yet implemented.
 
 ## Open questions / decisions needed
 
@@ -334,7 +342,6 @@ Reusable across Experiments 1 and 3:
   based lung segmentation (bbox-only, no hard masking) was adopted instead (0/8
   failures, substantially better text/marker removal), and its final squaring/resize
   step was pinned down in Experiment 003 (direct resize to 224×224, no padding — see
-  Pipeline step 2 above). Still pending: a full-dataset PSPNet timing check before
-  committing to a batch run over all 1,189 clean-negatives-cohort images, and final
-  confirmation of the CLAHE `(kernel_size, clip_limit)` default between the two
-  candidates above.
+  Pipeline step 2 above), with CLAHE finalized at `kernel_size=16`, `clip_limit=0.01`.
+  Still pending: a full-dataset PSPNet timing check before committing to a batch run
+  over all 1,189 clean-negatives-cohort images.
