@@ -1,45 +1,52 @@
 # Experiment 1 Log
 
-- **Current experiment:** Experiment 005 (denoising comparison for cubical persistence
-  diagrams: Anscombe+wavelet denoise, persistence thresholding, confidence-set
-  bootstrap) is done — no single method picked as default yet; confidence-set cutoff
-  found to be very aggressive (2-7 points/image). DTM filtration dropped from scope
-  (no cubical-grid implementation available). Vectorization not started.
-- **Preprocessing pipeline:** `build_cohort.py` (filter + dedup + comorbidity_count/
-  is_clean_negative + clean-negatives variant) -> `split_cohort.py` (train/test split
-  from the clean-negatives cohort) -> `select_preprocessing_sample.py` (sample
-  selection) -> ROI crop (`tda_chexpr.roi.apply_roi_crop`, methods `none`/
-  `center_crop`/`lung_mask`; `lung_mask` now defaults to `size=224`, direct resize, no
-  padding) -> normalization (`tda_chexpr.preprocessing.apply_normalization`, methods
-  `none`/`he`/`clahe`, `clahe` default `kernel_size=16`/`clip_limit=0.01`) ->
-  filtration (`tda_chexpr.filtration.compute_persistence_diagram`, applied directly to
-  the CLAHE output with no denoising step by default; `apply_direction` is the only
-  preprocessing knob) -> optional denoising (`tda_chexpr.denoising`: Anscombe+wavelet
-  image-space denoise, `tda_chexpr.filtration.threshold_diagram` fixed-cutoff
-  thresholding, `tda_chexpr.denoising.bottleneck_confidence_cutoff` data-driven
-  cutoff), none yet selected as the pipeline default. No full-dataset batch run of any
-  stage yet — that lands with vectorization/classification.
-- **Dataset version:** primary/active: `data/exp1/pneumothorax_cohort_{train,valid}_clean_negatives.csv`
-  -> `pneumothorax_{train,test}_split.csv`. Full (unfiltered) cohort
-  `pneumothorax_cohort_{train,valid}.csv` retained on disk for a future clean-vs-full
-  comparison, not currently used by the split. EDA'd at `results/exp1/eda/v1/` (all six
+- **Current experiment:** Experiment 006 (cohort correction — see below) is done.
+  Experiment 1 is **halted** pending regeneration of the preprocessing sample and
+  downstream artifacts against the corrected cohort; Experiments 002–005 (ROI crop,
+  normalization, filtration, denoising) were tuned against the now-superseded cohort
+  and need to be re-validated before resuming.
+- **Preprocessing pipeline:** `build_cohort.py` (filter + comorbidity_count/
+  is_clean_negative + `filter_no_comorbidity`, applied *before* per-patient dedup, then
+  `select_studies` — see Experiment 006) -> `split_cohort.py` (train/test split from the
+  corrected clean cohort) -> `select_preprocessing_sample.py` (sample selection, **stale
+  — built from the pre-correction split, needs rerun**) -> ROI crop
+  (`tda_chexpr.roi.apply_roi_crop`, methods `none`/`center_crop`/`lung_mask`;
+  `lung_mask` now defaults to `size=224`, direct resize, no padding) -> normalization
+  (`tda_chexpr.preprocessing.apply_normalization`, methods `none`/`he`/`clahe`, `clahe`
+  default `kernel_size=16`/`clip_limit=0.01`) -> filtration
+  (`tda_chexpr.filtration.compute_persistence_diagram`, applied directly to the CLAHE
+  output with no denoising step by default; `apply_direction` is the only preprocessing
+  knob) -> optional denoising (`tda_chexpr.denoising`: Anscombe+wavelet image-space
+  denoise, `tda_chexpr.filtration.threshold_diagram` fixed-cutoff thresholding,
+  `tda_chexpr.denoising.bottleneck_confidence_cutoff` data-driven cutoff), none yet
+  selected as the pipeline default. No full-dataset batch run of any stage yet — that
+  lands with vectorization/classification.
+- **Dataset version:** primary/active: `data/exp1/v2_corrected_cohort/pneumothorax_cohort_{train,valid}_clean.csv`
+  -> `pneumothorax_{train,test}_split.csv` (corrected, Experiment 006). Reference
+  (unfiltered-by-comorbidity) cohort `pneumothorax_cohort_{train,valid}.csv` retained
+  alongside it for a future clean-vs-reference comparison. The old
+  `data/exp1/pneumothorax_*` files (pre-Experiment-006) are left on disk but superseded
+  — see `cohort_validation.md`. EDA'd at `results/exp1/eda/v9/` (all six corrected
   CSVs). Preprocessing/ROI-crop comparison sample: `data/exp1/preprocessing_sample.csv`
-  (10 rows, 5 positive / 5 negative, drawn from `pneumothorax_train_split.csv`; bumped
-  from 8 rows in Experiment 003).
+  (10 rows, 5 positive / 5 negative, drawn from the **pre-correction**
+  `pneumothorax_train_split.csv`; bumped from 8 rows in Experiment 003) — stale, needs
+  regenerating from the corrected split before Experiment 1 resumes.
 - **Model version:** `torchxrayvision` PSPNet (`pspnet_chestxray_best_model_4.pth`,
   ChestX-Det-trained, cached at `~/.torchxrayvision/models_data/`) for lung
   segmentation. No classification model yet.
 - **Random seed:** 42 (train/test split, preprocessing sample selection, and
   Experiment 005's block-bootstrap RNG).
 - **Feature extraction method:** not yet implemented (filtration/vectorization pending).
-- **Parameters:** see Experiment 001-005 below.
+- **Parameters:** see Experiment 001-006 below.
 - **Evaluation metric:** AUROC (planned primary), accuracy/F1 (planned secondary) — not
   yet computed, no model trained.
-- **Current status:** clean-negatives cohort + split built and EDA'd; ROI-crop +
-  normalization pipeline finalized (lung-mask crop, direct resize to 224x224, CLAHE
-  `kernel_size=16`, `clip_limit=0.01`); cubical-persistence filtration implemented and
-  explored (direction kept as a live axis); three denoising strategies explored and
-  compared, no default chosen yet; vectorization not started.
+- **Current status:** cohort-selection bug fixed and corrected cohort/split built + EDA'd
+  (Experiment 006); ROI-crop + normalization pipeline previously finalized (lung-mask
+  crop, direct resize to 224x224, CLAHE `kernel_size=16`, `clip_limit=0.01`) but built
+  against the stale cohort; cubical-persistence filtration and three denoising
+  strategies previously explored, also against the stale cohort; vectorization not
+  started. Next: regenerate the preprocessing sample from the corrected split and
+  re-validate Experiments 002–005 before resuming.
 
 ---
 
@@ -581,3 +588,85 @@ contrast amplification even after image-space denoising.
   `gtda.diagrams`, now with denoised/thresholded diagrams as candidate inputs.
 - Still no full-dataset batch run of any pipeline stage — everything so far is the
   10-image sample.
+
+---
+
+# Experiment 006
+
+## Goal
+
+Halt Experiment 1 and correct a cohort-selection error found against the four target
+criteria (target Pneumothorax; positives have no comorbidity; negatives are a pure
+false; one row per patient, earliest qualifying study). Full writeup in
+`cohort_validation.md` (repo root).
+
+## Dataset
+
+Rebuilt from `kaggle/train.csv` / `kaggle/valid.csv` via corrected
+`src/preprocessing/exp1/build_cohort.py` + `split_cohort.py` + `run_eda.py`. Outputs
+under `data/exp1/v2_corrected_cohort/` (old `data/exp1/*.csv` left in place,
+superseded, not deleted).
+
+## Parameters
+
+Same view/device filters as Experiment 001 (`AP/PA == "AP"`, `Support Devices == 0.0`),
+plus corrected comorbidity filtering (`tda_chexpr.cohort.filter_no_comorbidity`) applied
+*before* per-patient dedup, and dedup (`select_studies`) now tie-broken by lowest `view`
+number in addition to lowest `study_number`. Split: `stratified_split`, 80/20,
+`random_state=42`, unchanged.
+
+## Results
+
+Three bugs found and fixed in `tda_chexpr/cohort.py` (see `cohort_validation.md` for
+full detail):
+
+1. Positive rows were never filtered for comorbidity (`filter_clean_negatives` kept all
+   `Pneumothorax == 1.0` unconditionally) — violated the "no comorbidity" criterion for
+   positives. Fixed with a new `filter_no_comorbidity()`, applied to both labels
+   (asymmetric rule: positives require `comorbidity_count == 0`, negatives require
+   `No Finding == 1.0`).
+2. Comorbidity filtering ran *after* per-patient dedup, so "earliest qualifying study"
+   didn't account for it. Fixed by moving comorbidity computation/filtering before
+   `select_studies()`.
+3. `select_studies(mode="first_qualifying")` deduped by `study_number` only, so a study
+   with 2+ qualifying views (e.g. `view1` + `view2`, both AP frontal) left 2 rows for one
+   patient — present in both the old full cohort (33 patients) and old clean-negatives
+   cohort (23 patients). Fixed by tie-breaking on lowest `view` number too; verified
+   `n_records == n_patients` in every output now.
+
+Corrected counts (`data/exp1/v2_corrected_cohort/`):
+
+| Dataset | Rows / patients | Pos / neg |
+|---|---|---|
+| Reference train | 2,266 / 2,266 | 848 / 1,418 |
+| Reference valid | 77 / 77 | 1 / 76 |
+| Clean train (primary) | 575 / 575 | 253 / 322 |
+| Clean valid | 12 / 12 | 0 / 12 |
+| train_split | 460 / 460 | 202 / 258 |
+| test_split | 115 / 115 | 51 / 64 |
+
+EDA (all 6 datasets) at `results/exp1/eda/v9/`.
+
+## Observations
+
+- Enforcing "no comorbidity" on positives removes 71% of the previously-kept positive
+  class (869 → 253 in the train cohort) — most Pneumothorax-positive studies in this
+  dataset also have at least one other confirmed finding. The corrected primary cohort
+  is roughly half the size of the old one but much closer to balanced (was 73%/27%
+  pos/neg, now 44%/56%).
+- The clean valid cohort now has 0 positive cases (its single prior positive case had a
+  comorbidity) — doesn't block anything since Experiment 1 already carves its own split
+  from train, but the valid clean cohort is negative-only now.
+- Verified: zero duplicate patients in any output file, zero patient overlap between
+  train_split/test_split, `len(train_split) + len(test_split) == len(clean train
+  cohort)`.
+
+## Next Steps
+
+- Regenerate `preprocessing_sample.csv` from the corrected `train_split.csv` (the
+  current one was drawn from the pre-correction split and is stale).
+- Re-validate Experiments 002–005 (ROI crop, CLAHE params, filtration, denoising) against
+  the corrected, smaller, more-balanced cohort before resuming Experiment 1 — parameter
+  choices made against the old sample may not transfer unchanged.
+- Update `experiments.md` §Experiment matrix / downstream sections if the corrected
+  cohort size changes any planned batch-run sizing assumptions.

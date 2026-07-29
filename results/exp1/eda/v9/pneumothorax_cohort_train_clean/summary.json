@@ -1,0 +1,137 @@
+{
+  "n_records": 575,
+  "n_patients": 575,
+  "n_studies": 575,
+  "Pneumothorax_counts": {
+    "0.0": 322,
+    "1.0": 253
+  },
+  "pathology_counts": {
+    "No Finding": {
+      "1.0": 322,
+      "NaN": 253
+    },
+    "Enlarged Cardiomediastinum": {
+      "NaN": 504,
+      "0.0": 56,
+      "-1.0": 15
+    },
+    "Cardiomegaly": {
+      "NaN": 561,
+      "0.0": 13,
+      "-1.0": 1
+    },
+    "Lung Opacity": {
+      "NaN": 552,
+      "0.0": 20,
+      "-1.0": 3
+    },
+    "Lung Lesion": {
+      "NaN": 574,
+      "-1.0": 1
+    },
+    "Edema": {
+      "NaN": 556,
+      "0.0": 19
+    },
+    "Consolidation": {
+      "NaN": 529,
+      "0.0": 40,
+      "-1.0": 6
+    },
+    "Pneumonia": {
+      "NaN": 574,
+      "0.0": 1
+    },
+    "Atelectasis": {
+      "NaN": 563,
+      "0.0": 7,
+      "-1.0": 5
+    },
+    "Pneumothorax": {
+      "0.0": 322,
+      "1.0": 253
+    },
+    "Pleural Effusion": {
+      "NaN": 497,
+      "0.0": 75,
+      "-1.0": 3
+    },
+    "Pleural Other": {
+      "NaN": 575
+    },
+    "Fracture": {
+      "NaN": 571,
+      "0.0": 4
+    },
+    "Support Devices": {
+      "0.0": 575
+    }
+  },
+  "ap_pa_counts": {
+    "AP": 575
+  },
+  "frontal_lateral_counts": {
+    "Frontal": 575
+  },
+  "sex_counts": {
+    "Male": 332,
+    "Female": 243
+  },
+  "age_stats": {
+    "count": 575.0,
+    "mean": 53.85739130434783,
+    "std": 18.773280835331473,
+    "min": 18.0,
+    "25%": 40.0,
+    "50%": 56.0,
+    "75%": 69.0,
+    "max": 90.0
+  },
+  "missing_value_counts": {
+    "Path": 0,
+    "Sex": 0,
+    "Age": 0,
+    "Frontal/Lateral": 0,
+    "AP/PA": 0,
+    "No Finding": 253,
+    "Enlarged Cardiomediastinum": 504,
+    "Cardiomegaly": 561,
+    "Lung Opacity": 552,
+    "Lung Lesion": 574,
+    "Edema": 556,
+    "Consolidation": 529,
+    "Pneumonia": 574,
+    "Atelectasis": 563,
+    "Pneumothorax": 0,
+    "Pleural Effusion": 497,
+    "Pleural Other": 575,
+    "Fracture": 571,
+    "Support Devices": 0,
+    "split": 0,
+    "patient_id": 0,
+    "study_number": 0,
+    "view": 0,
+    "orientation": 0,
+    "comorbidity_count": 0,
+    "is_clean_negative": 0
+  },
+  "duplicate_path_count": 0,
+  "comorbidity_count_counts": {
+    "0": 575
+  },
+  "comorbidity_count_stats": {
+    "count": 575.0,
+    "mean": 0.0,
+    "std": 0.0,
+    "min": 0.0,
+    "25%": 0.0,
+    "50%": 0.0,
+    "75%": 0.0,
+    "max": 0.0
+  },
+  "is_clean_negative_counts": {
+    "true": 322,
+    "false": 253
+  }
+}

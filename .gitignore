@@ -2,9 +2,5 @@
 archive.zip
 /kaggle/
 
-/data/**
-!/data/**/
-!/data/**/.gitkeep
-
 __pycache__/
 *.pyc

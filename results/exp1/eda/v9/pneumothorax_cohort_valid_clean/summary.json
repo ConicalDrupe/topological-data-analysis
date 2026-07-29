@@ -1,0 +1,117 @@
+{
+  "n_records": 12,
+  "n_patients": 12,
+  "n_studies": 12,
+  "Pneumothorax_counts": {
+    "0.0": 12
+  },
+  "pathology_counts": {
+    "No Finding": {
+      "1.0": 12
+    },
+    "Enlarged Cardiomediastinum": {
+      "0.0": 12
+    },
+    "Cardiomegaly": {
+      "0.0": 12
+    },
+    "Lung Opacity": {
+      "0.0": 12
+    },
+    "Lung Lesion": {
+      "0.0": 12
+    },
+    "Edema": {
+      "0.0": 12
+    },
+    "Consolidation": {
+      "0.0": 12
+    },
+    "Pneumonia": {
+      "0.0": 12
+    },
+    "Atelectasis": {
+      "0.0": 12
+    },
+    "Pneumothorax": {
+      "0.0": 12
+    },
+    "Pleural Effusion": {
+      "0.0": 12
+    },
+    "Pleural Other": {
+      "0.0": 12
+    },
+    "Fracture": {
+      "0.0": 12
+    },
+    "Support Devices": {
+      "0.0": 12
+    }
+  },
+  "ap_pa_counts": {
+    "AP": 12
+  },
+  "frontal_lateral_counts": {
+    "Frontal": 12
+  },
+  "sex_counts": {
+    "Female": 7,
+    "Male": 5
+  },
+  "age_stats": {
+    "count": 12.0,
+    "mean": 39.916666666666664,
+    "std": 19.846952288739832,
+    "min": 19.0,
+    "25%": 24.5,
+    "50%": 30.0,
+    "75%": 61.0,
+    "max": 68.0
+  },
+  "missing_value_counts": {
+    "Path": 0,
+    "Sex": 0,
+    "Age": 0,
+    "Frontal/Lateral": 0,
+    "AP/PA": 0,
+    "No Finding": 0,
+    "Enlarged Cardiomediastinum": 0,
+    "Cardiomegaly": 0,
+    "Lung Opacity": 0,
+    "Lung Lesion": 0,
+    "Edema": 0,
+    "Consolidation": 0,
+    "Pneumonia": 0,
+    "Atelectasis": 0,
+    "Pneumothorax": 0,
+    "Pleural Effusion": 0,
+    "Pleural Other": 0,
+    "Fracture": 0,
+    "Support Devices": 0,
+    "split": 0,
+    "patient_id": 0,
+    "study_number": 0,
+    "view": 0,
+    "orientation": 0,
+    "comorbidity_count": 0,
+    "is_clean_negative": 0
+  },
+  "duplicate_path_count": 0,
+  "comorbidity_count_counts": {
+    "0": 12
+  },
+  "comorbidity_count_stats": {
+    "count": 12.0,
+    "mean": 0.0,
+    "std": 0.0,
+    "min": 0.0,
+    "25%": 0.0,
+    "50%": 0.0,
+    "75%": 0.0,
+    "max": 0.0
+  },
+  "is_clean_negative_counts": {
+    "true": 12
+  }
+}

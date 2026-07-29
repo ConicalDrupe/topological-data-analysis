@@ -47,49 +47,59 @@ U-Ignore policy). No uncertainty-mapping (U-Ones/U-Zeros) is used for this basel
       as "no device" — support devices (chest tubes, lines, etc.) visible on the film
       could confound the topological features this experiment extracts, so the
       strictest available label is used.
-   4. **Per-patient dedup**: for patients with multiple studies, keep only the patient's
-      **earliest (first) qualifying study** — the first study, in study-number order,
-      that satisfies **all three** filters above *jointly* (0/1 Pneumothorax label, AP
-      view, and confirmed no support devices, all in the same study). This yields at
-      most one study per patient for this cohort. (Note: this is an
+   4. **Comorbidity/no-other-disease filter** (corrected — see `cohort_validation.md`):
+      many Pneumothorax rows, positive *and* negative, still have *other* confirmed
+      pathologies (Cardiomegaly, Lung Opacity, Effusion, etc.). Since cubical persistence
+      is sensitive to any structural change in the lung field, a comorbid case on either
+      side of the label muddies the target-vs-healthy contrast. Two columns are added to
+      make this visible:
+      - **`comorbidity_count`** — how many of the 11 *other* pathology columns
+        (all `PATHOLOGY_COLUMNS` minus `Pneumothorax`, `No Finding`, `Support Devices`)
+        are confirmed-positive (`== 1.0`) for that row. Uncertain (`-1.0`) values are not
+        counted — the strict/confirmed-only convention used throughout this cohort.
+      - **`is_clean_negative`** — `No Finding == 1.0`: the labeler's own explicit
+        "nothing found at all" signal.
+
+      The filter is applied asymmetrically, before per-patient dedup (so it's part of
+      what "qualifying" means for step 5 below):
+      - **Positive rows** (`Pneumothorax == 1.0`) require `comorbidity_count == 0`.
+        There's no `No Finding`-equivalent explicit signal for positives (`No Finding`
+        is mutually exclusive with any positive pathology label, including Pneumothorax
+        itself), so `comorbidity_count == 0` is used directly.
+      - **Negative rows** (`Pneumothorax == 0.0`) require `is_clean_negative` (stricter
+        than `comorbidity_count == 0` alone — it also excludes rows where another
+        finding is merely uncertain, not just confirmed positive).
+
+      An earlier version of this pipeline only applied the negative-side check and kept
+      *all* positive rows regardless of comorbidity — see `cohort_validation.md` for the
+      bug writeup and before/after counts. This "clean" cohort is Experiment 1's
+      primary/active dataset. An unfiltered **reference cohort** (label + view + device
+      filters only, no comorbidity requirement) is still written alongside it, kept on
+      disk as "the larger dataset" to revisit for comparison once the classification
+      step exists.
+   5. **Per-patient dedup**: for patients with multiple qualifying rows (multiple
+      studies, or multiple qualifying views within one study), keep only the patient's
+      **earliest (first) qualifying row** — lowest `study_number`, then lowest `view`
+      number as a tiebreak within that study — among rows satisfying steps 1–4 jointly.
+      This yields exactly one row per patient for this cohort (verified:
+      `n_records == n_patients` in every output). (Note: this is an
       Experiment-1-specific rule — Experiment 3 deliberately keeps *all* qualifying
       studies per patient; see Shared Infrastructure below.)
-   5. Remap `Path` values to on-disk paths (strip the `CheXpert-v1.0-small/` prefix — see
+   6. Remap `Path` values to on-disk paths (strip the `CheXpert-v1.0-small/` prefix — see
       `CLAUDE.md`).
 
-   **Resulting cohort size (verified against the real CSVs):** train 2,299 rows / 2,266
-   patients (Pneumothorax balance: 1,430 negative / 869 positive); valid 77 rows / 77
-   patients (76 negative / 1 positive).
+   **Resulting cohort size (verified against the real CSVs,
+   `data/exp1/v2_corrected_cohort/`):**
+   - Reference (no comorbidity filter): train 2,266 rows / 2,266 patients (848 positive /
+     1,418 negative); valid 77 / 77 (1 positive / 76 negative).
+   - **Clean (primary/active dataset):** train 575 rows / 575 patients (253 positive /
+     322 negative) — `pneumothorax_cohort_train_clean.csv`; valid 12 / 12 (0 positive /
+     12 negative) — `pneumothorax_cohort_valid_clean.csv`.
 
-   **Comorbidity confound check and "clean negatives" cohort (decided):** many
-   Pneumothorax-negative rows still have *other* confirmed pathologies (Cardiomegaly,
-   Lung Opacity, Effusion, etc.). Since cubical persistence is sensitive to any
-   structural change in the lung field, a "negative" with a different disease could
-   produce a topological signature that looks similarly abnormal to a true pneumothorax
-   case — muddying the target-vs-healthy contrast. Two columns are added to every cohort
-   CSV to make this visible and actionable:
-   - **`comorbidity_count`** — how many of the 11 *other* pathology columns
-     (all `PATHOLOGY_COLUMNS` minus `Pneumothorax`, `No Finding`, `Support Devices`) are
-     confirmed-positive (`== 1.0`) for that row. Uncertain (`-1.0`) values are not
-     counted — the strict/confirmed-only convention used throughout this cohort.
-   - **`is_clean_negative`** — `No Finding == 1.0`: the labeler's own explicit "nothing
-     found at all" signal, chosen over the looser `comorbidity_count == 0` (which still
-     allows unmentioned/uncertain findings on other columns) as the strictest available
-     "truly healthy" indicator.
-
-   A **clean-negatives cohort variant** is then derived: keep every `Pneumothorax == 1.0`
-   row (positives are kept regardless of their own comorbidities — only the negative
-   side of the contrast is being cleaned up), but restrict `Pneumothorax == 0.0` rows to
-   `is_clean_negative == True` only. Verified counts: train 869 positive + 320 clean
-   negative = **1,189 rows** (`pneumothorax_cohort_train_clean_negatives.csv`); valid 1
-   positive + 12 clean negative = **13 rows**
-   (`pneumothorax_cohort_valid_clean_negatives.csv`).
-
-   **This clean-negatives cohort is Experiment 1's primary/active dataset** — see
-   Train/test split below. The original, unfiltered cohort (with both new columns) is
-   still written and kept on disk as "the larger dataset," to revisit for comparison
-   once the classification step exists (does restricting to clean negatives actually
-   change measured AUROC, or was the comorbidity confound not material in practice?).
+   Enforcing the comorbidity filter on positives removes 71% of the previously-kept
+   positive class (869 → 253 in the train cohort) — most Pneumothorax-positive studies in
+   this dataset also have at least one other confirmed finding. See
+   `cohort_validation.md` for full before/after detail.
 
 2. **ROI cropping** — crop each image to its region of interest *before*
    normalization, to remove border text, lateral-view markers, and other burned-in
@@ -175,26 +185,28 @@ AP-only + no-support-devices filters above it shrinks to 77 rows with only **1**
 Pneumothorax case — unusable as a reliable evaluation set on its own. Instead, Experiment
 1 carves its own split out of the filtered *train* cohort:
 
-- **Source (updated)**: `pneumothorax_cohort_train_clean_negatives.csv` (1,189 rows),
-  not the full unfiltered cohort — Experiment 1 uses the clean-negatives cohort as its
-  primary/active dataset (see Pipeline step 1). The full cohort remains on disk, unused
-  by the split, for the future clean-vs-full comparison.
+- **Source (corrected)**: `data/exp1/v2_corrected_cohort/pneumothorax_cohort_train_clean.csv`
+  (575 rows), not the reference/unfiltered cohort — Experiment 1 uses the clean cohort as
+  its primary/active dataset (see Pipeline step 4). The reference cohort remains on disk,
+  unused by the split, for the future clean-vs-reference comparison.
 - **Method**: stratified 80/20 split by `Pneumothorax`, implemented as a plain per-class
   `pandas` sample (`tda_chexpr.split.stratified_split`) rather than a `scikit-learn`
   dependency.
-- **Split by patient, not by row**: `select_studies(mode="first_qualifying")` guarantees
-  one *study* per patient, but that study can still contribute more than one frontal AP
-  image (33 patients in the original cohort have 2 rows). The split is therefore done on
-  unique `patient_id` first, then every row belonging to a chosen patient follows that
-  patient into train or test — a naive row-level split was tried first and produced 8
-  patients leaking across both splits, which is why this two-step approach is needed.
-- **Output** (verified against the real CSVs): `data/exp1/pneumothorax_train_split.csv`
-  (953 rows / 932 patients: 698 positive / 255 clean negative) and
-  `data/exp1/pneumothorax_test_split.csv` (236 rows / 234 patients: 171 positive / 65
-  clean negative), written by `src/preprocessing/exp1/split_cohort.py`.
-- The filtered `valid.csv` cohorts (`pneumothorax_cohort_valid.csv` and its
-  `_clean_negatives` variant) are still produced and kept as a secondary/supplementary
-  check, not the primary evaluation set.
+- **Split by patient, not by row**: kept as defense-in-depth even though
+  `select_studies(mode="first_qualifying")` now guarantees exactly one row per patient
+  (see `cohort_validation.md`, Bug 3 — an earlier version of the dedup could leave a
+  patient with 2 rows when a study had more than one qualifying view, which is what
+  originally caused an 8-patient train/test leak under a naive row-level split).
+- **Output** (verified against the real CSVs):
+  `data/exp1/v2_corrected_cohort/pneumothorax_train_split.csv` (460 rows / 460 patients:
+  202 positive / 258 clean negative) and
+  `data/exp1/v2_corrected_cohort/pneumothorax_test_split.csv` (115 rows / 115 patients:
+  51 positive / 64 clean negative), written by `src/preprocessing/exp1/split_cohort.py`.
+- The filtered `valid.csv` cohorts (`pneumothorax_cohort_valid.csv` and its `_clean`
+  variant, both under `data/exp1/v2_corrected_cohort/`) are still produced and kept as a
+  secondary/supplementary check, not the primary evaluation set. Note: the clean valid
+  cohort has 0 positive cases after the comorbidity fix (its one prior positive case had
+  a comorbidity) — it's negative-only now.
 
 ### Experiment matrix
 

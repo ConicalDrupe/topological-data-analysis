@@ -1,0 +1,14 @@
+Path,Sex,Age,Frontal/Lateral,AP/PA,No Finding,Enlarged Cardiomediastinum,Cardiomegaly,Lung Opacity,Lung Lesion,Edema,Consolidation,Pneumonia,Atelectasis,Pneumothorax,Pleural Effusion,Pleural Other,Fracture,Support Devices,split,patient_id,study_number,view,orientation,comorbidity_count,is_clean_negative
+valid/patient64544/study1/view1_frontal.jpg,Female,42,Frontal,AP,1.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,valid,patient64544,1,view1,frontal,0,True
+valid/patient64554/study1/view1_frontal.jpg,Female,19,Frontal,AP,1.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,valid,patient64554,1,view1,frontal,0,True
+valid/patient64562/study1/view1_frontal.jpg,Male,25,Frontal,AP,1.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,valid,patient64562,1,view1,frontal,0,True
+valid/patient64576/study1/view1_frontal.jpg,Male,23,Frontal,AP,1.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,valid,patient64576,1,view1,frontal,0,True
+valid/patient64586/study1/view1_frontal.jpg,Male,68,Frontal,AP,1.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,valid,patient64586,1,view1,frontal,0,True
+valid/patient64591/study1/view1_frontal.jpg,Female,23,Frontal,AP,1.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,valid,patient64591,1,view1,frontal,0,True
+valid/patient64602/study1/view1_frontal.jpg,Male,81,Frontal,AP,0.0,0.0,0.0,1.0,0.0,0.0,0.0,0.0,0.0,1.0,0.0,0.0,0.0,0.0,valid,patient64602,1,view1,frontal,1,False
+valid/patient64627/study1/view1_frontal.jpg,Female,29,Frontal,AP,1.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,valid,patient64627,1,view1,frontal,0,True
+valid/patient64685/study1/view1_frontal.jpg,Male,25,Frontal,AP,1.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,valid,patient64685,1,view1,frontal,0,True
+valid/patient64696/study1/view1_frontal.jpg,Female,31,Frontal,AP,1.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,valid,patient64696,1,view1,frontal,0,True
+valid/patient64716/study1/view1_frontal.jpg,Female,68,Frontal,AP,1.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,valid,patient64716,1,view1,frontal,0,True
+valid/patient64721/study1/view1_frontal.jpg,Male,67,Frontal,AP,1.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,valid,patient64721,1,view1,frontal,0,True
+valid/patient64727/study1/view1_frontal.jpg,Female,59,Frontal,AP,1.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,valid,patient64727,1,view1,frontal,0,True

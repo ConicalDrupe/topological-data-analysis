@@ -9,14 +9,14 @@ import pandas as pd
 from tda_chexpr.data import REPO_ROOT
 from tda_chexpr.eda import next_version_dir, plot_age_histogram, print_summary, save_summary_json, summarize_cohort
 
-DATA_DIR = REPO_ROOT / "data" / "exp1"
+DATA_DIR = REPO_ROOT / "data" / "exp1" / "v2_corrected_cohort"
 RESULTS_DIR = REPO_ROOT / "results" / "exp1" / "eda"
 
 DATASETS = [
     "pneumothorax_cohort_train",
     "pneumothorax_cohort_valid",
-    "pneumothorax_cohort_train_clean_negatives",
-    "pneumothorax_cohort_valid_clean_negatives",
+    "pneumothorax_cohort_train_clean",
+    "pneumothorax_cohort_valid_clean",
     "pneumothorax_train_split",
     "pneumothorax_test_split",
 ]

@@ -1,0 +1,136 @@
+{
+  "n_records": 460,
+  "n_patients": 460,
+  "n_studies": 460,
+  "Pneumothorax_counts": {
+    "0.0": 258,
+    "1.0": 202
+  },
+  "pathology_counts": {
+    "No Finding": {
+      "1.0": 258,
+      "NaN": 202
+    },
+    "Enlarged Cardiomediastinum": {
+      "NaN": 404,
+      "0.0": 43,
+      "-1.0": 13
+    },
+    "Cardiomegaly": {
+      "NaN": 450,
+      "0.0": 9,
+      "-1.0": 1
+    },
+    "Lung Opacity": {
+      "NaN": 439,
+      "0.0": 18,
+      "-1.0": 3
+    },
+    "Lung Lesion": {
+      "NaN": 459,
+      "-1.0": 1
+    },
+    "Edema": {
+      "NaN": 447,
+      "0.0": 13
+    },
+    "Consolidation": {
+      "NaN": 420,
+      "0.0": 34,
+      "-1.0": 6
+    },
+    "Pneumonia": {
+      "NaN": 460
+    },
+    "Atelectasis": {
+      "NaN": 451,
+      "-1.0": 5,
+      "0.0": 4
+    },
+    "Pneumothorax": {
+      "0.0": 258,
+      "1.0": 202
+    },
+    "Pleural Effusion": {
+      "NaN": 397,
+      "0.0": 60,
+      "-1.0": 3
+    },
+    "Pleural Other": {
+      "NaN": 460
+    },
+    "Fracture": {
+      "NaN": 457,
+      "0.0": 3
+    },
+    "Support Devices": {
+      "0.0": 460
+    }
+  },
+  "ap_pa_counts": {
+    "AP": 460
+  },
+  "frontal_lateral_counts": {
+    "Frontal": 460
+  },
+  "sex_counts": {
+    "Male": 265,
+    "Female": 195
+  },
+  "age_stats": {
+    "count": 460.0,
+    "mean": 53.99782608695652,
+    "std": 18.964535059817518,
+    "min": 18.0,
+    "25%": 40.0,
+    "50%": 55.0,
+    "75%": 69.0,
+    "max": 90.0
+  },
+  "missing_value_counts": {
+    "Path": 0,
+    "Sex": 0,
+    "Age": 0,
+    "Frontal/Lateral": 0,
+    "AP/PA": 0,
+    "No Finding": 202,
+    "Enlarged Cardiomediastinum": 404,
+    "Cardiomegaly": 450,
+    "Lung Opacity": 439,
+    "Lung Lesion": 459,
+    "Edema": 447,
+    "Consolidation": 420,
+    "Pneumonia": 460,
+    "Atelectasis": 451,
+    "Pneumothorax": 0,
+    "Pleural Effusion": 397,
+    "Pleural Other": 460,
+    "Fracture": 457,
+    "Support Devices": 0,
+    "split": 0,
+    "patient_id": 0,
+    "study_number": 0,
+    "view": 0,
+    "orientation": 0,
+    "comorbidity_count": 0,
+    "is_clean_negative": 0
+  },
+  "duplicate_path_count": 0,
+  "comorbidity_count_counts": {
+    "0": 460
+  },
+  "comorbidity_count_stats": {
+    "count": 460.0,
+    "mean": 0.0,
+    "std": 0.0,
+    "min": 0.0,
+    "25%": 0.0,
+    "50%": 0.0,
+    "75%": 0.0,
+    "max": 0.0
+  },
+  "is_clean_negative_counts": {
+    "true": 258,
+    "false": 202
+  }
+}

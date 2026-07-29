@@ -1,0 +1,131 @@
+{
+  "n_records": 115,
+  "n_patients": 115,
+  "n_studies": 115,
+  "Pneumothorax_counts": {
+    "0.0": 64,
+    "1.0": 51
+  },
+  "pathology_counts": {
+    "No Finding": {
+      "1.0": 64,
+      "NaN": 51
+    },
+    "Enlarged Cardiomediastinum": {
+      "NaN": 100,
+      "0.0": 13,
+      "-1.0": 2
+    },
+    "Cardiomegaly": {
+      "NaN": 111,
+      "0.0": 4
+    },
+    "Lung Opacity": {
+      "NaN": 113,
+      "0.0": 2
+    },
+    "Lung Lesion": {
+      "NaN": 115
+    },
+    "Edema": {
+      "NaN": 109,
+      "0.0": 6
+    },
+    "Consolidation": {
+      "NaN": 109,
+      "0.0": 6
+    },
+    "Pneumonia": {
+      "NaN": 114,
+      "0.0": 1
+    },
+    "Atelectasis": {
+      "NaN": 112,
+      "0.0": 3
+    },
+    "Pneumothorax": {
+      "0.0": 64,
+      "1.0": 51
+    },
+    "Pleural Effusion": {
+      "NaN": 100,
+      "0.0": 15
+    },
+    "Pleural Other": {
+      "NaN": 115
+    },
+    "Fracture": {
+      "NaN": 114,
+      "0.0": 1
+    },
+    "Support Devices": {
+      "0.0": 115
+    }
+  },
+  "ap_pa_counts": {
+    "AP": 115
+  },
+  "frontal_lateral_counts": {
+    "Frontal": 115
+  },
+  "sex_counts": {
+    "Male": 67,
+    "Female": 48
+  },
+  "age_stats": {
+    "count": 115.0,
+    "mean": 53.29565217391304,
+    "std": 18.057400637209458,
+    "min": 18.0,
+    "25%": 42.0,
+    "50%": 56.0,
+    "75%": 67.0,
+    "max": 84.0
+  },
+  "missing_value_counts": {
+    "Path": 0,
+    "Sex": 0,
+    "Age": 0,
+    "Frontal/Lateral": 0,
+    "AP/PA": 0,
+    "No Finding": 51,
+    "Enlarged Cardiomediastinum": 100,
+    "Cardiomegaly": 111,
+    "Lung Opacity": 113,
+    "Lung Lesion": 115,
+    "Edema": 109,
+    "Consolidation": 109,
+    "Pneumonia": 114,
+    "Atelectasis": 112,
+    "Pneumothorax": 0,
+    "Pleural Effusion": 100,
+    "Pleural Other": 115,
+    "Fracture": 114,
+    "Support Devices": 0,
+    "split": 0,
+    "patient_id": 0,
+    "study_number": 0,
+    "view": 0,
+    "orientation": 0,
+    "comorbidity_count": 0,
+    "is_clean_negative": 0
+  },
+  "duplicate_path_count": 0,
+  "comorbidity_count_counts": {
+    "0": 115
+  },
+  "comorbidity_count_stats": {
+    "count": 115.0,
+    "mean": 0.0,
+    "std": 0.0,
+    "min": 0.0,
+    "25%": 0.0,
+    "50%": 0.0,
+    "75%": 0.0,
+    "max": 0.0
+  },
+  "is_clean_negative_counts": {
+    "true": 64,
+    "false": 51
+  }
+}

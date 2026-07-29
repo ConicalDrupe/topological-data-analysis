@@ -26,15 +26,20 @@ def filter_binary_label(df: pd.DataFrame, label: str) -> pd.DataFrame:
 def select_studies(df: pd.DataFrame, mode: str) -> pd.DataFrame:
     """Select which studies to keep per patient.
 
-    mode="first_qualifying": one study per patient -- the earliest
-      (lowest study_number) among the rows remaining after filtering.
-      This is Experiment 1's rule.
+    mode="first_qualifying": exactly one row per patient -- the earliest
+      (lowest study_number) among the rows remaining after filtering, and
+      within that study the lowest view number (a study can have more than
+      one qualifying view, e.g. view1 + view2 both AP frontal -- without this
+      tiebreak that would leave two rows for one patient). This is
+      Experiment 1's rule.
     mode="all_ordered": keep every remaining study per patient, sorted by
       study_number. This is Experiment 3's rule.
     """
     if mode == "first_qualifying":
         min_study = df.groupby("patient_id")["study_number"].transform("min")
-        return df[df["study_number"] == min_study].copy()
+        df = df[df["study_number"] == min_study]
+        min_view = df.groupby("patient_id")["view"].transform("min")
+        return df[df["view"] == min_view].copy()
     if mode == "all_ordered":
         return df.sort_values(["patient_id", "study_number"]).reset_index(drop=True)
     raise ValueError(f"Unknown mode: {mode!r}")
@@ -86,14 +91,26 @@ def add_clean_negative_flag(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
-def filter_clean_negatives(df: pd.DataFrame, target_label: str) -> pd.DataFrame:
-    """Keep all target_label positives, but only clean (is_clean_negative) negatives.
+def filter_no_comorbidity(df: pd.DataFrame, target_label: str) -> pd.DataFrame:
+    """Keep only rows with no confounding comorbidity, asymmetric by label:
 
-    Requires add_clean_negative_flag to have been run already. Isolates the
-    target-vs-healthy contrast from comorbid-disease confounds on the negative
-    side, without discarding positive rows for having comorbidities too.
+    - target_label == 1.0 (positive): require comorbidity_count == 0 -- no
+      other pathology column confirmed positive. There's no "No Finding"-style
+      explicit signal available for positives (it's mutually exclusive with
+      any positive pathology label, including the target itself).
+    - target_label == 0.0 (negative): require is_clean_negative (No Finding
+      == 1.0) -- the labeler's own explicit "nothing found" signal, stricter
+      than comorbidity_count == 0 alone (it also excludes rows where another
+      finding is merely uncertain/-1.0, not just confirmed positive).
+
+    Requires add_comorbidity_count and add_clean_negative_flag to have been
+    run already.
     """
-    return df[(df[target_label] == 1.0) | df["is_clean_negative"]].copy()
+    is_positive = df[target_label] == 1.0
+    qualifies = (is_positive & (df["comorbidity_count"] == 0)) | (
+        ~is_positive & df["is_clean_negative"]
+    )
+    return df[qualifies].copy()
 
 
 def build_cohort(
@@ -103,12 +120,17 @@ def build_cohort(
     frontal_only: bool = False,
     ap_only: bool = False,
     require_no_support_devices: bool = False,
+    require_no_comorbidity: bool = False,
 ) -> pd.DataFrame:
-    """Full cohort construction pipeline: filter -> narrow view/devices -> select studies.
+    """Full cohort construction pipeline: filter -> narrow view/devices/comorbidity
+    -> select studies.
 
-    View/device filters run *before* select_studies so that "qualifying" is a
+    All row-level filters run *before* select_studies so that "qualifying" is a
     joint condition -- a patient's earliest study must satisfy every active
-    filter at once, not just the label filter.
+    filter at once (label, view, devices, and comorbidity), not just the label
+    filter. This matters for require_no_comorbidity in particular: without it,
+    a patient could be anchored to an early study that fails the comorbidity
+    check even though a later study of theirs would have qualified cleanly.
     """
     df = add_path_components(df)
     df = filter_binary_label(df, label)
@@ -118,5 +140,9 @@ def build_cohort(
         df = filter_ap_only(df)
     if require_no_support_devices:
         df = filter_no_support_devices(df)
+    if require_no_comorbidity:
+        df = add_comorbidity_count(df, target_label=label)
+        df = add_clean_negative_flag(df)
+        df = filter_no_comorbidity(df, target_label=label)
     df = select_studies(df, mode=mode)
     return df.reset_index(drop=True)

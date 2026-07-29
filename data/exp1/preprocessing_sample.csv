@@ -1,0 +1,11 @@
+Path,Sex,Age,Frontal/Lateral,AP/PA,No Finding,Enlarged Cardiomediastinum,Cardiomegaly,Lung Opacity,Lung Lesion,Edema,Consolidation,Pneumonia,Atelectasis,Pneumothorax,Pleural Effusion,Pleural Other,Fracture,Support Devices,split,patient_id,study_number,view,orientation,comorbidity_count,is_clean_negative
+train/patient17908/study3/view1_frontal.jpg,Male,75,Frontal,AP,,,,1.0,,1.0,,,,1.0,,,,0.0,train,patient17908,3,view1,frontal,2,False
+train/patient09494/study5/view1_frontal.jpg,Male,64,Frontal,AP,,,,-1.0,,,,,1.0,1.0,,,,0.0,train,patient09494,5,view1,frontal,1,False
+train/patient09693/study2/view1_frontal.jpg,Female,77,Frontal,AP,,,,,,,,,1.0,1.0,,,,0.0,train,patient09693,2,view1,frontal,1,False
+train/patient43562/study1/view1_frontal.jpg,Female,58,Frontal,AP,,,,,,,0.0,,,1.0,0.0,,,0.0,train,patient43562,1,view1,frontal,0,False
+train/patient07084/study7/view1_frontal.jpg,Female,40,Frontal,AP,,,,,,1.0,1.0,,,1.0,,,,0.0,train,patient07084,7,view1,frontal,2,False
+train/patient48862/study2/view1_frontal.jpg,Male,23,Frontal,AP,1.0,0.0,,,,,0.0,,,0.0,0.0,,,0.0,train,patient48862,2,view1,frontal,0,True
+train/patient36302/study5/view1_frontal.jpg,Male,57,Frontal,AP,1.0,,,,,,,,,0.0,,,,0.0,train,patient36302,5,view1,frontal,0,True
+train/patient14589/study3/view1_frontal.jpg,Female,39,Frontal,AP,1.0,,,,,,,,,0.0,,,,0.0,train,patient14589,3,view1,frontal,0,True
+train/patient45193/study2/view1_frontal.jpg,Female,60,Frontal,AP,1.0,,,,,,,,,0.0,,,,0.0,train,patient45193,2,view1,frontal,0,True
+train/patient39428/study4/view1_frontal.jpg,Male,74,Frontal,AP,1.0,,,,,,,,,0.0,,,,0.0,train,patient39428,4,view1,frontal,0,True
