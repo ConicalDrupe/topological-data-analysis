@@ -554,13 +554,21 @@ wheels = [
 [[package]]
 name = "mapper"
 version = "0.1.0"
-source = { virtual = "Mapper" }
+source = { editable = "Mapper" }
 dependencies = [
     { name = "kmapper" },
+    { name = "numpy" },
+    { name = "pandas" },
+    { name = "scikit-learn" },
 ]
 
 [package.metadata]
-requires-dist = [{ name = "kmapper", specifier = ">=2.1.0" }]
+requires-dist = [
+    { name = "kmapper", specifier = ">=2.1.0" },
+    { name = "numpy" },
+    { name = "pandas" },
+    { name = "scikit-learn" },
+]
 
 [[package]]
 name = "markdown-it-py"
