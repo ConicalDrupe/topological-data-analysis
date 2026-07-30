@@ -1,4 +1,4 @@
-# Experiment 2 — Mapper Graph (v1)
+# Experiment 2 — Mapper Graph (v1, v2)
 
 ## Goal
 
@@ -95,10 +95,97 @@ all-negative) — every node is a mix of both labels.
   panels, image previews) is the natural next build once this base graph is
   validated as informative.
 
+## v2 — Enhanced Cluster-Detail Viewer
+
+### Goal
+
+SPEC.md Section 6: extend the existing Mapper graph (same lens/cover/clustering as v1,
+now factored into `mapper.graph.build_graph`) so clicking a node's "Cluster Details"
+panel also shows per-node field-distribution summaries and a way to inspect member
+images, without replacing kmapper's own Jinja2/D3 template.
+
+### Design decision (SPEC.md Section 6.2's open choice)
+
+Resolved as: **inline batched thumbnail grid + in-page lightbox**, not a separate
+linked page. Rationale: the stated scaling concern (a cluster could hold "hundreds of
+thousands" of images in a future dataset) is a DOM-size/render-time problem, not an
+image-byte-size problem — `kaggle/processed/*.png` are already small (224x224, ~30 KB)
+and images are referenced by relative file path, never embedded as base64. So the grid
+renders thumbnails in fixed batches (default 48) with a "Load N more" button, while the
+full path/tooltip list stays in memory as lightweight JSON, letting the lightbox's
+prev/next navigation jump instantly across the *entire* member list regardless of how
+many thumbnails have been rendered. A linked separate page was rejected because a page
+reload per "closer look" click directly fights the stated speed requirement.
+
+### Implementation
+
+- `mapper.cluster_details.classify_field`: dtype-driven categorical/continuous
+  classification (SPEC.md Section 6.1), computed once from the *full* column so a
+  field's type stays consistent across nodes (see Bugs below).
+- Per-node payload (distributions + image paths/tooltips) is computed in Python and
+  injected as a JS global into the HTML `visualize()` already returns
+  (`save_file=False`), by splicing a `<style>`/`<script>` block before `</body>` —
+  no fork of the installed kmapper package.
+- The injected JS wraps kmapper's own `window.set_focus_node` (calls the original, then
+  renders the new sections) rather than replacing kmapper's click/hover interaction
+  model.
+
+### Bugs found and fixed
+
+1. `classify_field` was initially called on each node's small member *subset* rather
+   than the full column — a continuous field like `Age` (72 unique values overall) was
+   misclassified as categorical whenever a small cluster happened to have ≤10 distinct
+   ages. Fixed by computing field types once from `df[field]` (the full column) and
+   threading that through to every node.
+2. An incidental "fix" to remove kmapper's CDN dependency for `d3.js` (swapping in
+   kmapper's own bundled `static/d3.min.js`) broke the graph entirely — that bundled
+   file is an old, incompatible d3 version (no `d3.scalePow`, pre-v4 style), not the
+   `d3@6.1.1` the CDN serves and `kmapper.js` actually requires. Reverted; the v1/v2
+   graphs still load `d3`/`file-saver` from CDN, same pre-existing behavior as before
+   this work (unrelated to this change — flagged as a known limitation, not fixed here).
+
+### Results
+
+Ran against the same `eps=3.5, min_samples=5` graph as v1 (54 nodes, 162 edges) —
+see the `v2` entry in the Run Log below for exact parameters. 0 images skipped
+(all `resolve_image_path` lookups succeeded).
+
+Verified end-to-end with a headless-Chromium interaction test (Playwright, driving the
+real generated HTML file): node click expands the panel and renders correct
+distributions (categorical bar/count/percent for `Pneumothorax`, mean/median/std/range +
+10-bin histogram for `Age`); the gallery renders an initial batch, the "Load N more"
+button correctly appends the remainder for a 61-image node (batch size 48 → "Load 13
+more (13 remaining)" → all 61 rendered, button removed); clicking a thumbnail opens the
+lightbox with the correct image and tooltip, next/prev navigation and Escape-to-close
+both work. No console or page errors during any of this.
+
+### Observations
+
+- The dtype-driven classification, once fixed to use the global column, behaves as
+  intended for this schema: `Pneumothorax` (2-valued float) and `Sex`/`is_clean_negative`
+  would classify as categorical, `Age` as continuous, `comorbidity_count` as categorical
+  (degenerate, single value in this cohort — harmless, just a one-bar chart).
+- The real scaling risk for very large clusters, as anticipated, is DOM node count, not
+  image bytes — the batched-render + full-list-in-memory design keeps the lightbox
+  instant regardless of unrendered thumbnail count.
+
+### Next Steps
+
+- User to visually review `Mapper/results/v2/graphs/medgemma_train_mapper.html`
+  interactively (click a few nodes, browse a gallery, open the lightbox) as the
+  acceptance check.
+- If a future dataset actually approaches "hundreds of thousands of images per node,"
+  revisit whether the per-node image *path list* itself (not the images) becomes large
+  enough in the embedded JSON payload to matter — not a concern at this cohort's scale
+  (460 rows).
+- The CDN dependency for `d3`/`file-saver` (pre-existing, not introduced here) means
+  both v1 and v2 graphs need network access to render at all — worth a real fix
+  (vendoring a correct d3@6.1.1 build) if offline use ever becomes a requirement.
+
 ## Run Log
 
 Raw per-invocation diagnostics, auto-appended by
-`Mapper/scripts/build_mapper_graph.py` on every run:
+`Mapper/scripts/build_mapper_graph.py` / `build_mapper_graph_v2.py` on every run:
 
 ## Run 2026-07-30T20:34:11.887969+00:00
 
@@ -129,3 +216,21 @@ Raw per-invocation diagnostics, auto-appended by
 - DBSCAN degeneracy check (whole-dataset diagnostic fit): 16.3% unclustered
   (label == -1), largest single cluster holds 83.7% of points
 - Not degenerate by the >=90% noise / >=90% single-cluster threshold.
+
+## Run 2026-07-30T20:57:10.402998+00:00 (v2 — enhanced cluster viewer)
+
+- Dataset: backend=medgemma, split=train, 460 rows,
+  embedding_dim=1152
+- Lens: PCA(n_components=2, random_state=42) on raw embeddings
+- Cover: kmapper.Cover(n_cubes=10, perc_overlap=0.5)
+- Clustering: sklearn.cluster.DBSCAN(eps=3.5, min_samples=5),
+  fit on original 1152-d embeddings (not lens-space)
+- Node coloring: mean Pneumothorax value among cluster members (0-1 scale)
+- Cluster-detail fields: Pneumothorax, Age
+- Image kind: processed, gallery batch size: 48
+- Output: /home/boon/Projects/topological-data-analysis/Mapper/results/v2/graphs/medgemma_train_mapper.html
+- Mapper graph: 54 nodes, 162 edges
+- DBSCAN degeneracy check (whole-dataset diagnostic fit): 16.3% unclustered
+  (label == -1), largest single cluster holds 83.7% of points
+- Not degenerate by the >=90% noise / >=90% single-cluster threshold.
+- Images skipped (unresolvable path): 0
