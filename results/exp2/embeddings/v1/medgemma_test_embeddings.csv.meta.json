@@ -1,0 +1,9 @@
+{
+  "backend": "medgemma",
+  "model_id": "google/medgemma-4b-it",
+  "vision_attr": "vision_tower",
+  "pooling": "mean_patch",
+  "embedding_dim": 1152,
+  "key_column": "Path",
+  "generated_at": "2026-07-30T02:00:51.599866+00:00"
+}

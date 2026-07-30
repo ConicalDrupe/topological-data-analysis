@@ -3,11 +3,10 @@
 Auth, per backend:
 - `siglip` (default preset): ungated, no Hugging Face account needed. Good for
   smoke-testing the pipeline first.
+- `rad-dino`: confirmed ungated (MIT-licensed model card) -- no auth needed.
 - `medgemma`: gated, like the rest of the Gemma family. Create an HF account, accept
   the license on the `google/medgemma-4b-it` model page, then either run
   `huggingface-cli login` once or set `HF_TOKEN` in the environment before running.
-- `rad-dino`: gating status unconfirmed as of writing -- try it and follow the same
-  accept-license-then-token flow as medgemma if it 401s.
 See encoders.py for the full backend preset table.
 """
 

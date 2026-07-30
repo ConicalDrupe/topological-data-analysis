@@ -37,12 +37,15 @@ Auth, per `--backend`:
 | backend    | gated?      | what you need                                                                 |
 |------------|-------------|--------------------------------------------------------------------------------|
 | `siglip`   | no          | nothing — works anonymously                                                    |
+| `rad-dino` | no          | confirmed ungated (MIT-licensed model card) — nothing needed                   |
 | `medgemma` | yes         | HF account, accept license on `google/medgemma-4b-it`'s model page, then `huggingface-cli login` or `export HF_TOKEN=...` |
-| `rad-dino` | unconfirmed | try it; if it 401s, same flow as medgemma                                      |
 | `custom`   | depends     | whatever the checkpoint you point `--model-id` at requires                     |
 
-Start with `--backend siglip` to confirm the pipeline runs end-to-end before dealing with
-gated access.
+Start with `--backend siglip` or `--backend rad-dino` (both ungated) to confirm the
+pipeline runs end-to-end before dealing with `medgemma`'s gated access — the module's
+own `--backend` default is `medgemma`, so passing `--backend` explicitly matters. All
+three presets have now run successfully end-to-end against this repo's cohort (see
+`logs/exp2_embeddings_log.md`).
 
 ## Generate embeddings
 
@@ -123,9 +126,33 @@ attribute path, pooling strategy) — no new code path required. For a one-off c
 skip the preset and pass `--backend custom --model-id ... --vision-attr ... --pooling
 ...` directly.
 
+## Loading only the vision submodule
+
+Backends whose checkpoint wraps the vision encoder inside a larger model (`vision_attr`
+non-empty — currently `siglip` and `medgemma`) load through `_load_vision_submodule` in
+`encoders.py`: it builds the target module's architecture, then fetches and loads only
+the checkpoint tensors under that submodule's prefix, via `weights.py`. For a *sharded*
+checkpoint (MedGemma's ~4B params) this skips downloading any shard that doesn't contain
+a vision-tower tensor — the language model's weights are never fetched.
+
+This fast path is verified before being trusted: the checkpoint's tensor names (after
+stripping the prefix) must exactly match the built module's `state_dict()` keys, or it
+falls back to loading the full checkpoint through the standard `from_pretrained` (slower,
+downloads everything, but carries transformers' own legacy-key-remapping logic). This
+matters in practice — MedGemma's published checkpoint stores `vision_tower.vision_model.*`
+(an extra nesting level from whatever transformers version it was saved with), which
+doesn't match transformers 5.14.1's flat `Gemma3Model.vision_tower` (a bare
+`SiglipVisionModel`); the fast path was verified to fail cleanly on this and fall back
+correctly, rather than silently loading a randomly-initialized vision tower. SigLIP's
+single-file checkpoint matches exactly, so it does use the fast path — verified bit-exact
+against the old full-checkpoint-load path.
+
 ## Known TODOs
 
-See the `TODO` comments in `src/gemma_embeddings/encoders.py`:
-- MedGemma's exact `vision_tower` attribute path and whether `AutoModel` resolves the
-  checkpoint at all — confirm against the installed `transformers` version.
-- RAD-DINO's gating status and its model card's recommended pooling (mean-patch vs. CLS).
+- MedGemma's vision tower ships with `vision_use_head=False` (no attention-pooling head
+  in this checkpoint), so its preset uses `pooling="mean_patch"`, not `"pooler"` —
+  SigLIP has no CLS token at all (patch-only sequence), so the code's generic
+  no-pooler-output fallback (CLS-token indexing) would silently grab one arbitrary patch
+  rather than a real pooled representation if used here. If a future backend's checkpoint
+  also lacks a pooling head, check whether it actually has a CLS token before defaulting
+  to `pooling="pooler"`.
