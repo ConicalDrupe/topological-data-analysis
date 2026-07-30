@@ -1,10 +1,13 @@
 # Experiment 1 Log
 
-- **Current experiment:** Experiment 006 (cohort correction — see below) is done.
-  Experiment 1 is **halted** pending regeneration of the preprocessing sample and
-  downstream artifacts against the corrected cohort; Experiments 002–005 (ROI crop,
-  normalization, filtration, denoising) were tuned against the now-superseded cohort
-  and need to be re-validated before resuming.
+- **Current experiment:** Experiment 007 (full-dataset conservative-CLAHE processed
+  image export — see below) is done. Experiment 1 remains otherwise **halted** pending
+  regeneration of the preprocessing sample and downstream artifacts against the
+  corrected cohort; Experiments 002–005 (ROI crop, normalization, filtration,
+  denoising) were tuned against the now-superseded cohort and still need to be
+  re-validated at the Experiment 003 *default* CLAHE settings before Experiment 1
+  proper resumes — Experiment 007 is a separate, deliberately more conservative export
+  requested independently of that pipeline, not a substitute for it.
 - **Preprocessing pipeline:** `build_cohort.py` (filter + comorbidity_count/
   is_clean_negative + `filter_no_comorbidity`, applied *before* per-patient dedup, then
   `select_studies` — see Experiment 006) -> `split_cohort.py` (train/test split from the
@@ -19,8 +22,10 @@
   knob) -> optional denoising (`tda_chexpr.denoising`: Anscombe+wavelet image-space
   denoise, `tda_chexpr.filtration.threshold_diagram` fixed-cutoff thresholding,
   `tda_chexpr.denoising.bottleneck_confidence_cutoff` data-driven cutoff), none yet
-  selected as the pipeline default. No full-dataset batch run of any stage yet — that
-  lands with vectorization/classification.
+  selected as the pipeline default. First full-dataset batch run is now done for the
+  ROI-crop + CLAHE stages only (Experiment 007, 575 images, conservative
+  `clip_limit=0.002` variant) — filtration/denoising/vectorization/classification are
+  still 10-image-sample-only.
 - **Dataset version:** primary/active: `data/exp1/v2_corrected_cohort/pneumothorax_cohort_{train,valid}_clean.csv`
   -> `pneumothorax_{train,test}_split.csv` (corrected, Experiment 006). Reference
   (unfiltered-by-comorbidity) cohort `pneumothorax_cohort_{train,valid}.csv` retained
@@ -37,7 +42,7 @@
 - **Random seed:** 42 (train/test split, preprocessing sample selection, and
   Experiment 005's block-bootstrap RNG).
 - **Feature extraction method:** not yet implemented (filtration/vectorization pending).
-- **Parameters:** see Experiment 001-006 below.
+- **Parameters:** see Experiment 001-007 below.
 - **Evaluation metric:** AUROC (planned primary), accuracy/F1 (planned secondary) — not
   yet computed, no model trained.
 - **Current status:** cohort-selection bug fixed and corrected cohort/split built + EDA'd
@@ -45,8 +50,11 @@
   crop, direct resize to 224x224, CLAHE `kernel_size=16`, `clip_limit=0.01`) but built
   against the stale cohort; cubical-persistence filtration and three denoising
   strategies previously explored, also against the stale cohort; vectorization not
-  started. Next: regenerate the preprocessing sample from the corrected split and
-  re-validate Experiments 002–005 before resuming.
+  started. Full-dataset processed-image export (lung-mask crop + conservative CLAHE,
+  `clip_limit=0.002`) now done for both corrected splits (575/575 images, 0 failures) —
+  Experiment 007, `kaggle/processed/`. Next: regenerate the preprocessing sample from
+  the corrected split and re-validate Experiments 002–005 (at the `clip_limit=0.01`
+  default) before resuming.
 
 ---
 
@@ -670,3 +678,107 @@ EDA (all 6 datasets) at `results/exp1/eda/v9/`.
   choices made against the old sample may not transfer unchanged.
 - Update `experiments.md` §Experiment matrix / downstream sections if the corrected
   cohort size changes any planned batch-run sizing assumptions.
+
+---
+
+# Experiment 007
+
+## Goal
+
+Generate a physical, versioned processed-image dataset (segmentation → crop → CLAHE →
+resize) from the corrected cohort's full train and test splits, written to
+`kaggle/processed/` mirroring `kaggle/train/`'s own layout for easy lookup — requested
+independently of, and prior to, the still-pending Experiment 002–005 re-validation
+against the corrected cohort (see Experiment 006's Next Steps). CLAHE here uses a
+deliberately more conservative `clip_limit` than Experiment 003's confirmed default, at
+your explicit request. This is also the first full-dataset (575 images) run of the
+PSPNet segmentation step — Experiments 002/003 both explicitly flagged full-dataset
+timing as untested beyond an 8–10 image sample.
+
+## Dataset
+
+Both corrected-cohort splits in full: `data/exp1/v2_corrected_cohort/
+pneumothorax_train_split.csv` (460 rows) and `pneumothorax_test_split.csv` (115 rows) —
+575 rows total. Verified directly before running: zero path overlap between the two
+files, every `Path` value in both is prefixed `train/` (no `valid/` rows), every row is
+`Frontal/Lateral == "Frontal"`, and all 575 source JPEGs exist on disk.
+
+## Parameters
+
+- `tda_chexpr.roi.apply_roi_crop(image, "lung_mask", margin_frac=0.05, threshold=0.5,
+  size=224)` — same PSPNet lung-mask bbox crop + direct resize to 224x224 (aspect-ratio
+  warped, no padding) finalized in Experiment 003. Unchanged.
+- `tda_chexpr.preprocessing.apply_normalization(image, "clahe", clip_limit=0.002,
+  kernel_size=16, nbins=256)` — **deliberate deviation from Experiment 003's confirmed
+  default (`clip_limit=0.01`)**, at your request for a "very conservative" CLAHE for
+  this export. Verified directly against the installed skimage 0.26.0 source
+  (`skimage/exposure/_adapthist.py`): `clim = int(clip(clip_limit * kernel_size**2, 1,
+  None))`. At `kernel_size=16` (256 cells), both `clip_limit=0.001` and `0.002` floor to
+  `clim=1` — byte-identical output either way, and the most conservative non-zero
+  `clim` this `kernel_size` supports (consistent with Experiment 003's own `clim`
+  quantization table, which already noted `clip_limit` in `[0.002, 0.006]` all sit on
+  this same `clim=1` plateau at `kernel_size=16`). `0.002` was recorded as the nominal
+  value since it's further from the `clim=1`/`clim=2` boundary at `0.0078` than `0.001`.
+- Output: `skimage.util.img_as_ubyte` on the CLAHE `[0,1]` float64 output → 8-bit
+  grayscale PNG (lossless), written to `kaggle/processed/<source Path, .jpg -> .png>`
+  (e.g. `kaggle/processed/train/patient18455/study3/view1_frontal.png`), directory
+  structure otherwise identical to `kaggle/train/`.
+- New scripts: `src/preprocessing/exp1/preprocess_full_dataset.py` (batch pipeline +
+  manifest, ~9s-class PSPNet singleton load, per-row try/except so one failure can't
+  abort the batch) and `src/preprocessing/exp1/eda_processed_dataset.py` (EDA/report
+  over the manifest + saved images only — no PSPNet/torch import, freely re-runnable).
+
+## Results
+
+- **575/575 rows processed successfully, 0 failures** (`results/exp1/preprocessing/v1/
+  manifest.csv`) — no empty lung masks, no non-grayscale loads, no save errors, across
+  both splits.
+- **First full-dataset PSPNet timing measurement**: model load 0.6s (weights already
+  cached locally from a prior run this session — Experiment 002/003's ~9s figure was a
+  cold load), batch 721.1s for 575 images (**1.25s/image average** on CPU, no GPU used
+  despite one being available in this environment). Resolves the "check full-dataset
+  PSPNet timing" item open since Experiment 002.
+- All 575 output images confirmed exactly 224x224, 8-bit grayscale (manifest's
+  `processed_height`/`processed_width` columns, and a direct spot-check via PIL).
+- EDA (`results/exp1/eda/v10/`): per-split `summary.json` (dataset summary + added
+  preprocessing status/duration stats), `image_stats.json` and intensity-histogram
+  comparison plots (raw vs. processed) over a 15-positive/15-negative stratified sample
+  (`random_state=42`) of successfully-processed rows.
+- Visual spot-check (one positive example, full raw vs. processed side-by-side):
+  lung-mask crop correctly isolates the lung field and removes most border
+  annotations; CLAHE's effect is visually subtle, consistent with the conservative
+  `clim=1` setting, not a strong local-contrast boost.
+
+## Observations
+
+- Because the `clim=1` plateau (Experiment 003's own finding) already covers
+  `clip_limit` values well below `0.01`, requesting an even more conservative value
+  than the Experiment 003 default did not require any new code — only a different
+  `clip_limit` argument to the already-existing `apply_normalization` call.
+- 0/575 segmentation failures at full-dataset scale is a stronger result than the
+  8-image sample in Experiment 002 could show on its own — the "no support devices"
+  cohort filter (excluding heavy tube/line clutter) likely continues to help PSPNet
+  generalize here, as hypothesized in Experiment 002.
+- The manifest's `duration_sec` (mean ~1.25s/image, both splits) is measured with the
+  PSPNet model already resident in memory — it does not include the one-time model
+  load, which is reported separately and was fast here only because the weights file
+  was already cached from an earlier step in this session (a cold environment would
+  see the ~9s load Experiment 002 measured, once, plus this same per-image rate).
+- This export uses a different CLAHE `clip_limit` (0.002) than Experiment 003's
+  confirmed pipeline default (0.01) — anything built on top of `kaggle/processed/`
+  going forward should treat it as the conservative-CLAHE variant, not the Experiment
+  1 pipeline's eventual default output, until/unless the two are explicitly reconciled.
+
+## Next Steps
+
+- This does not resolve Experiment 006's still-open item: `preprocessing_sample.csv`
+  regeneration and re-validation of Experiments 002–005 against the corrected cohort at
+  the Experiment 003 *default* `clip_limit=0.01` remain pending before Experiment 1
+  proper resumes.
+- If GPU-accelerated PSPNet inference is ever needed (e.g. for a much larger future
+  batch), `tda_chexpr.segmentation.predict_lung_mask` currently runs on CPU
+  unconditionally — moving the model/tensor to `cuda` is a candidate optimization, not
+  done here since 1.25s/image was fast enough for 575 images.
+- Neither new script supports resuming a partially-completed run (unlike
+  `GenerateEmbeddings`'s `--resume` flag) — acceptable at this dataset size, but worth
+  adding if `kaggle/processed/` is ever regenerated over a much larger cohort.
