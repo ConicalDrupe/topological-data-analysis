@@ -146,7 +146,7 @@ time:
   This directly operationalizes Experiment 2's comparison of derived clusters vs. true
   pathology label and is a one-line addition, so it stays "basic."
 - **Output**: static interactive HTML via `KeplerMapper().visualize()`, written to
-  `results/exp2/mapper/v1/graphs/medgemma_train_mapper.html`. This is a new versioned
+  `Mapper/results/v1/graphs/medgemma_train_mapper.html`. This is a new versioned
   directory — do not overwrite prior experiment outputs, per root `CLAUDE.md`.
 - **Reproducibility**: fix `random_state` on the PCA/TSNE lens. DBSCAN has no seed, but
   its `eps`/`min_samples` should be exposed as CLI flags rather than hardcoded — in
@@ -161,7 +161,7 @@ time:
 
 ## 5. Experiment logging
 
-Create `Mapper/logs/mapper_log.md` (new file — follows the existing
+Create `/Mapper/logs/mapper_log.md` (new file — follows the existing
 `logs/exp2_embeddings_log.md` naming convention for Experiment 2 sub-stages) using the
 standard Experiment Log template from root `CLAUDE.md`:
 
