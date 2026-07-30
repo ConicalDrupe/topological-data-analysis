@@ -1,0 +1,7 @@
+[project]
+name = "mapper"
+version = "0.1.0"
+requires-python = "==3.12.*"
+dependencies = [
+    "kmapper>=2.1.0",
+]

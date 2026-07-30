@@ -1,7 +1,7 @@
-# AGENTS.md
+# CLAUDE.md
 
 Guidance for working in this repository. See [`experiments.md`](./experiments.md) for the
-actual research plan — this file covers data access and tooling only.
+actual research plan — this file covers data access and tooling only. If working on Mapper, see [`SPEC.md`](./Mapper/SPEC.md)
 
 ## Data access
 
