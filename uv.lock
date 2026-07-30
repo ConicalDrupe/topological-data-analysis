@@ -572,6 +572,7 @@ dependencies = [
     { name = "numpy" },
     { name = "pandas" },
     { name = "scikit-learn" },
+    { name = "scipy" },
     { name = "umap-learn" },
 ]
 
@@ -581,6 +582,7 @@ requires-dist = [
     { name = "numpy" },
     { name = "pandas" },
     { name = "scikit-learn" },
+    { name = "scipy" },
     { name = "umap-learn" },
 ]
 

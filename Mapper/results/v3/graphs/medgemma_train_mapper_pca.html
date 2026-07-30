@@ -1,0 +1,1929 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <meta name="generator" content="KeplerMapper">
+  <title>MedGemma train embeddings — Mapper graph (v2, pca) | KeplerMapper</title>
+
+  <link rel="icon" type="image/png" href="http://i.imgur.com/axOG6GJ.jpg" />
+
+  <link href='https://fonts.googleapis.com/css?family=Roboto+Mono:700,300' rel='stylesheet' type='text/css'>
+  <style>* {
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  height: 100%;
+}
+
+body {
+  font-family: "Roboto Mono", "Helvetica", sans-serif;
+  font-size: 14px;
+}
+
+#logo {
+  width:  85px;
+  height: 85px;
+}
+
+#display {
+  color: #95A5A6;
+  background: #212121;
+}
+
+#header {
+  background: #111111;
+}
+
+#print {
+  color: #000;
+  background: #FFF;
+}
+
+h1 {
+  font-size: 21px;
+  font-weight: 300;
+  font-weight: 300;
+}
+
+h2 {
+  font-size: 18px;
+  padding-bottom: 20px;
+  font-weight: 300;
+}
+
+h3 {
+  font-size: 14px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+h4 {
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  padding-bottom:0px;
+}
+
+
+#meta_content h3 {
+  float: left;
+  padding-right: 8px;
+}
+
+p, #tooltip_content h3, ol, ul, table {
+  padding-bottom: 10px;
+}
+
+ol, ul {
+  padding-left: 20px;
+}
+
+ol b {
+  display: block;
+}
+
+a {
+  color: #16a085;
+  text-decoration: none;
+}
+
+.pane {
+  position: relative;
+}
+
+.pane-left {
+  float: left;
+}
+
+.pane-right {
+  float: right;
+}
+
+a:hover {
+  color: #2ecc71;
+}
+
+.banner {
+  /* height: 35px; */
+  padding: 10px 0px;
+}
+
+
+#print #header {
+  background: #FFF;
+}
+
+
+#canvas {
+  width: 100%;
+}
+
+#svg {
+  position: absolute;
+}
+
+#toolbar {
+  padding-top: 5px;
+  margin-bottom: 5px;
+  width: 100%;
+}
+
+#display #toolbar {
+}
+
+#display .banner {
+  border-top: 1px solid #000;
+}
+
+.inline-block {
+  display: inline-block;
+}
+
+.tool_item {
+  padding-left: 10px;
+  padding-right: 10px;
+}
+
+.pane_content {
+  width: 300px;
+  height:100%;
+  padding: 20px;
+  overflow: auto;
+  display: none;
+}
+
+.pane {
+  z-index: 1;
+}
+
+#display .pane_content {
+  background: #191919;
+}
+
+#print .pane_content{
+  background: #FFF;
+}
+
+#meta_content::-webkit-scrollbar, #tooltip_content::-webkit-scrollbar {
+  width: 1em;
+}
+
+#meta_content::-webkit-scrollbar-track, #tooltip_content::-webkit-scrollbar-track {
+  -webkit-box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.3);
+}
+
+#meta_content::-webkit-scrollbar-thumb, #tooltip_content::-webkit-scrollbar-thumb {
+  background-color: darkgrey;
+  outline: 1px solid slategrey;
+}
+
+.histogram {
+  display: block;
+  height: 100px;
+  padding-top: 50px;
+  clear: both;
+}
+
+#display .histogram {
+  opacity: 0.68;
+}
+
+.bin {
+  width: 10%;
+  float: left;
+}
+
+.bin div {
+  font-size: 10px;
+  display: block;
+  width: 35px;
+  margin-top: -30px;
+  text-align: right;
+  margin-left: -3px;
+  -webkit-transform: rotate(-90deg);
+  -moz-transform: rotate(-90deg);
+  -ms-transform: rotate(-90deg);
+  -o-transform: rotate(-90deg);
+}
+
+.histogram:hover {
+  opacity: 1.;
+}
+
+#display .circle {
+  stroke-opacity: 0.18;
+  stroke-width: 7px;
+  stroke: #000;
+}
+
+#print .circle {
+  stroke-opacity: 1;
+  stroke-width: 2px;
+  stroke: #000;
+  stroke-linecap: round;
+}
+
+#print .link {
+  stroke: #000;
+}
+
+#display .link {
+  stroke: rgba(160, 160, 160, 0.5);
+}
+
+table {
+  border-collapse: collapse;
+  display: table;
+  width: 100%;
+  margin-bottom: 20px;
+}
+
+td, th {
+  padding: 5px;
+  text-align: left;
+}
+
+#display th {
+  background: #212121
+}
+
+td {
+  border-bottom: 1px solid #111;
+}
+
+.highlight {
+  filter: url(#drop-shadow-pulse);
+}
+
+.control-row {
+  padding: 5px 0px;
+}
+
+.btn {
+  display: inline-block;
+  padding: 0.35em 1.2em;
+  border: 0.1em solid #FFFFFF;
+  margin: 0 0.3em 0.3em 0;
+  border-radius: 0.12em;
+  box-sizing: border-box;
+  text-decoration: none;
+  background-color: transparent;
+  font-weight: 300;
+  color: #FFFFFF;
+  text-align: center;
+  transition: all 0.2s;
+}
+
+.btn:hover {
+  color: #000000;
+  background-color: #FFFFFF;
+}
+
+.btn:disabled {
+  color: #FFFFFF;
+  opacity: .35;
+}
+
+#print .btn {
+  color: #000;
+  border-color: #000
+}
+
+#print .btn:hover {
+  color: #FFFFFF;
+  background-color: #000000
+}
+
+#print .btn:disabled {}
+
+#toolbar .btn {
+  padding: 0 1.2em;
+}
+
+label {
+  display: inline-block;
+  margin-bottom: .5rem;
+}
+
+#config-file-loader {
+  margin-bottom: .5em;
+}
+
+.btn:not(:disabled):not(.disabled) {
+    cursor: pointer;
+}
+
+.wrap {
+  display: flex;
+}
+
+.wrap-header div:last-child {
+  margin-left: auto;
+}
+
+.wrap-end {
+  justify-content: flex-end;
+}
+
+.wrap-logo {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.wrap-logo .logo {
+  margin: auto;
+}
+
+.wrap-header {
+  /* padding: 5px 10px; */
+  padding: 5px 5px 5px 10px;
+  justify-content: space-between;
+}
+
+#display .wrap-header {
+  box-shadow: 0px 0px 4px #000;
+}
+
+.toolbar-container {
+  margin-left: -10px;
+}
+</style>
+
+</head>
+
+<body id="display">
+
+  <!-- Variables used later -->
+  <script>
+    const graph = {"links": [{"source": 0, "target": 1, "width": 1}, {"source": 0, "target": 7, "width": 1}, {"source": 1, "target": 7, "width": 1}, {"source": 2, "target": 6, "width": 1}, {"source": 4, "target": 5, "width": 1}], "nodes": [{"color": [[0.6]], "id": "", "name": "cube2_cluster0", "size": 3, "tooltip": {"cluster_stats": {"above": [{"feature": "emb_0116", "mean": -0.045, "std": 0.9}, {"feature": "emb_0074", "mean": -0.004, "std": 0.9}, {"feature": "emb_0118", "mean": 0.199, "std": 0.9}, {"feature": "emb_0410", "mean": -0.009, "std": 0.8}, {"feature": "emb_0027", "mean": 0.052, "std": 0.8}], "below": [{"feature": "emb_0315", "mean": -0.548, "std": 0.9}, {"feature": "emb_0057", "mean": -0.353, "std": 0.8}, {"feature": "emb_0405", "mean": -0.027, "std": 0.8}, {"feature": "emb_0734", "mean": 0.04, "std": 0.8}, {"feature": "emb_1048", "mean": 0.128, "std": 0.7}], "size": 15}, "custom_tooltips": ["patient10753", "patient22954", "patient10873", "patient08870", "patient09904", "patient33797", "patient46028", "patient34184", "patient36151", "patient40677", "patient64058", "patient49600", "patient63284", "patient42052", "patient37853"], "dist_label": "Member", "histogram": [[{"color": "rgb(70, 18, 100)", "height": 67.0, "perc": 40.0}, {"color": "rgb(68, 51, 125)", "height": 0.0, "perc": 0.0}, {"color": "rgb(58, 80, 138)", "height": 0.0, "perc": 0.0}, {"color": "rgb(46, 107, 141)", "height": 0.0, "perc": 0.0}, {"color": "rgb(36, 131, 141)", "height": 0.0, "perc": 0.0}, {"color": "rgb(33, 155, 136)", "height": 0.0, "perc": 0.0}, {"color": "rgb(51, 178, 121)", "height": 0.0, "perc": 0.0}, {"color": "rgb(94, 199, 96)", "height": 0.0, "perc": 0.0}, {"color": "rgb(155, 215, 59)", "height": 0.0, "perc": 0.0}, {"color": "rgb(220, 226, 37)", "height": 100.0, "perc": 60.0}]], "node_id": "cube2_cluster0", "projection_stats": [{"max": 0.461, "mean": 0.45, "min": 0.438, "name": "PCA-1"}, {"max": 0.599, "mean": 0.352, "min": 0.089, "name": "PCA-2"}]}, "type": "circle"}, {"color": [[0.7777777777777778]], "id": "", "name": "cube3_cluster0", "size": 3, "tooltip": {"cluster_stats": {"above": [{"feature": "emb_0118", "mean": 0.205, "std": 0.9}, {"feature": "emb_0121", "mean": 0.322, "std": 0.9}, {"feature": "emb_0410", "mean": -0.009, "std": 0.8}, {"feature": "emb_0372", "mean": 0.029, "std": 0.8}, {"feature": "emb_1053", "mean": -0.161, "std": 0.8}], "below": [{"feature": "emb_0584", "mean": -0.232, "std": 0.9}, {"feature": "emb_0479", "mean": -0.057, "std": 0.8}, {"feature": "emb_0292", "mean": -0.349, "std": 0.8}, {"feature": "emb_0138", "mean": -0.243, "std": 0.8}, {"feature": "emb_0128", "mean": -0.275, "std": 0.8}], "size": 18}, "custom_tooltips": ["patient38218", "patient42337", "patient15507", "patient43458", "patient31426", "patient15802", "patient27773", "patient05822", "patient21763", "patient35727", "patient06422", "patient00467", "patient02526", "patient36740", "patient05610", "patient64058", "patient07841", "patient47964"], "dist_label": "Member", "histogram": [[{"color": "rgb(70, 18, 100)", "height": 29.0, "perc": 22.2}, {"color": "rgb(68, 51, 125)", "height": 0.0, "perc": 0.0}, {"color": "rgb(58, 80, 138)", "height": 0.0, "perc": 0.0}, {"color": "rgb(46, 107, 141)", "height": 0.0, "perc": 0.0}, {"color": "rgb(36, 131, 141)", "height": 0.0, "perc": 0.0}, {"color": "rgb(33, 155, 136)", "height": 0.0, "perc": 0.0}, {"color": "rgb(51, 178, 121)", "height": 0.0, "perc": 0.0}, {"color": "rgb(94, 199, 96)", "height": 0.0, "perc": 0.0}, {"color": "rgb(155, 215, 59)", "height": 0.0, "perc": 0.0}, {"color": "rgb(220, 226, 37)", "height": 100.0, "perc": 77.8}]], "node_id": "cube3_cluster0", "projection_stats": [{"max": 0.481, "mean": 0.472, "min": 0.459, "name": "PCA-1"}, {"max": 0.656, "mean": 0.343, "min": 0.109, "name": "PCA-2"}]}, "type": "circle"}, {"color": [[0.48]], "id": "", "name": "cube4_cluster0", "size": 4, "tooltip": {"cluster_stats": {"above": [{"feature": "emb_0418", "mean": 0.407, "std": 0.6}, {"feature": "emb_0384", "mean": 0.022, "std": 0.5}, {"feature": "emb_0999", "mean": -0.024, "std": 0.5}, {"feature": "emb_0222", "mean": 0.031, "std": 0.5}, {"feature": "emb_0450", "mean": 0.105, "std": 0.5}], "below": [{"feature": "emb_0096", "mean": 0.207, "std": 0.5}, {"feature": "emb_0737", "mean": 0.011, "std": 0.5}, {"feature": "emb_1044", "mean": -0.352, "std": 0.5}, {"feature": "emb_1028", "mean": -0.226, "std": 0.5}, {"feature": "emb_0348", "mean": -0.011, "std": 0.5}], "size": 50}, "custom_tooltips": ["patient35935", "patient41151", "patient18894", "patient54875", "patient47951", "patient30124", "patient51560", "patient60847", "patient29793", "patient14153", "patient25974", "patient02680", "patient09340", "patient39400", "patient43562", "patient49315", "patient61768", "patient15997", "patient11998", "patient30127", "patient22395", "patient13932", "patient37101", "patient14380", "patient04064", "patient22087", "patient50279", "patient42033", "patient16579", "patient15457", "patient56798", "patient28943", "patient07530", "patient26955", "patient32371", "patient42847", "patient06187", "patient32070", "patient39817", "patient46068", "patient31146", "patient15229", "patient43630", "patient07799", "patient45165", "patient13509", "patient61673", "patient44450", "patient22694", "patient32500"], "dist_label": "Member", "histogram": [[{"color": "rgb(70, 18, 100)", "height": 100.0, "perc": 52.0}, {"color": "rgb(68, 51, 125)", "height": 0.0, "perc": 0.0}, {"color": "rgb(58, 80, 138)", "height": 0.0, "perc": 0.0}, {"color": "rgb(46, 107, 141)", "height": 0.0, "perc": 0.0}, {"color": "rgb(36, 131, 141)", "height": 0.0, "perc": 0.0}, {"color": "rgb(33, 155, 136)", "height": 0.0, "perc": 0.0}, {"color": "rgb(51, 178, 121)", "height": 0.0, "perc": 0.0}, {"color": "rgb(94, 199, 96)", "height": 0.0, "perc": 0.0}, {"color": "rgb(155, 215, 59)", "height": 0.0, "perc": 0.0}, {"color": "rgb(220, 226, 37)", "height": 92.0, "perc": 48.0}]], "node_id": "cube4_cluster0", "projection_stats": [{"max": 0.43, "mean": 0.4, "min": 0.364, "name": "PCA-1"}, {"max": 0.779, "mean": 0.45, "min": 0.104, "name": "PCA-2"}]}, "type": "circle"}, {"color": [[0.2]], "id": "", "name": "cube6_cluster0", "size": 2, "tooltip": {"cluster_stats": {"above": [{"feature": "emb_0412", "mean": -0.177, "std": 1.7}, {"feature": "emb_0230", "mean": 0.233, "std": 1.6}, {"feature": "emb_0175", "mean": 0.35, "std": 1.6}, {"feature": "emb_0766", "mean": -0.096, "std": 1.5}, {"feature": "emb_0519", "mean": 0.263, "std": 1.5}], "below": [{"feature": "emb_0288", "mean": 0.157, "std": 1.6}, {"feature": "emb_0145", "mean": -0.182, "std": 1.5}, {"feature": "emb_0749", "mean": -0.017, "std": 1.5}, {"feature": "emb_0357", "mean": -0.326, "std": 1.4}, {"feature": "emb_1135", "mean": -0.277, "std": 1.4}], "size": 5}, "custom_tooltips": ["patient53531", "patient19815", "patient47681", "patient43542", "patient13439"], "dist_label": "Member", "histogram": [[{"color": "rgb(70, 18, 100)", "height": 100.0, "perc": 80.0}, {"color": "rgb(68, 51, 125)", "height": 0.0, "perc": 0.0}, {"color": "rgb(58, 80, 138)", "height": 0.0, "perc": 0.0}, {"color": "rgb(46, 107, 141)", "height": 0.0, "perc": 0.0}, {"color": "rgb(36, 131, 141)", "height": 0.0, "perc": 0.0}, {"color": "rgb(33, 155, 136)", "height": 0.0, "perc": 0.0}, {"color": "rgb(51, 178, 121)", "height": 0.0, "perc": 0.0}, {"color": "rgb(94, 199, 96)", "height": 0.0, "perc": 0.0}, {"color": "rgb(155, 215, 59)", "height": 0.0, "perc": 0.0}, {"color": "rgb(220, 226, 37)", "height": 25.0, "perc": 20.0}]], "node_id": "cube6_cluster0", "projection_stats": [{"max": 0.248, "mean": 0.242, "min": 0.233, "name": "PCA-1"}, {"max": 0.522, "mean": 0.346, "min": 0.178, "name": "PCA-2"}]}, "type": "circle"}, {"color": [[0.25]], "id": "", "name": "cube7_cluster0", "size": 3, "tooltip": {"cluster_stats": {"above": [{"feature": "emb_0656", "mean": 0.191, "std": 1.5}, {"feature": "emb_0470", "mean": 0.125, "std": 1.5}, {"feature": "emb_0776", "mean": -0.081, "std": 1.4}, {"feature": "emb_0460", "mean": 0.099, "std": 1.4}, {"feature": "emb_0376", "mean": 0.252, "std": 1.4}], "below": [{"feature": "emb_0238", "mean": -0.177, "std": 1.7}, {"feature": "emb_0288", "mean": 0.161, "std": 1.6}, {"feature": "emb_1025", "mean": -0.371, "std": 1.5}, {"feature": "emb_0925", "mean": -0.523, "std": 1.5}, {"feature": "emb_0200", "mean": -0.218, "std": 1.5}], "size": 16}, "custom_tooltips": ["patient22961", "patient11096", "patient58216", "patient55293", "patient00771", "patient06802", "patient00312", "patient55665", "patient55555", "patient46342", "patient42322", "patient18423", "patient52559", "patient05834", "patient07079", "patient19340"], "dist_label": "Member", "histogram": [[{"color": "rgb(70, 18, 100)", "height": 100.0, "perc": 75.0}, {"color": "rgb(68, 51, 125)", "height": 0.0, "perc": 0.0}, {"color": "rgb(58, 80, 138)", "height": 0.0, "perc": 0.0}, {"color": "rgb(46, 107, 141)", "height": 0.0, "perc": 0.0}, {"color": "rgb(36, 131, 141)", "height": 0.0, "perc": 0.0}, {"color": "rgb(33, 155, 136)", "height": 0.0, "perc": 0.0}, {"color": "rgb(51, 178, 121)", "height": 0.0, "perc": 0.0}, {"color": "rgb(94, 199, 96)", "height": 0.0, "perc": 0.0}, {"color": "rgb(155, 215, 59)", "height": 0.0, "perc": 0.0}, {"color": "rgb(220, 226, 37)", "height": 33.0, "perc": 25.0}]], "node_id": "cube7_cluster0", "projection_stats": [{"max": 0.227, "mean": 0.21, "min": 0.199, "name": "PCA-1"}, {"max": 0.67, "mean": 0.341, "min": 0.124, "name": "PCA-2"}]}, "type": "circle"}, {"color": [[0.3333333333333333]], "id": "", "name": "cube8_cluster0", "size": 4, "tooltip": {"cluster_stats": {"above": [{"feature": "emb_0725", "mean": 50.128, "std": 1.7}, {"feature": "emb_0376", "mean": 0.27, "std": 1.6}, {"feature": "emb_0500", "mean": 0.134, "std": 1.6}, {"feature": "emb_0517", "mean": 0.469, "std": 1.4}, {"feature": "emb_0102", "mean": 0.191, "std": 1.4}], "below": [{"feature": "emb_0213", "mean": -0.265, "std": 1.5}, {"feature": "emb_1025", "mean": -0.371, "std": 1.5}, {"feature": "emb_0089", "mean": -0.326, "std": 1.4}, {"feature": "emb_0348", "mean": -0.123, "std": 1.4}, {"feature": "emb_0351", "mean": -0.267, "std": 1.3}], "size": 39}, "custom_tooltips": ["patient11096", "patient55430", "patient13954", "patient20463", "patient28095", "patient55293", "patient04723", "patient16901", "patient06802", "patient00312", "patient16478", "patient58928", "patient56149", "patient22926", "patient17181", "patient48862", "patient26939", "patient18423", "patient10132", "patient28323", "patient49859", "patient46395", "patient61248", "patient25045", "patient30474", "patient39395", "patient39937", "patient43130", "patient39684", "patient04751", "patient19340", "patient61345", "patient54759", "patient38151", "patient46921", "patient29071", "patient28966", "patient34999", "patient39736"], "dist_label": "Member", "histogram": [[{"color": "rgb(70, 18, 100)", "height": 100.0, "perc": 66.7}, {"color": "rgb(68, 51, 125)", "height": 0.0, "perc": 0.0}, {"color": "rgb(58, 80, 138)", "height": 0.0, "perc": 0.0}, {"color": "rgb(46, 107, 141)", "height": 0.0, "perc": 0.0}, {"color": "rgb(36, 131, 141)", "height": 0.0, "perc": 0.0}, {"color": "rgb(33, 155, 136)", "height": 0.0, "perc": 0.0}, {"color": "rgb(51, 178, 121)", "height": 0.0, "perc": 0.0}, {"color": "rgb(94, 199, 96)", "height": 0.0, "perc": 0.0}, {"color": "rgb(155, 215, 59)", "height": 0.0, "perc": 0.0}, {"color": "rgb(220, 226, 37)", "height": 50.0, "perc": 33.3}]], "node_id": "cube8_cluster0", "projection_stats": [{"max": 0.205, "mean": 0.147, "min": 0.0, "name": "PCA-1"}, {"max": 0.892, "mean": 0.5, "min": 0.211, "name": "PCA-2"}]}, "type": "circle"}, {"color": [[0.5319148936170213]], "id": "", "name": "cube9_cluster0", "size": 4, "tooltip": {"cluster_stats": {"above": [{"feature": "emb_0725", "mean": 49.181, "std": 0.9}, {"feature": "emb_0599", "mean": 0.511, "std": 0.8}, {"feature": "emb_1097", "mean": 0.222, "std": 0.7}, {"feature": "emb_0691", "mean": 0.385, "std": 0.7}, {"feature": "emb_0542", "mean": -0.036, "std": 0.7}], "below": [{"feature": "emb_0351", "mean": -0.204, "std": 0.8}, {"feature": "emb_0786", "mean": -0.179, "std": 0.7}, {"feature": "emb_0231", "mean": -0.251, "std": 0.7}, {"feature": "emb_0065", "mean": -0.096, "std": 0.7}, {"feature": "emb_0556", "mean": 0.189, "std": 0.7}], "size": 47}, "custom_tooltips": ["patient35742", "patient32289", "patient61024", "patient00048", "patient62012", "patient58388", "patient32273", "patient54520", "patient02661", "patient47951", "patient48267", "patient60847", "patient46788", "patient37591", "patient03122", "patient10076", "patient53493", "patient41425", "patient35910", "patient59043", "patient01342", "patient57963", "patient51742", "patient34202", "patient25311", "patient30559", "patient48094", "patient47770", "patient55374", "patient40493", "patient59490", "patient16579", "patient17258", "patient60915", "patient36377", "patient51838", "patient25968", "patient42847", "patient40203", "patient47972", "patient32650", "patient38796", "patient39817", "patient37806", "patient25762", "patient44450", "patient22694"], "dist_label": "Member", "histogram": [[{"color": "rgb(70, 18, 100)", "height": 88.0, "perc": 46.8}, {"color": "rgb(68, 51, 125)", "height": 0.0, "perc": 0.0}, {"color": "rgb(58, 80, 138)", "height": 0.0, "perc": 0.0}, {"color": "rgb(46, 107, 141)", "height": 0.0, "perc": 0.0}, {"color": "rgb(36, 131, 141)", "height": 0.0, "perc": 0.0}, {"color": "rgb(33, 155, 136)", "height": 0.0, "perc": 0.0}, {"color": "rgb(51, 178, 121)", "height": 0.0, "perc": 0.0}, {"color": "rgb(94, 199, 96)", "height": 0.0, "perc": 0.0}, {"color": "rgb(155, 215, 59)", "height": 0.0, "perc": 0.0}, {"color": "rgb(220, 226, 37)", "height": 100.0, "perc": 53.2}]], "node_id": "cube9_cluster0", "projection_stats": [{"max": 0.379, "mean": 0.319, "min": 0.26, "name": "PCA-1"}, {"max": 0.871, "mean": 0.518, "min": 0.175, "name": "PCA-2"}]}, "type": "circle"}, {"color": [[0.5177664974619289]], "id": "", "name": "cube10_cluster0", "size": 6, "tooltip": {"cluster_stats": {"above": [{"feature": "emb_0089", "mean": -0.095, "std": 0.5}, {"feature": "emb_1002", "mean": 0.052, "std": 0.5}, {"feature": "emb_0886", "mean": 0.004, "std": 0.5}, {"feature": "emb_0374", "mean": -0.155, "std": 0.5}, {"feature": "emb_0218", "mean": -0.158, "std": 0.5}], "below": [{"feature": "emb_0725", "mean": 47.492, "std": 0.6}, {"feature": "emb_0656", "mean": -0.114, "std": 0.5}, {"feature": "emb_0849", "mean": 0.165, "std": 0.5}, {"feature": "emb_1060", "mean": 0.101, "std": 0.5}, {"feature": "emb_0287", "mean": -0.305, "std": 0.5}], "size": 197}, "custom_tooltips": ["patient18455", "patient04702", "patient30638", "patient58655", "patient34162", "patient54603", "patient33799", "patient37203", "patient58504", "patient32158", "patient12295", "patient01383", "patient07945", "patient39792", "patient48896", "patient42501", "patient36043", "patient50842", "patient38218", "patient35013", "patient57144", "patient10755", "patient20738", "patient42337", "patient02049", "patient03669", "patient40863", "patient08524", "patient49558", "patient13850", "patient16463", "patient30323", "patient31579", "patient57987", "patient39846", "patient03922", "patient40140", "patient07003", "patient63097", "patient08549", "patient23212", "patient16697", "patient34974", "patient45193", "patient19853", "patient52203", "patient39595", "patient57438", "patient15839", "patient04659", "patient04397", "patient15507", "patient57662", "patient43813", "patient30447", "patient42279", "patient21324", "patient43458", "patient53799", "patient31426", "patient15802", "patient33623", "patient27773", "patient12713", "patient35263", "patient48785", "patient26474", "patient41770", "patient42593", "patient38141", "patient32327", "patient42657", "patient28910", "patient34615", "patient46529", "patient05822", "patient20602", "patient52617", "patient08870", "patient48065", "patient01069", "patient42999", "patient23675", "patient22730", "patient28797", "patient01595", "patient46906", "patient14837", "patient39428", "patient58005", "patient37476", "patient43078", "patient36298", "patient21763", "patient63878", "patient42937", "patient14511", "patient21792", "patient17699", "patient31194", "patient10081", "patient35727", "patient38771", "patient37991", "patient54845", "patient47342", "patient47111", "patient46106", "patient33954", "patient13288", "patient19530", "patient45667", "patient37392", "patient38866", "patient41965", "patient19962", "patient36697", "patient42481", "patient34016", "patient49381", "patient19264", "patient49079", "patient19863", "patient06714", "patient39035", "patient12907", "patient02159", "patient05628", "patient25824", "patient21361", "patient47707", "patient42131", "patient06422", "patient46673", "patient49282", "patient00467", "patient55285", "patient32595", "patient30858", "patient55111", "patient04462", "patient46703", "patient34634", "patient37006", "patient39481", "patient24713", "patient51688", "patient20504", "patient09229", "patient19933", "patient58616", "patient01344", "patient02526", "patient23303", "patient56593", "patient52925", "patient35000", "patient32338", "patient56406", "patient24261", "patient32955", "patient29435", "patient41669", "patient36740", "patient00204", "patient07445", "patient11710", "patient05610", "patient13863", "patient64058", "patient35548", "patient42185", "patient25293", "patient19929", "patient41274", "patient59239", "patient35707", "patient07841", "patient07513", "patient07145", "patient03765", "patient24160", "patient38659", "patient29782", "patient49421", "patient55131", "patient36631", "patient19578", "patient22828", "patient14621", "patient47964", "patient42938", "patient17445", "patient64522", "patient10501", "patient15318", "patient58474"], "dist_label": "Member", "histogram": [[{"color": "rgb(70, 18, 100)", "height": 93.0, "perc": 48.2}, {"color": "rgb(68, 51, 125)", "height": 0.0, "perc": 0.0}, {"color": "rgb(58, 80, 138)", "height": 0.0, "perc": 0.0}, {"color": "rgb(46, 107, 141)", "height": 0.0, "perc": 0.0}, {"color": "rgb(36, 131, 141)", "height": 0.0, "perc": 0.0}, {"color": "rgb(33, 155, 136)", "height": 0.0, "perc": 0.0}, {"color": "rgb(51, 178, 121)", "height": 0.0, "perc": 0.0}, {"color": "rgb(94, 199, 96)", "height": 0.0, "perc": 0.0}, {"color": "rgb(155, 215, 59)", "height": 0.0, "perc": 0.0}, {"color": "rgb(220, 226, 37)", "height": 100.0, "perc": 51.8}]], "node_id": "cube10_cluster0", "projection_stats": [{"max": 0.898, "mean": 0.578, "min": 0.459, "name": "PCA-1"}, {"max": 0.883, "mean": 0.416, "min": 0.0, "name": "PCA-2"}]}, "type": "circle"}]};
+    const colorscale = [[0.0, "rgb(68, 1, 84)"], [0.1, "rgb(72, 35, 116)"], [0.2, "rgb(64, 67, 135)"], [0.3, "rgb(52, 94, 141)"], [0.4, "rgb(41, 120, 142)"], [0.5, "rgb(32, 144, 140)"], [0.6, "rgb(34, 167, 132)"], [0.7, "rgb(68, 190, 112)"], [0.8, "rgb(121, 209, 81)"], [0.9, "rgb(189, 222, 38)"], [1.0, "rgb(253, 231, 36)"]];
+    const summary = {"color_function_name": ["Pneumothorax (mean)"], "custom_meta": {"clusterer": "DBSCAN(eps=3.5)", "n_cubes": [11, 1], "nerve_min_intersection": 1, "perc_overlap": 0.1, "projection": "PCA(n_components=2, random_state=42)", "scaler": "MinMaxScaler()"}, "n_edges": 5, "n_nodes": 8, "n_total": 387, "n_unique": 354, "node_color_function": ["mean"]};
+    const summary_histogram = [[[{"color": "rgb(70, 18, 100)", "height": 0.0, "perc": 0.0}, {"color": "rgb(68, 51, 125)", "height": 0.0, "perc": 0.0}, {"color": "rgb(58, 80, 138)", "height": 67.0, "perc": 25.0}, {"color": "rgb(46, 107, 141)", "height": 33.0, "perc": 12.5}, {"color": "rgb(36, 131, 141)", "height": 33.0, "perc": 12.5}, {"color": "rgb(33, 155, 136)", "height": 100.0, "perc": 37.5}, {"color": "rgb(51, 178, 121)", "height": 0.0, "perc": 0.0}, {"color": "rgb(94, 199, 96)", "height": 33.0, "perc": 12.5}, {"color": "rgb(155, 215, 59)", "height": 0.0, "perc": 0.0}, {"color": "rgb(220, 226, 37)", "height": 0.0, "perc": 0.0}]]];
+  </script>
+
+  <div id="header">
+    <div class="wrap wrap-header">
+
+      <div class="">
+
+        <!-- toolbar -->
+        <div class="toolbar-container">
+        
+<div id="toolbar" class='wrap'>
+    <div id="tooltip_control" class="tool_item">
+        <h3>
+        <a href="#"><small id="tooltip_tag">[+]</small></a>
+        Cluster Details
+        </h3>
+    </div>
+
+    <div id="meta_control" class="tool_item">
+        <h3>
+        <a href="#"><small id="meta_tag">[+]</small></a>
+        Mapper Summary
+        </h3>
+    </div>
+
+    <div id="help_control" class="tool_item">
+        <h3>
+        <a href="#"><small id="helptip_tag">[+]</small></a>
+        Help
+        </h3>
+    </div>
+
+    
+
+    
+
+    
+
+    
+
+</div>
+        </div>
+        <!-- /toolbar -->
+
+        <div class='banner'>
+          <noscript><b>Requires JavaScript (d3.js) for visualizations</b></noscript>
+          <h1> MedGemma train embeddings — Mapper graph (v2, pca) </h1>
+        </div>
+
+      </div>
+
+      <div class="wrap-logo">
+        <img id="logo" class='logo' src="data:image/png;base64, iVBORw0KGgoAAAANSUhEUgAAAFoAAABaCAIAAAC3ytZVAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAACK1SURBVHhevdxXrJVV0wdw9NhfsfdeUVREEJHeFJCmgCg2jEaRmCCWxAtDYrwy8cJojAZRmgUJRZpUAUFBREGQpoK99977+9t71tnss5v7oDgX+13PembNmvnPf2at58j3bdfgP5eaWvlfVn755Zd99tnnxx9//PXXX41/+umn33777Y8//vjzzz/Tgv9Q/gs4tttuu1133XXffffdaaed9t9//++++26XXXb56quvBH/44YefdtppHufNm/fzzz9vv/32DRs23GuvvSBC/9tvv/36668/+OADA2Alc9tStiEcUBDS7rvvfsQRR4jqk08+kXmBpddZmpx55pmDBw9GjfHjxy9fvjy9qJUdd9zxkEMOadSoEXT23HPP995777XXXoNmer0NZJvAAQJpF8wPP/zw0UcfQeGvv/5K7/KkSZMm559/ft++fT/88ENVc+GFF4IsvSsS4B555JGNGzf+/fff8eX111/fFnypSf/7L8lxxx3XrFkzQLz55pucVhESm97VlYj/oIMOQhA1EtE+88wzok0aRYJiUGAZ6U499VR19+WXX1bQ3wr5d+AIVnPxs88+W7t27aefflrZS8F37dq1RYsWxsccc4zwVq9efckllwjvhRdeCJ0K8vnnnwMFOqeccspJJ52EU+VAr6/8UzjUvwwfeuihKmLjxo1VFrYyufjii7VSiOgse++9t5o6+OCDW7ZsuW7dOqEmvYoCAgTUUIBywAEHYKLzKL3bWvlHcOyxxx6KmR/vvvtu9R1OUxw0aNBRRx31xRdfNG3a1CmLU8j16quvnnzyyQwiSIUmUiDOY60HXyDr/MKv9GKrZOvh0CZw/p133qlXq99hhx0GDBjQpk0bXda5e+KJJ/rVaHfeeWe8gAWioZtzF3fSmioEKMrz9NNPZ/+bb77ZappsDRy77bYbtr/99ttSUd+NNU6nCVpppSBQKfoo2us+fqWX8eOPP94dBEeqaZOWwHTIkCFDhw4Fh8djjz0W3fJP9Oql3nDYT9k3b968X79+jjpSPTtUuFUap3uXsu/QoYPJ/fbbT99xNqOJruGEBpC7mX68Zs2aWFgsoETPc84559Zbb73lllt69+6tBpUMI7fddhtrMNWPknbVsn363+oE8LZR88gpFfPnz3/66aefeOKJyy67zLECqaRXSjRd8btTiQQcMo/YoFH5IhG8yyiMQllzHTZsWI8ePeIxJxYedthhAwcOHDly5LRp08aOHXvuueceeOCB2PTcc885pOgoPTYZ7NixI2RjYZVSD3bAgvVXXnnFb69evdavXw8CLRBAcg6Rnj174q043TJJWlYrXbp0USlqRKiaDnSEARog4pdLBHoDyLzcUvCW5vvvv689xUHubL7mmmtuv/129HQGWUKZJlFZgJYkjWPy5MkQYY1ZaqCpvqKrhUOzwENYGHOuW7duDvzp06fbTwwcEpi8tW7d+qKLLoKLahIM4OSTZw5R83qktSbfeuutuEopEz1V++S0+L1y0XIfY1BIEuDcYdlFXkVcfvnl7du3N8OT8Couu9a6gxiwb/mMGTMifsY//vjjPn36ALTKi0lVcGh4wtiwYUM8yuell176/fff88zpCBfexysCHYEppfPOO69///6dOnVq27atNDo1vMIaMLksXHnllWoblVhGbBBs2rTp6KOP9ovzmYxnxQw43NCCSuybjI1CMMJdFrjsKxnLlXDuVGIfFnJmi2oQ+Xs4xAyOl156KT1nTxZlKULba6W2kV6JigBCqPmlieQaZLwVs5CQRckIgGXIAshB88YbbyCgLzRmKesmYcEjfnlri5jJeFArHp999lnUsxEj8FUsDmmMSxrZ2xos0NblKNhUQf6m0+A/xhZfnFGDE5ym4C1OFjiak82bNzv23K94zFcz3JJS1zDntEnuahaaDk1cQHhNMd9vmn6dGvGYL25r8IVXw4YN2eGPcwrd0utagbiPAIik5/JSCQ47oeiLL76YnmsF58VjECHJ+bhx4/ITEiIk8atkjMUFBwdegAaTlY+EI46jxOlLGaXjniowxnPgxkAnUgJyEJOEca1h6dKlbujmuWovPQXvuJeU8sTVOaomPZeRsnDw44wzztAaIvJ80fBsaXs3MX7gs66urabXebJ48WL9X2MTPDWVBQsN3yq0shzcggETDip7NPH2hBNOwKBkIiuccXixFqyJ31WrVrVr144bOGULsOIFQIvZEaJhQZByei4lZeHgn/5fnHMCDk6IRGwS4lcXAH8Bj5YtW8ZjkXgbKCCIeSgbqGflZhWGC8+JoIPCRbGQggsYI7qMhWxS9qhNIAL4UE+xGDtcDFQf99KyInE5ULa6THouktIruSuZuUtRgXjFon4RFSvVQlUyit81IVKniNzQRIhHfBWAzBhb5SSSwLiM4g7vYap3gJ5lmgZSzXJslxMwWShJWAY+N1cemrRKdwC63aP0KsiiRYtwqhxkJWZtqYwxOT2XEmeKhAPFQFQCkBaxTZgwATQiefTRRwUMVr/eRkrNg0YAcU1QhujgFxxoAlZv4YXPiKNOA9kQy4mLnNNH1QDadUORwkI/goVeayHni6s7X3iLxTpOeq4rJeBwy7STaNNzkUgy1wUgOegKaRGqdu3AkTxp0iSHn0YAneAFgLgYofKeZZ2V937jrbAlnMGwHz0Fv7yNmXzxUWMvfZGCZPi1u9phTQeJVp1Uy4jzKM7m9JwnhXBAV7QKOz2XEX7Ij7JXusQjFghDtvkHEdcE87wUJxJFnpHC9Yz3wWpv7WUhIJS9eXbMg1hvsjD/KAkRKh2XVKem+B3JGzdu1BG4Le0h1VzJXQ6aNm2aHvKk8BoWdyGRpOdSIu0+QJQrJ8QvJBdWTui+MIJ6s2bNEAEE+rwMYzI2yQki+AblcdzNopViIj6CEoOQwhIlRgcu2Gcm7Zo9UFSQLVhjFsqqQ13rsvBlAb72Gj9+vI3SmjICU93K7gZpKit14JAi2zuQ0nMZ4aiPa8qyJ132dhNnXUolVpJh5K3OKmC+Rlvhq3gspABxrVfMagc0Hs0D10CotkANFl5++WVIWSX4ANfbKLHwJMQklxhUR3ywRI9nWbQVmALrFi1aFLTIOnBoMGIobun5ogXIj/uM/ic/Z599tkggImze2B4LzMuwCmeKmti81VB1PjoQjFuGwMQMJo8mLZTtKFU40nd86Ed0YIGMPhQck7AogIPEpC7GphPHJaVv374+3mI7aeMDI0k7K1xFJZ57labYSf+b7RoCi2/WYvEWcZz8itYHS2zPaTtx1FcZ1hGNgE/6mcxL18KFCw1UgRr0oaWInLLAgpQcil+oyCJFfDKjuahTLSn+DiSBGNGqVSsOaBPiLNn/Kgv3XH/0F/djDRjEuaOHqz6RXQjikWyBgzdIzsX0XCsgFAwI9B5wSJrsqVioK3sx46q7gHLgK7CBYgk1QbI5depU1KCDBcOGDRMeNdzGDrdPKcJHj7LKUWose6WCOA1r5WNrRyObWCkHya16CmqgKjhQbM6cOVpp/FnAyW1GLKG2xbqen3+t5J/8+ELnhBx6C2ZAoKtMxp/h6OhhIoeUYIANFGtFHtXrlKHp80nAZqRC8jFI8hUIXETuDEI9oEQ+LFFTskITKFyXDK5jJfvhW30lVybQjDGvHEnIi8izZ89Gw6QQ/6PU5ZATXNQU9Zhu3bqpBT6JBL0jQinSaBkVNtcVgmTCSAMTA7wcKJqL8MBEXzwGNkb1K664QvKhKfJ4hVMGsGZTgYhWAm0RWPOHlzgyYsSIm2++2abSQMGvBJjnm9g0bzMeSdSptRA3kA+rojtAP84yCeAqCrNP35fhkiVLcjxIcMibxoEzgwYNYiW+I6Dglb1lTEsTs4C5yw8es0VN/HTUP7wAQcTADuEWNoIGoBMnThwyZIjIKXPOr5bplRiMzZu0ryXKx4CvBn7d6ATWq1cvY1S3O2sqzlv5UKrggDV6OkdYYxPEFJhiUwJsxFXOyxxTEglTiTSvZO655x7UU9fC5EkGDtqa3IABAxQzc5AL4MHBM8vCLpiB4hVb0QL5R8db83DhGXKxq8o0S2DxzyRH586dKyeOIduROHFAJnt29GhM01rbMc5vA3v5FAaBNAiSWVyzXJGyzKzuvnLlSqDwmQ9WAYvnEQWbETkm+hULBaBoSZKnZeDpqFGjIIU1ip3lzEEL+KuuuooVTG7Tpo097OfQBVNc/uwnbI3dHo4GfmMBp7UV+VfbccLb1RFjM9gF55HWr8CAhWIW2lth2psCd0Fs0lrzBnYUJ31gwcIxJ08idPvCdrvYVNiK2pWEP/hvUwut4qFow4KKMGlHay0Ro/TwWaR0lIZ7o6Duv/9+mjYSFIUEB8B8OOfKOP6jaSTZI8+ALT+20fYUPKRBJkJcEDlmcjHKmMcgQL9gOw9wx1oU5dnkyZO1JI90vJUiBiUcLrjGoGAsMW+AF+o3Cnbt2rWM8wd8ihE0lsuNemGZA9GkBGLGEoizwBlvFQL4ZDpiUVnWCnbmzJnz5s0TFPvU6AghA4ckg1nDs416kRPxRxXwEt8UhbYPP/GjnFfr1q2zgRkK1Gwg2zZGJbFBM/6zA7NwoSyYIK1ytZCvPGMtNvJW1fgFLp/4imIw1dQ9ehVc43r0SGowlRKOSTI28ZknAKLDpthYAF/cd/nDSZM6ke24sWbNGtRgRPiEKW5nCsoDbCTExhBBDW0VnWwPJsBLiAG7sBewjmBZzMBITmxGTQxA4TraIwKfGLSHsL0FCiegYAwjPMcFQfqVQzZxATqckXzKyKxOWTPjV/zqS7YsZ5MpoNjaPQhqMBIPHdWhC6xYsaJ58+YWgokmjAAhPTRZMAO70aNHi4VOCM/xlFqmU4oNkcyC0MAekOaT+wIu2Ez80q58xGnMIZmkIGCbGccXcOQ/Kpzp6MecBo15W4rBNTzuXepLJq2FhSUU5Ioz1jr5IqWACETgCKCoVnY0DkcJ4ygQatCkxltZ1PWgFuF4BSP6eoQbFwseXTQWLFjADp0QETVu3BhANbKqXGUpXmiNyg9AuOBRMFE14JDn8EAwjALCZgJgC6fkXEOCAigjS4IHmWyLUMWxDFk2BaCrh0HUi4YFFKbYxFNb6KBZd7ZIsBJwdudSHBnQYRZx1DgI2GeNHaHSz2S7pkaDECC+WGtTQIwdO9YWyW5WxKUw2anht/WR3hDNUiuSN+EBCzrAMmN7TpgXbVSmUCVZdQhbAsVGGRcAIdvU+IeZGAE4pYEvKMaCuvClwAPQaEA4bIl5W+uabhncCF7kRJxeWcJb/tiXz3DUO5SJyTCLejyhwBmOITjjuoHl0uaEcrLml0lOeJKBj98eeBOzBFSopS/YG4GlQho1Ibsa+OWoWuU6KOEiLR7tLVd4xBs65qWIW9AxI1fGFnLLvF95sxAHI58SiMlao7YiBwVYEDPQj4KlKZNaMojlPIqOPzZ1uzGDrSLy0YjmEilONvn28MMPP/XUU8liXYlju0aSwVxAHixgDqhR8+Ix4I0itAGf5AEjhCEAqMkbKjEXlwLOiVY2QCBa6HARlMbKAUBRIyoR3DANfsmkTKB9MRYhILPEW0sEyUmec9IvVto6orD14sWLeatAMJqTjPNZmUyZMiV3mhQIZDPsEAxcmU7TtaInCQbPsUNgQkJ1+X/++ec55NEqSWDdY7RYqInHwKMI+eeoQhwKARBlcFADsTBsunTpUgShw13e6OLUkgd1hRE5gLj8CzvKxBK9xj0QuJEkbt97773scNsqwEkYTxTRyJEjjcNasfCQ2RpZdWTiW5rOE3AITNUYB4EFABHA29U3rgFETIpBnLzBAnWBWcauz8qBBbyITAKUf0grz9C0Chfivz84TRwWEUM54YBVNpIkBjVRiACXWZHw0GUSfzmGgBIGfawxL5CHHnpo1apVNJOtIsEO+pn/sA45WU3TdUXvsZ8jSgx0mBah+oouJcnQQWBBYhB3wREtk7taKSiN8UV1OHGgEI/wAhOneQA+rb5z584OV1swkvYuJXqz6wPUaGIEO/QVDmTVghnWoq5NKhMwoQbE6buPJCulxKGTgYPH2FEODlEhmKYlD4JHIqmOguSZQ0E5dOjQgQUN3CNc6MiJAWIrWi7y2IDEuQNfM3aUNNlevnw5myZ1RyUgDJqhwIECdGi6gCC2geoQOQVXLKepsOWJb5ZzT9pA4y0sevfu7eR2twRlMlQksmhtjdLldzk4iKzKmzDkk9MZCLP/tdUMn4TtaxWmZlg0KTPcBZCCQgeW0dsMsDgHLMziqw4f6LjLY5YtAMch7UCVwYVxFSew5EetWOVXu6FgzB8UjoqWMAZNMmXgUTqlHbtFAa8nn3ySftZMoVCDb40gdaOSvYPwxsfu0KFDZVIhOJyFpywje97alSuuVQ5z+yGnGEx6lDqJsge3zINS2L5ZHEM2Fb+3uBBImbFQkOrRLkLlFVy8Ao2+a9PIGb9VN00JMKBgoVV0otmJBQryBHRF2rVr18BU4mXIJ1w2skKxaaaV8klOrE/TdaVt27Y33ngjp1nXpdg1Vv+cExs/iEm9ULS+i6RFeJygQ4FlA07gMw6iieXOMqwxFgNlA9jJHoe4YYkBQJlVj5gon7Z2oiGOSXCAyUaQpa95Ba2AxSBlNgUmDXBs2bIl/YiFKUxkSlXGTL5wTG/O/Ls0sQkgTeeJ9N50002qTq5EBREBMyoDKkJlykPUJ0fDdYUtMHRVpSadJjout5wFsgd6QNgx4KAmPMupSR0LfDJvL5YhQpMCoe8tlglGC3DTNVACHOMnFDCFHYHYl5/GPHEk+34xjnAIg05ljUbkaapWNEduZP5PjoQkgWm6Vsx37979hhtusJkwOEcA5GudZ+Ervw0o84OaFHmFsa6DPPaWu1INCCliJHZxLsieAIylF7+cTQotNoWp+CWZAgssMwIjQapWyjbSMv3aSxZ1IgYtCXCN7YKqmrQOaiYfDhKgL1q0KBzIiRuD8qyRBy0QMGk6K0wok2uvvVYkqIh4AsDGCMkSM+Jk0X70AeEVFgjA+UrB8nDOcsCbUcmCiRxablWkSPyMa0BhkH2/ULa1tx4VneXUmIKII0w8dNq3b28MR2gCBWTcAJNVeln//v2p2Y7b+YhACkHEq+LSVFbCTubfpTEqkjSdFdzWMjQhhrhC+CQ2thCEIdkWOQj88kPt+JUQYQhAeKrUVwDqCp7rtpdwcIgqThZ+c9dkjIlXDBKU8cigTQNTZo3togHzLbhj0ivcQRYhmOeMjWxqC2AxyH9SjEiLFi3QPP4sQLxVWZmbIVWG8m+vnB4+fDgsOMRX+8WJZd6vlMoSfQvt6iLkrWwT/vEGFqo6mpbLMgUkRFHxMI479J0L1no01oksAY3q80hsARQDCspHFTCiopmFjgLhgN2hg3cZj7MieKY0dQ67+y9cuNABbK3M0aeQj4hYtBVXYQF6jA4okZkPBFaMYnty1llnXX311TQwk4tsgVOSecmK9ZIzc+ZM22ON/GiZcmXMgjAgNWDAAAZlkjI7smfSK3hZhdKUoyMIL2DlDb/NRMKpBQW8haDjgw/e6tPscIMR51HJ7z2J0bngIi759y3ujhMcZJw+m36ZkiRtVY7Vqe0szMAhVBsA0tid/frrr8ccQBABWMmW3ALbtV9jt1gyZUwwRALDCfO89Gsb80EWCRStcvWKEW9jFZR1BwEHviALmnCDfzYFriWY76uKpkiwzKpgGYdBxgerChCRRU5S4JhXqlsRScD8+fPhgrN0QM8HwVJ2hNudKftm4OCTTMZtcvDgwT169JAK7yxwydm0aROMA139Bs/tZDG/JYom9nKXlzamTCH+isEgQkpUbGYVaHgTjgrVvhzlAAYZ2N2OxrZmTWNj346MB+e1fN5DAVLCswTQjGcwyBOWtVIp4YMk2Qut8Mu+jifeohVcdAp879KlCz9Ziz6S+a+e1tsDkN45XC3jkMAef/xxjJBk4YlEtJZ5tBOnbcNdv2JAb3tzWnqx1DwPYOHqxYPYz0nGFfYpKyWuiI21SLv4zQOIDoNohcwsgAB3GFQyoLcdfSiEw2IIsuQLm/CK+UCNsoWW4ybPBaLNs+9ucvfddwtHsmNtBg61ZEvNVs0rnBkzZvg6FA/KSLW0cDSMsmgbYMkkF52ONlY4EUykQmMWvwFmxVoeABRNpAhNFDz+WyhUC6P7QoFxNiFiax+NDgsL6XBPhujLqjFPBCBm1uwFyogkJ/ykHxVEP4R9bks8417Z18mCRJoa9HMHa/pbC4fatWsXJhCBE2pSJJwAkAEr8h+mbSa9EAWKDHNaEgg4wEeNu8EUPAcNPmsBENF0WWMcNVq3bs0VwatBzpkXHiNucdLgkeuMR/Mz8FY8lMUvAQxa5a0PYo0poghh01csIgSnciXDCPtq0EXZt5wm6pqP/jZiTVzWpn8iYAFtnZKLHAKY+JnwijkbmAksiMzYCWNxSq7oeIt7dnK+UogluIMgsPChFQmxMSxMIoh0OYZFYmsWsManBDudOnUSOeOyAnd5s5eFdBiRABmCSxQO9vHBjLc58YqHdASPKTy0Bd98YTz44IOjR49+5JFHnMQBKGQ5TDPWbvlLnL19a2q/wFuxYgWHYmMJ4YeB7VlnWrTeSrU+hwUoYLld0QF7NQtvWRMwjKDMPwzikLSDJto2D8Qme/HnOAF36NABWIyAwF7GNjLgRgSPknjHGQABgn3KWpXAcDmiICxLO36JloIGoShmz55tUi+zSvxJtUEDVSkNoovHLXDYrGnTplwRANcdPyBUYJJpPYcwk9PUeGlLvVaQIudoYGQhOGQGNSjIG1BY5jrUYGcJgLBdSAIThq/bIDbOQ0e7ZY0dkOn8UUThHgvMAt2vJhJ0EwZo3Lg0Pk6apGlS+8Nx5eDEjT8psGlhmMqJ7KpuAabnfDiYw0+NLcc9wTMKWh7DWJmBNqqDIcEgjoDFbx7GsAC2VGvd0uIXrCBTgDgJOL9g1YlkHjSqacKECUwJHkbcEok6gjgUYMQZmh45zaC1nIQjoNFBAlQ0bio0jYkb4TYjzgsYQY1ZyjFfLK1atcKXqMSQLXAQ/G/ZsmU+WiE2gAtEfKpKGrC5wgrX/dqP62Lu16+f7XnmF0wIIiG59HJdJJZTsAWajBkzxkUIghIAXF3GLpMmTZJqIAqeEWBhAfsWgtuMNgwLk15xwxKc4nnULGHtsccec5BxIGZKij4lYZKXnrNS519b8d5mXEnPRWKnjRs3AsU1BksRWPaiIgzwnH+yZEaBaBDohqVyC1C/nIagpEFQMQvbJLdAZpUI/YJJYu+66y7B4JHmAvEYU4AjlpmMikMfv1atX78+1xHMoG2MKwjfiv8OVPiPz6DlSyk9lBcuYi8v5RyIUiTP1gpGngXJY7UgfjAhsxITjIWYz3X8QkPKXM/VpqigCWUsMH/HHXcoex3HJKZIPgW8gLVJdWch1uCIGaYgHnZIZV4QfcoqzqTnWimEg9Ni067TcxmRIhY5zRt7i0FCOGetAV4IANG8lVWClh4tcWw5evTsSDhq2BFYgvErcr/WMiVyNJk+fbpdTDIFVsoRtmCiv9jaI4fRNutahh05ppQTBau600OeFMJB2OUun9JzKREbRLhozCGCBTLGb2N8ETkGcRdZzIhE8HPnzpVkIrFoFUFy3aMlFGBkUjx2N8ZnLWDixIkOCPVF0+lGGcnt7hfLHGqMq1OHYPhGWEijUoK8Vqn09JwnJWK237Jly9wC0nMpUSkQwV52hS0YjdD5IvKIn7tcRBYwmffl5th2rHJUnLYwQA2vZNtyqTYJC8atNYAOO1hgMGfOHMstMQ908zAVlV+4s2Mm+qvloLQk62ZpgXLBn7tyUpoC8JaN4o/FnNiYBwBGb5riNNYvFAKPkUJI/AYZZZF45ETUjqggJXi4mOG9eKyKR2+xgFrQ06+AYap3zpo1C3bCtpxlLV9hSgnIhOe0RiJrWYi1JcVnIVoF7sVSdpk2pheWs8scL4UEFw1JKeKIgBVao0aN+CoefZTfCgQu8OK3hWLmLjoYW2Js3mQQCtfMMA5iv8QrERJHFbCGDx8+bdo02YKg5QbBKa/skmuNkhSDAokPH2lLz0VSFg6iZPr06ZMe6govo6U5R8UfrUFpuFn46AYi7xWII9nJimVqQQCcJtbGQWigg0DNbU33dTBBJG560AE01ADhN6rSEtZcl/VXJckBal6xiSk0oRAdoWSxcAlkrn/puZRUgoMf4mnTpo2Mpak8kRZOCCn+tM0bAeAtZb8zZ84007ZtW83PI4D47RVcRCux4nHNhR2YfPhR8EUnPMq+lWNHY4FZaECNGDjRdY377rsP+nRM8gGOtnN++U4LB7I+bhGuIrsd03MZqXMrLRbZIwzF3vnSrFkz57/McEJL45DbobujzDsLnE3mRR6JoiaZsodN8oNN2oFU6zLQFI9JWFgSiJhRcYRZKEPEcp4ECygQ95dAk1nWbETTPU1hrly5csmSJeEn4ZL7uMko0gpSiR0hXFeTnTt3Ts+1gtWSzFEBoGikCKUnT56MFJgp4RLFSzyScH2O0Ondu3f79u3jzytSzZRLFB3NKLjgGubRl640QFznW7Vqla7EiB3tC1zGFanwfPuxyRSYQCYxfIhiDNG/ZM5nl36UpsrL37AjRLQ2c4/0wZOmsp/G6MA/85qTdOmaku+ElkOe8dV5rOcvWrRo9OjRaHzdddeJnKawvQUZNRSwXOeGAkwVggT4tZaC4Gn6NtWJXJy0GDtGuUmDyHUrRDDvJgYmuNjIKs5wEhYQxyP64XZlqQoOIgPc6tix4+bNm2MGsfWFCy64QNIMxo8fj/b25qVIXJ+0jwULFowYMcIHju+U6JdIIXWIwBojasR5BGtV7QMECtRYRntqCkHyGUEQkSOpfIhN3zEDeuWjUhCKpmsYOFRK/IELHDxBMVvwJ3z+W6kWDoIjMqntOQukUXcQifqHlG6PLE4QxeyWMW7cOF/uEi6lPKMcFsQgSJCBj4sIj0cBn55tHlnkU4TAsmrFihVInn/dJLCDCx8gLjeCB0rMS4wqUy9AVFzIS6dKXoRUusyWFN6rfF8T3bt3HzhwoJDUpPMCWIsXL7a9bioqzqUFdUWoo0aN6tevn4oQucSqJqCoJm0VuKBRTSIUm8vo/Pnzq4kHOyRD4TgHrUUivR9YWJY0qpN6w0EErzmJASN4z2/lqrBlJmlUFEXua7VLly7yj24Kh6k777xT14xjAr5Ax4uS/38wKgtrffv2jX9ImabqI/UolpwIW4WjACw0OWRWxuXoUCyUFX/Pnj1RQ1NECoDitv5qrEwwTnqnTp1afLpXFn1as1Ap2lCaqqdsDRwhWobAnHY4b5BmqxMFov7dBdS5WhA/NJHcUQIpBHnggQcAlLSrEKRwMCHXhg0bqjlQy8nWw0FkUgLjMJNqzE8vqhBtVSdWINqqqnF8+DbDONUuvXpTlaXnNGndujU4HF76a/UkLSn/CI4QTVShamMaoTxjTXpRUZTJ6tWrdT79Xz5xQW4BpEzGjBlTjRFp0Lx8PWqZOlec3P9Q/gU4QlylfIM7R538opKov02vNqlqmjRp4qKB5Adn/63flClTCk7WAoGamtIjXHPcKXz4Kbd/SIqc/GtwED4FU/wKMq5kfK2QN58YUHO7W7t2raqZNWuWMimprxh9mLDpI91JjBGkXneKamRrDtoqxX1ZBcWXhTap3Wo0aiS9rhUHysiRI1UZUsACLulFFgIWdFbE0VMYwSZYp9fbQLYhHDmBC5o4RMQmbB8U0Xd1UI/G2oeACXaYoSl4qyQ/7mNO9PpeqLZO/gs4isVxoAW4zqGGXyJgk7ijocSlVhH9Wx2hWmnQ4P8Be0kh3B1gzgAAAABJRU5ErkJggg==">
+      </div>
+    </div>
+
+  </div>
+
+    <div id="canvas" class='canvas'>
+      <!-- Graph will go in here -->
+      <svg id='svg'>
+        <defs>
+          <filter id="drop-shadow-glow" filterUnits="userSpaceOnUse" width="250%" height="250%">
+            <feGaussianBlur in="SourceGraphic" stdDeviation="12" result="blur-out"/>
+            <feColorMatrix in="blur-out" type="hueRotate" values="0" result="color-out"/>
+            <feOffset in="color-out" dx="0" dy="0" result="the-shadow"/>
+            <feComponentTransfer type="linear" slope="0.2" result="shadow-opacity"/>
+            <feBlend in="SourceGraphic" in2="the-shadow" mode="normal"/>
+          </filter>
+          <filter id="drop-shadow-pulse" filterUnits="userSpaceOnUse" width="250%" height="250%">
+            <feGaussianBlur in="SourceGraphic" stdDeviation="12" result="blur-out">
+              <animate attributeName="stdDeviation" from="0" to="100" dur="1.5s" repeatCount="indefinite" />
+            </feGaussianBlur>
+            <feColorMatrix in="blur-out" type="hueRotate" values="0" result="color-out"/>
+            <feOffset in="color-out" dx="0" dy="0" result="the-shadow"/>
+            <feComponentTransfer type="linear" slope="0.2" result="shadow-opacity"/>
+            <feBlend in="SourceGraphic" in2="the-shadow" mode="normal"/>
+          </filter>
+        </defs>
+      </svg>
+
+    <!-- Panes for each of the tips -->
+    <div id="tooltip" class='pane pane-left'>
+      <div id="tooltip_content" class="pane_content">
+        <div id='tooltip_content_no_focus_node'>
+          Hover over a node to see attributes about it.
+        </div>
+        <div id='tooltip_content_focus_node' style='display:none'>
+        <div>
+  <div class='actions'>
+    <h3>Actions</h3>
+    <p>
+      <button class='btn center-on-node'>Center viewport on node</button>
+    </p>
+  </div>
+
+  <div class='details'>
+    <h2>Cluster Details <span style="font-size:0.7em">(node id: <span class='node_id'></span>)</span></h2>
+
+    <!-- histogram -->
+    <div class='histogram-wrapper'>
+      <hr><br/>
+
+      <h3><span class='distribution_label'></span> Distribution</h3>
+
+      <div class="histogram"></div>
+
+      <br><br>
+    </div>
+    <!-- /histogram -->
+
+    <!-- Projection Statistics -->
+    <div class='projection_stats' style='display:none'>
+
+      <hr><br/>
+
+      <h3>Projection Statistics</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Lens</th>
+            <th style="width:50px;"><small>Mean</small></th>
+            <th style="width:50px;"><small>Max</small></th>
+            <th style="width:50px;"><small>Min</small></th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+
+    <!-- Cluster Statistics -->
+    <div class='cluster_stats'>
+        <hr><br/>
+
+        <h3>Cluster Statistics</h3>
+        <div class='above-wrapper'>
+            <h3>Above Average</h3>
+            <table>
+              <thead>
+                <tr>
+                  <th>Feature</th>
+                  <th style="width:50px;"><small>Mean</small></th>
+                  <th style="width:50px;"><small>STD</small></th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+        </div>
+
+        <div class='below-wrapper'>
+            <h3>Below Average</h3>
+            <table>
+              <thead>
+                <tr>
+                  <th>Feature</th>
+                  <th style="width:50px;"><small>Mean</small></th>
+                  <th style="width:50px;"><small>STD</small></th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+        </div>
+
+        <h3>Size</h3>
+        <p class='cluster-size'></p>
+    </div>
+
+    <!-- Membership information -->
+    <div class='membership-information'>
+      <hr> <br/>
+
+      <h3>Members</h3>
+      <div class='list-of-members'></div>
+
+      <br><br>
+      <hr><br>
+    </div>
+    <!-- /membership information -->
+  </div>
+</div>
+        </div>
+      </div>
+    </div>
+
+    <div id="helptip" class='pane pane-right'>
+      <div id="helptip_content" class="pane_content">
+        <!-- Help pane.
+    TODO: Add more information here.  -->
+
+<ul>
+<li>Click on a node to lock focus on that node. The node with the current focus will pulse. Click off of a node to release the lock.</li>
+<li>Dragging a node will fix its position on the screen. Double-click a fixed-position node to unfreeze it.</li>
+</ul>
+
+<table>
+    <tr>
+        <th>Key</th>
+        <th><small>Action</small></th>
+    </tr>
+
+    <tr>
+        <td>s</td>
+        <td><small>Nodes glow :D</small></td>
+    </tr>
+
+    <tr>
+        <td>c</td>
+        <td><small>remove glow</small></td>
+    </tr>
+
+    <tr>
+        <td>p</td>
+        <td><small>Print mode - white backgrounds</small></td>
+    </tr>
+
+    <tr>
+        <td>d</td>
+        <td><small>Display mode - black backgrounds</small></td>
+    </tr>
+
+    <tr>
+        <td>z</td>
+        <td><small>Turn off gravity</small></td>
+    </tr>
+
+    <tr>
+        <td>m</td>
+        <td><small>Spacious layout</small></td>
+    </tr>
+
+    <tr>
+        <td>e</td>
+        <td><small>Tight layout</small></td>
+    </tr>
+
+    <tr>
+        <td>f</td>
+        <td><small>Freeze layout</small></td>
+    </tr>
+
+    <tr>
+        <td>x</td>
+        <td><small>Unfreeze all nodes</small></td>
+    </tr>
+
+</table>
+
+<div class="control-wrapper">
+  <div class="control-row">
+    <button class='btn' type="button" id="download-config" name="download-config">Save config</button>
+  </div>
+
+  <div class="control-row">
+    <label for="config-file-loader">Load config file</label>
+    <input type="file" id="config-file-loader" name="config-file-loader" accept="application/json">
+    <button class='btn' id='load-config' disabled>Load</button>
+  </div>
+</div>
+      </div>
+    </div>
+
+    <div id="meta" class='pane pane-right'>
+      <div id="meta_content" class="pane_content">
+        <h2>Mapper Summary</h2>
+
+<hr><br>
+
+
+    
+        <h3>projection </h3> <p> PCA(n_components=2, random_state=42)</p>
+    
+        <h3>n_cubes </h3> <p> [11, 1]</p>
+    
+        <h3>perc_overlap </h3> <p> 0.1</p>
+    
+        <h3>clusterer </h3> <p> DBSCAN(eps=3.5)</p>
+    
+        <h3>scaler </h3> <p> MinMaxScaler()</p>
+    
+        <h3>nerve_min_intersection </h3> <p> 1</p>
+    
+
+
+<h3>Nodes</h3><p> 8 </p>
+
+<h3>Edges</h3><p> 5 </p>
+
+<h3>Total Samples</h3><p> 387</p>
+
+<h3>Unique Samples</h3><p> 354</p>
+
+<h3>Color function</h3><p>
+  Pneumothorax (mean)
+</p>
+
+<h3>Node Color Function</h3><p> mean</p>
+
+
+<!-- histogram -->
+<hr><br/>
+
+<h3>Node Distribution</h3>
+
+<div class="histogram"></div>
+
+<br><br>
+<!-- /histogram -->
+
+<hr><br>
+      </div>
+    </div>
+
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/6.1.1/d3.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/file-saver@2.0.2/dist/FileSaver.min.js"></script>
+
+  <script>// Height and width settings
+var page_height = window.innerHeight - 5;
+var header_height = document.getElementById('header').offsetHeight;
+var canvas_height = page_height - header_height;
+document.getElementById("canvas").style.height = canvas_height + "px";
+var width = document.getElementById("canvas").offsetWidth;
+var height = document.getElementById("canvas").offsetHeight;
+var w = width;
+var h = height;
+var padding = 40;
+
+var focus_node_id = null;
+var focus_node = null;
+var text_center = false;
+var outline = false;
+
+// Size for zooming
+var size = d3.scalePow().exponent(1)
+           .domain([1,100])
+           .range([8,24]);
+
+// Variety of variable inits
+var default_node_color = "#ccc";
+var default_node_color = "rgba(160,160,160, 0.5)";
+var default_link_color = "rgba(160,160,160, 0.5)";
+var nominal_base_node_size = 8;
+var nominal_text_size = 15;
+var max_text_size = 24;
+var nominal_stroke = 1.0;
+var max_stroke = 4.5;
+var max_base_node_size = 36;
+var min_zoom = 0.1;
+var max_zoom = 7;
+var zoom;
+var svg, g;
+var simulation;
+var link, node;
+var drag;
+var dragging = false;
+var circle;
+var text;
+var focus_via_click = false;
+var nodes = [];
+var links = [];
+
+var tocolor = "fill";
+var towhite = "stroke";
+if (outline) {
+  tocolor = "stroke";
+  towhite = "fill";
+}
+
+/**
+ * Side panes
+ */
+
+// Show/Hide Functionality
+function toggle_pane(content, content_id, tag) {
+  var active = content.active ? false : true;
+
+  if (active) {
+    content_id.style("display", "block");
+    tag.node().textContent = "[-]";
+  } else {
+    content_id.style("display", "none");
+    tag.node().textContent = "[+]";
+  }
+
+  // TODO: This is probably not the best way to find the correct height.
+  var h = canvas_height - content.offsetTop - padding;
+  content_id.style("height", h + "px")
+
+  content.active = active;
+}
+
+d3.select("#tooltip_control").on("click", function(e) {
+  toggle_pane(tooltip_content,
+              d3.select("#tooltip_content"),
+              d3.select("#tooltip_tag"))
+
+});
+
+d3.select("#meta_control").on("click", function(e) {
+  toggle_pane(meta_content,
+              d3.select("#meta_content"),
+              d3.select("#meta_tag"))
+
+});
+
+d3.select("#help_control").on("click", function(e) {
+  toggle_pane(helptip_content,
+              d3.select("#helptip_content"),
+              d3.select("#helptip_tag"))
+});
+
+d3.select('#select-color-function').on('input', function(e){
+  color_function_index = parseInt(e.target.value);
+  update_color_functions()
+})
+d3.select('#select-node-color-function').on('input', function(e){
+  node_color_function_index = parseInt(e.target.value);
+  update_color_functions()
+})
+
+/**
+ *
+ * Set up color scale
+ *
+ *
+ */
+// var colorscale defined in base.html
+var domain = colorscale.map((x)=>x[0])
+var palette = colorscale.map((x)=>x[1])
+
+var color = d3.scaleLinear()
+  .domain(domain)
+  .range(palette);
+
+/*
+* one-time setups, like SVG and force init
+*/
+function init() {
+
+  zoom = d3.zoom()
+    .scaleExtent([min_zoom, max_zoom])
+    .on('zoom', zoomed)
+
+  // We draw the graph in SVG
+  svg = d3.select("#canvas svg")
+          .attr("width", width)
+          .attr("height", height)
+          .style("cursor","move")
+          .call(zoom)
+          .on('dblclick.zoom', null); // prevent default zoom-in on dblclick
+
+  svg.on('click.focus', function(e){
+    set_focus_via_click(null);
+  });
+
+  g = svg.append("g")
+
+  link = g.selectAll(".link")
+  node = g.selectAll(".node")
+  text = g.selectAll(".text")
+
+  simulation = d3.forceSimulation()
+    .force('charge', d3.forceManyBody().strength(-1200))
+    .force('center', d3.forceCenter(width / 2, height / 2))
+    .force('link', d3.forceLink().distance(5))
+    .force('x', d3.forceX()) // not sure what this does...
+    .force('y', d3.forceY())
+    .on('tick', ticked)
+
+  drag = d3.drag()
+    .on("start", function(e, d){
+      svg.style('cursor','grabbing');
+      if (!e.active) {
+        simulation.alphaTarget(0.3).restart()
+      }
+      d.fx = d.x
+      d.fy = d.y
+      dragging = true;
+    })
+    .on('drag', function(e, d){
+      d.fx = e.x
+      d.fy = e.y
+    })
+    .on('end', function(e, d){
+      if (!e.active) {
+        simulation.alphaTarget(0)
+      }
+      dragging = false;
+    });
+
+  resize();
+  d3.select(window).on("resize", resize);
+
+  d3.select(window).on("mouseup.focus", function(e){
+    if (focus_node == null) {
+      set_cursor('move');
+    } else {
+      set_cursor('pointer');
+    }
+  });
+}
+
+function set_histogram(selection, data){
+  selection.selectAll('.bin')
+    .data(data)
+    .join(
+      enter => enter.append('div')
+        .attr('class', 'bin')
+        .call(enter => enter.append('div')
+          .text(d => d.perc + '%'))
+      ,
+      update => update
+        .call(update => update.select('div')
+          .text(d => d.perc + '%'))
+    )
+    .style('height', (d) => (d.height || 1) + 'px')
+    .style('background', (d) => d.color);
+}
+
+
+
+var color_function_index = 0;
+var node_color_function_index = 0;
+
+function update_color_functions(){
+  // update_meta_content_histogram
+  set_histogram(d3.select('#meta_content .histogram'), summary_histogram[node_color_function_index][color_function_index])
+
+  // update node colors
+  node.style(tocolor, function(d) {
+    return color(d.color[node_color_function_index][color_function_index]);
+  })
+
+  // update focus node display, if focus_node
+  if (focus_node != null){
+    set_focus_node_histogram(focus_node)
+  }
+}
+
+function update_meta_content_histogram(){
+
+}
+
+function draw_circle_size(d) {
+  return (d3.symbol()
+    .size(function(d) {
+      if (!d.size_modifier) {
+          d.size_modifier = 1;
+      }
+      return d.size * 50 * d.size_modifier;
+    })
+    .type(d3.symbolCircle))(d)
+}
+
+function start() {
+
+  /*
+  * Force-related things
+  *
+  */
+  // shallow copy to enable restarting,
+  // because otherwise, starting the force simulation mutates the links (replaces indeces with refs)
+  nodes = graph.nodes.map(n => Object.assign({}, n));
+  links = graph.links.map(l => Object.assign({}, l));
+
+  // draw links first so that they appear behind nodes
+  link = link
+    .data(links)
+    .join("line")
+      .attr("class", "link")
+      .style("stroke-width", function(d) { return d.w * nominal_stroke; })
+      .style("stroke-width", function(d) { return d.w * nominal_stroke; });
+
+  node = node
+    .data(nodes, d => d.name)
+    .join(enter => enter.append("g")
+      .attr("class", "node")
+      .attr("id", function(d){ return "node-" + d.name })
+      // append circles...
+      .append("path")
+        .attr("d", draw_circle_size )
+        .attr("class", "circle")
+        .on("mouseover.focus", node_mouseover)
+        .on("mouseout.focus", node_mouseout)
+        .on('mousedown.focus', node_mousedown)
+        .on("dblclick.freeze", (e, d) => unfreeze_node(d) )
+        .on('click.zoom', node_click)
+        .on('center_viewport', center_on_node)
+        .call(drag));
+
+  simulation.nodes(nodes);
+  simulation.force('link').links(links);
+  simulation.alpha(1).restart()
+
+  update_color_functions()
+}
+
+init();
+start();
+
+function restart() {
+  // nodes = []
+  // links = []
+  // node.remove()
+  // link.remove()
+  focus_via_click = false;
+  start()
+}
+
+function zoomed({transform}){
+  g.attr('transform', transform)
+}
+
+function ticked() {
+  node.attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"; })
+      .attr("cx", function(d) { return d.x; })
+      .attr("cy", function(d) { return d.y; })
+
+  link.attr("x1", function(d) { return d.source.x; })
+      .attr("y1", function(d) { return d.source.y; })
+      .attr("x2", function(d) { return d.target.x; })
+      .attr("y2", function(d) { return d.target.y; });
+}
+
+/*
+* Resizing window and redraws
+*/
+function resize() {
+  var width = document.getElementById("canvas").offsetWidth;
+  var height = document.getElementById("canvas").offsetHeight;
+
+  svg.attr("width", width)
+     .attr("height", height);
+
+  simulation.force('center', d3.forceCenter(width / 2, height / 2));
+  simulation.alpha(.3).restart();
+
+  w = width;
+  h = height;
+}
+
+function set_focus_via_click(d) {
+  focus_via_click = (d != null ? true : false);
+  set_focus_node(d);
+}
+
+function do_above_below_stats(wrapper, data) {
+  let column_order = ['feature', 'mean', 'std'];
+  wrapper.select('tbody')
+    .selectAll('tr')
+    .data(data, d => d)
+    .join(enter => {
+        let tr = enter.append('tr')
+        tr.append('td')
+        tr.append('td').style('font-size', 'smaller')
+        tr.append('td').style('font-size', 'smaller').attr('class', 'std')
+        return tr
+        })
+    .selectAll('td')
+    .text( (d, i) => d[column_order[i]] )
+  if (data.length > 0) {
+    wrapper.style('display', 'block')
+  } else {
+    wrapper.style('display', 'none')
+  }
+}
+
+function do_projection_stats(wrapper, data) {
+  let column_order = ['name', 'mean', 'min', 'max'];
+  wrapper.select('tbody').selectAll('tr')
+    .data(data, d => d)
+    .join(enter => {
+      let tr = enter.append('tr')
+      tr.append('td')
+      tr.append('td').style('font-size', 'smaller')
+      tr.append('td').style('font-size', 'smaller')
+      tr.append('td').style('font-size', 'smaller')
+      return tr;
+    })
+    .selectAll('td')
+    .text( (d, i) => d[column_order[i]] );
+  if (data.length > 0) {
+    wrapper.style('display', 'block')
+  } else {
+    wrapper.style('display', 'none')
+  }
+}
+
+let focus_node_tooltip_select = d3.select('#tooltip_content_focus_node');
+let tooltip_content_no_focus_node = d3.select('#tooltip_content_no_focus_node')
+let projection_stats_select = focus_node_tooltip_select.select('.projection_stats');
+let cluster_stats_select = focus_node_tooltip_select.select('.cluster_stats');
+let above_wrapper = cluster_stats_select.select('.above-wrapper');
+let below_wrapper = cluster_stats_select.select('.below-wrapper');
+let list_of_members = focus_node_tooltip_select.select('.membership-information .list-of-members');
+
+function set_focus_node(d){
+  if (d == null) {
+    focus_node = null;
+    set_cursor('move');
+    tooltip_content_no_focus_node.style('display', 'block');
+    focus_node_tooltip_select.style('display', 'none')
+    exit_highlight();
+  } else if (focus_node == null || d.name != focus_node.name) {
+    exit_highlight(focus_node);
+    focus_node = d;
+    set_highlight(focus_node);
+    set_cursor('pointer');
+
+    tooltip_content_no_focus_node.style('display', 'none');
+
+    focus_node_tooltip_select.select('button.center-on-node').node().dataset.nodeId = d.tooltip.node_id;
+    focus_node_tooltip_select.select('.node_id').text(d.tooltip.node_id)
+    focus_node_tooltip_select.select('.distribution_label').text(d.tooltip.dist_label)
+
+    // histogram
+    set_focus_node_histogram(d)
+
+    // projection statistics
+    let projection_stats = d.tooltip.projection_stats;
+    do_projection_stats(projection_stats_select, projection_stats)
+
+    // cluster statistics
+    let cluster_stats = d.tooltip.cluster_stats;
+    if (cluster_stats) {
+
+      do_above_below_stats(above_wrapper, cluster_stats.above);
+
+      do_above_below_stats(below_wrapper, cluster_stats.below);
+
+      cluster_stats_select.select('.cluster-size').text(cluster_stats.size)
+
+      cluster_stats_select.style('display', 'block')
+    } else {
+      cluster_stats_select.style('display', 'none')
+    }
+
+    // membership information
+    list_of_members.selectAll('span')
+      .data(d.tooltip.custom_tooltips, d => d)
+      .join('span')
+        .html(d => d)
+        .style('display', 'inline-block')
+        .style('padding', '0 3px')
+
+    focus_node_tooltip_select.style('display', 'block');
+
+    set_focus_node_histogram(d)
+  }
+  // else, it's already the focus node, so do nothing...
+}
+
+d3.select('#tooltip .center-on-node').on('click', function(e){
+  // d3.select('#node-' + focus_node.name + ' .circle').dispatch('center_viewport')
+  d3.select('#node-' + e.target.dataset.nodeId + ' .circle').dispatch('center_viewport')
+})
+
+function set_focus_node_histogram(d){
+  set_histogram(d3.select('#tooltip_content .histogram'), d.tooltip.histogram[color_function_index])
+}
+
+function set_highlight(node) {
+  let node_id = node.name;
+  d3.select('#node-' + node_id + ' .circle').classed('highlight', true);
+  d3.select('#node-' + node_id).classed('highlight', true);
+}
+
+function exit_highlight(node) {
+  let node_id = false;
+  if (node) {
+    node_id = node.name
+  }
+  if (!node_id) {
+     d3.selectAll('.node .circle').classed('highlight', false);
+     d3.selectAll('.node').classed('highlight', false);
+  } else {
+     d3.select('#node-' + node_id + ' .circle').classed('highlight', false);
+     d3.select('#node-' + node_id).classed('highlight', false);
+  }
+
+  do_projection_stats(projection_stats_select, [])
+  do_above_below_stats(above_wrapper, [])
+  do_above_below_stats(below_wrapper, [])
+}
+
+function set_cursor(state) {
+  if (!dragging) {
+    svg.style('cursor', state);
+  }
+}
+
+function node_is_fixed(d){
+  return d.hasOwnProperty('fx') || d.hasOwnProperty('fy')
+}
+
+function node_click(e, d) {
+  e.stopPropagation()
+  // to prevent the svg click.focus listener from unsetting the focus node...
+}
+
+function center_on_node(e, d) {
+  svg.transition().duration(250).call(zoom.translateTo, d.x, d.y);
+}
+
+function node_mouseover(e, d) {
+  d.was_fixed = d.hasOwnProperty('fx') || d.hasOwnProperty('fy')
+  if (!d.was_fixed){
+    d.fx = d.x;
+    d.fy = d.y;
+  }
+
+  if (e.buttons == 0){
+    set_cursor('pointer');
+    if (!focus_via_click) {
+      set_focus_node(d);
+    }
+  }
+}
+
+function node_mouseout(e, d) {
+  if (!d.was_fixed){
+      delete d.fx
+      delete d.fy
+  }
+  if (e.buttons == 0){
+    set_cursor('move');
+    if (!focus_via_click) {
+        set_focus_node(null);
+    }
+  }
+}
+
+function node_mousedown(e, d) {
+  e.stopPropagation();
+  if (focus_node.name != d.name) {
+      //switch click focus
+      set_focus_via_click(d);
+  } else if (!focus_via_click) {
+      //d already selected but not via click; set click true
+      focus_via_click = true;
+  }
+}
+
+
+
+function isNumber(n) {
+  return !isNaN(parseFloat(n)) && isFinite(n);
+}
+
+function unfreeze_node(d){
+  delete d.fy
+  delete d.fx
+  return d
+}
+
+function freeze_node(d){
+  d.fx = d.x;
+  d.fy = d.y;
+  return d
+}
+
+// search functionality
+d3.select('#searchbar')
+  .on('submit', function(event){
+      /*
+      * Searchbar functionality
+      *
+      * Permits AND, OR, and EXACT functionality
+      *
+      */
+      event.preventDefault();
+      // always running this will clear search results on a submit with an empty query
+      node.datum(d => { d.size_modifier = 1; return d });
+      node.style('filter', null)
+
+      node.datum(d => {
+        let to_lower = tooltip => String(tooltip).toLowerCase();
+        d.tooltip.custom_tooltips_lowercase = d.tooltip.custom_tooltips.map(to_lower)
+        return d
+      });
+
+      let search_query = d3.select(this).select('input').property('value').toLowerCase();
+      if (search_query) {
+          let search_mode = d3.select(this).select('input[name="search_mode"]:checked').property('value');
+
+          let node_ratio_fn = (d, i) => {
+            matches = d.tooltip.custom_tooltips_lowercase.map(map_fn)
+            let how_many = matches.filter(x=>x).length;
+
+            // Future optional feature -- size relative to ratio _within-node_
+            let out_of = d.tooltip.cluster_stats.size;
+            let ratio = how_many / out_of;
+
+            // Node sizes will be overall number of items in the node
+            // number of matching
+            d.size_modifier = how_many;
+          }
+
+          let map_fn;
+          let node_each_fn;
+          switch (search_mode) {
+            case 'and':
+              search_query = search_query.split(' ');
+              map_fn = tooltip => {
+                return search_query.every(query_word => { return tooltip.includes( query_word ) })
+              }
+              node.each(node_ratio_fn)
+              break;
+            case 'or':
+              search_query = search_query.split(' ');
+              map_fn = tooltip => {
+                return search_query.some(query_word => { return tooltip.includes( query_word ) })
+              }
+              node.each(node_ratio_fn)
+              break;
+            case 'exact':
+              node.filter((d,i) => {
+                  matches = d.tooltip.custom_tooltips_lowercase.map(tooltip => tooltip == search_query)
+                  return matches.some(e => e);
+              })
+              .style("filter", "url(#drop-shadow-glow)");
+              break;
+            default:
+              console.error(`search mode ${search_mode} unknown`);
+              return;
+          }
+
+      }
+      node.attr("d", draw_circle_size )
+
+  })
+
+
+//https://stackoverflow.com/questions/51319147/map-default-value
+class MapWithDefault extends Map {
+  get(key) {
+    if (!this.has(key)) {
+      this.set(key, this.default())
+    };
+    return super.get(key);
+  }
+
+  constructor(defaultFunction, entries) {
+    super(entries);
+    this.default = defaultFunction;
+  }
+}
+
+d3.select('#min_intersction_selector')
+  .on('submit', function(event){
+    // replicates the logic in kmapper.nerve.GraphNerve.compute
+    event.preventDefault()
+
+    let result = new MapWithDefault(() => []);
+
+    // loop over all combinations of nodes
+    // https://stackoverflow.com/a/43241295/1396649
+    let candidates = []
+    let num_nodes = graph.nodes.length;
+    for (let i = 0; i < num_nodes - 1; i++){
+      for (let j = i + 1; j < num_nodes; j++) {
+        candidates.push([i, j]);
+      }
+    }
+
+    candidates.forEach(function(candidate) {
+      let node1_idx = candidate[0];
+      let node2_idx = candidate[1];
+      let node1 = graph.nodes[node1_idx];
+      let node2 = graph.nodes[node2_idx];
+      let intersection = node1.tooltip.custom_tooltips.filter(x => node2.tooltip.custom_tooltips.includes(x));
+      if (intersection.length >= Number(min_intersction_selector_input.property('value')) ) {
+        result.get(node1_idx).push(node2_idx)
+      }
+    })
+
+    let edges = []
+    result.forEach(function(value, key) {
+      let _edges = value.map(function(end) {
+        return [key, end]
+      })
+      edges.push(_edges);
+    })
+
+    edges = edges.flat().map(function(edge) {
+      return {
+        'source': edge[0],
+        'target': edge[1],
+        'width': 1
+      }
+    })
+
+    graph.links = edges;
+    restart()
+  })
+
+
+// Dynamically size the min_intersection_selector input
+let min_intersction_selector_input = d3.select('#min_intersction_selector input');
+
+min_intersction_selector_input
+  .on('input', function(event){
+    resizeInput.call(this)
+  })
+
+function resizeInput() {
+  this.style.width = ( this.value.length + 3 ) + "ch";
+}
+
+// Only trigger if input is present
+if (min_intersction_selector_input.size()) {
+  resizeInput.call(min_intersction_selector_input.node())
+}
+
+
+// Key press events
+let searchbar = d3.select('#searchbar input');
+
+d3.select(window).on("keydown", function (event) {
+  if (event.defaultPrevented) {
+    return; // Do nothing if the event was already processed
+  }
+
+  // if searchbar is present and has focus
+  if (searchbar.size() && searchbar.node().matches(':focus')){
+      return; // let them use the search bar.
+  }
+
+  if (!event.ctrlKey && !event.altKey && !event.metaKey) {
+    switch (event.key) {
+      case "f": // freeze all
+        node.datum(freeze_node);
+        break;
+      case "x": // unfreeze all
+        node.datum(unfreeze_node);
+        simulation.alphaTarget(.3).restart()
+        break
+      case "s":
+        // Glow
+        node.style("filter", "url(#drop-shadow-glow)");
+        break;
+      case "c":
+        // Remove glow
+        node.style("filter", null);
+        break;
+      case "p":
+        // Turn to print mode, white backgrounds
+        d3.select("body").attr('id', null).attr('id', "print")
+        break;
+      case "d":
+        // "Display" mode (dark background)
+        d3.select("body").attr('id', null).attr('id', "display")
+        break;
+      case "z":
+        // turn off gravity (??)
+        simulation
+          .force('charge', d3.forceManyBody().strength(0))
+          .alphaTarget(.3)
+          .restart()
+        break
+      case "m":
+        // spacious layout
+        simulation
+          .force('charge', d3.forceManyBody().strength(-1200))
+          .alphaTarget(.3)
+          .restart()
+        break
+      case "e":
+        // tight layout
+        simulation
+          .force('charge', d3.forceManyBody().strength(-60))
+          .alphaTarget(.3)
+          .restart()
+        break
+      default:
+        return; // Quit when this doesn't handle the key event.
+    }
+  event.preventDefault();
+  }
+  // Cancel the default action to avoid it being handled twice
+}, true);
+
+
+
+/*
+* Save and load config
+*
+*/
+
+// save config
+document.getElementById('download-config').addEventListener('click', function(e){
+  let config = {}
+  node.data().forEach(node => {
+      let config_node = {}
+
+      if ( node.hasOwnProperty('fx') && node.hasOwnProperty('fy') ) {
+        config_node['fx'] = config_node['x'] = node['fx']
+        config_node['fy'] = config_node['y'] = node['fy']
+      } else {
+        config_node['x'] = node['x']
+        config_node['y'] = node['y']
+      }
+      config[node['name']] = config_node
+    })
+
+  //JSON.stringify(config,undefined,2)
+
+  // https://stackoverflow.com/a/45594892
+  var fileName = 'kmapper-config.json';
+
+  // Create a blob of the data. Blob is native JS api
+  var fileToSave = new Blob([JSON.stringify(config)], {
+      type: 'application/json',
+      name: fileName
+  });
+
+  // function from FileSaver.js
+  saveAs(fileToSave, fileName);
+})
+
+// load config
+var config_file_loader = document.getElementById('config-file-loader');
+
+config_file_loader.addEventListener('change', function(){
+  document.getElementById('load-config').disabled = ( config_file_loader.files.length === 0 )
+})
+
+document.getElementById('load-config').addEventListener('click', function(){
+  const config_file = config_file_loader.files[0];
+  const fr = new FileReader();
+  fr.onload = function(e) {
+    var config = JSON.parse(e.target.result);
+    load_config(config);
+  }
+  fr.readAsText(config_file)
+})
+function load_config(config){
+  node = node.datum(function(d, i){
+    let load_node_config = config[d['name']]
+    d = Object.assign(d, load_node_config);
+    if ( d.hasOwnProperty('fx') && !load_node_config.hasOwnProperty('fx') ) {
+      delete d['fx']
+    }
+    if ( d.hasOwnProperty('fy') && !load_node_config.hasOwnProperty('fy') ) {
+      delete d['fy']
+    }
+    return d;
+  })
+  simulation.restart()
+}
+</script>
+
+<style>/* Mapper v2 cluster-detail extensions: field distributions + image gallery + lightbox */
+
+.cluster-details-extra h3 {
+  margin-bottom: 4px;
+}
+
+.cluster-details-extra hr {
+  margin: 10px 0;
+}
+
+/* --- Field distributions --- */
+
+.field-distribution {
+  margin-bottom: 10px;
+}
+
+.field-distribution .field-name {
+  font-weight: bold;
+  font-size: 0.9em;
+}
+
+.field-distribution .field-stats {
+  font-size: 0.8em;
+  color: #555;
+  margin: 2px 0 4px 0;
+}
+
+.dist-bar-row {
+  display: flex;
+  align-items: center;
+  font-size: 0.75em;
+  margin: 2px 0;
+}
+
+.dist-bar-label {
+  width: 70px;
+  flex-shrink: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  padding-right: 4px;
+}
+
+.dist-bar-track {
+  flex-grow: 1;
+  background: #eee;
+  height: 12px;
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.dist-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #46127f, #a02c8c);
+}
+
+.dist-bar-value {
+  width: 60px;
+  flex-shrink: 0;
+  text-align: right;
+  padding-left: 4px;
+  font-size: 0.9em;
+  color: #333;
+}
+
+/* --- Image gallery --- */
+
+.image-gallery-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(56px, 1fr));
+  gap: 4px;
+  margin: 6px 0;
+}
+
+.image-gallery-thumb {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  object-fit: cover;
+  cursor: pointer;
+  border-radius: 2px;
+  border: 1px solid #ccc;
+  transition: transform 0.1s, border-color 0.1s;
+}
+
+.image-gallery-thumb:hover {
+  transform: scale(1.08);
+  border-color: #a02c8c;
+}
+
+.image-gallery-loadmore {
+  display: block;
+  width: 100%;
+  margin-top: 6px;
+  padding: 6px;
+  font-size: 0.8em;
+  cursor: pointer;
+  background: #f0f0f0;
+  border: 1px solid #ccc;
+  border-radius: 3px;
+}
+
+.image-gallery-loadmore:hover {
+  background: #e0e0e0;
+}
+
+.image-gallery-empty {
+  font-size: 0.8em;
+  color: #888;
+  font-style: italic;
+}
+
+/* --- Lightbox --- */
+
+.cluster-lightbox-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.85);
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cluster-lightbox-overlay[hidden] {
+  display: none;
+}
+
+.cluster-lightbox-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  max-width: 90vw;
+  max-height: 90vh;
+}
+
+.cluster-lightbox-content img {
+  max-width: 80vw;
+  max-height: 70vh;
+  object-fit: contain;
+  border: 2px solid #fff;
+}
+
+.cluster-lightbox-info {
+  color: #fff;
+  margin-top: 10px;
+  font-size: 0.9em;
+  text-align: center;
+}
+
+.cluster-lightbox-close {
+  position: absolute;
+  top: 16px;
+  right: 24px;
+  color: #fff;
+  font-size: 2em;
+  cursor: pointer;
+  line-height: 1;
+}
+
+.cluster-lightbox-nav {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #fff;
+  font-size: 2.5em;
+  cursor: pointer;
+  user-select: none;
+  padding: 0 20px;
+}
+
+.cluster-lightbox-prev {
+  left: 0;
+}
+
+.cluster-lightbox-next {
+  right: 0;
+}
+</style>
+<script>
+const clusterDetailsExtra = {"cube2_cluster0": {"distributions": {"Pneumothorax": {"type": "categorical", "counts": {"1.0": 9, "0.0": 6}, "proportions": {"1.0": 0.6, "0.0": 0.4}, "missing": 0}, "Age": {"type": "continuous", "mean": 47.13333333333333, "median": 44.0, "std": 20.978931230059256, "min": 18.0, "max": 87.0, "missing": 0, "histogram": [{"bin_start": 18.0, "bin_end": 24.9, "count": 3}, {"bin_start": 24.9, "bin_end": 31.8, "count": 1}, {"bin_start": 31.8, "bin_end": 38.7, "count": 3}, {"bin_start": 38.7, "bin_end": 45.6, "count": 2}, {"bin_start": 45.6, "bin_end": 52.5, "count": 0}, {"bin_start": 52.5, "bin_end": 59.400000000000006, "count": 1}, {"bin_start": 59.400000000000006, "bin_end": 66.30000000000001, "count": 1}, {"bin_start": 66.30000000000001, "bin_end": 73.2, "count": 2}, {"bin_start": 73.2, "bin_end": 80.1, "count": 1}, {"bin_start": 80.1, "bin_end": 87.0, "count": 1}]}}, "images": [{"path": "../../../../kaggle/processed/train/patient10753/study10/view1_frontal.png", "patient_id": "patient10753", "tooltip": "patient10753 | Pneumothorax: 1.0 | Age: 18"}, {"path": "../../../../kaggle/processed/train/patient22954/study4/view1_frontal.png", "patient_id": "patient22954", "tooltip": "patient22954 | Pneumothorax: 1.0 | Age: 21"}, {"path": "../../../../kaggle/processed/train/patient10873/study2/view1_frontal.png", "patient_id": "patient10873", "tooltip": "patient10873 | Pneumothorax: 0.0 | Age: 87"}, {"path": "../../../../kaggle/processed/train/patient08870/study7/view1_frontal.png", "patient_id": "patient08870", "tooltip": "patient08870 | Pneumothorax: 1.0 | Age: 35"}, {"path": "../../../../kaggle/processed/train/patient09904/study2/view1_frontal.png", "patient_id": "patient09904", "tooltip": "patient09904 | Pneumothorax: 1.0 | Age: 69"}, {"path": "../../../../kaggle/processed/train/patient33797/study1/view1_frontal.png", "patient_id": "patient33797", "tooltip": "patient33797 | Pneumothorax: 0.0 | Age: 45"}, {"path": "../../../../kaggle/processed/train/patient46028/study2/view1_frontal.png", "patient_id": "patient46028", "tooltip": "patient46028 | Pneumothorax: 1.0 | Age: 30"}, {"path": "../../../../kaggle/processed/train/patient34184/study2/view1_frontal.png", "patient_id": "patient34184", "tooltip": "patient34184 | Pneumothorax: 0.0 | Age: 65"}, {"path": "../../../../kaggle/processed/train/patient36151/study9/view1_frontal.png", "patient_id": "patient36151", "tooltip": "patient36151 | Pneumothorax: 0.0 | Age: 36"}, {"path": "../../../../kaggle/processed/train/patient40677/study2/view1_frontal.png", "patient_id": "patient40677", "tooltip": "patient40677 | Pneumothorax: 1.0 | Age: 44"}, {"path": "../../../../kaggle/processed/train/patient64058/study1/view1_frontal.png", "patient_id": "patient64058", "tooltip": "patient64058 | Pneumothorax: 1.0 | Age: 54"}, {"path": "../../../../kaggle/processed/train/patient49600/study2/view1_frontal.png", "patient_id": "patient49600", "tooltip": "patient49600 | Pneumothorax: 1.0 | Age: 77"}, {"path": "../../../../kaggle/processed/train/patient63284/study1/view1_frontal.png", "patient_id": "patient63284", "tooltip": "patient63284 | Pneumothorax: 0.0 | Age: 68"}, {"path": "../../../../kaggle/processed/train/patient42052/study2/view1_frontal.png", "patient_id": "patient42052", "tooltip": "patient42052 | Pneumothorax: 0.0 | Age: 23"}, {"path": "../../../../kaggle/processed/train/patient37853/study2/view1_frontal.png", "patient_id": "patient37853", "tooltip": "patient37853 | Pneumothorax: 1.0 | Age: 35"}]}, "cube3_cluster0": {"distributions": {"Pneumothorax": {"type": "categorical", "counts": {"1.0": 14, "0.0": 4}, "proportions": {"1.0": 0.7777777777777778, "0.0": 0.2222222222222222}, "missing": 0}, "Age": {"type": "continuous", "mean": 52.611111111111114, "median": 53.5, "std": 18.933036643476132, "min": 23.0, "max": 83.0, "missing": 0, "histogram": [{"bin_start": 23.0, "bin_end": 29.0, "count": 3}, {"bin_start": 29.0, "bin_end": 35.0, "count": 1}, {"bin_start": 35.0, "bin_end": 41.0, "count": 2}, {"bin_start": 41.0, "bin_end": 47.0, "count": 2}, {"bin_start": 47.0, "bin_end": 53.0, "count": 0}, {"bin_start": 53.0, "bin_end": 59.0, "count": 2}, {"bin_start": 59.0, "bin_end": 65.0, "count": 3}, {"bin_start": 65.0, "bin_end": 71.0, "count": 1}, {"bin_start": 71.0, "bin_end": 77.0, "count": 2}, {"bin_start": 77.0, "bin_end": 83.0, "count": 2}]}}, "images": [{"path": "../../../../kaggle/processed/train/patient38218/study3/view1_frontal.png", "patient_id": "patient38218", "tooltip": "patient38218 | Pneumothorax: 0.0 | Age: 62"}, {"path": "../../../../kaggle/processed/train/patient42337/study3/view1_frontal.png", "patient_id": "patient42337", "tooltip": "patient42337 | Pneumothorax: 1.0 | Age: 25"}, {"path": "../../../../kaggle/processed/train/patient15507/study1/view1_frontal.png", "patient_id": "patient15507", "tooltip": "patient15507 | Pneumothorax: 1.0 | Age: 26"}, {"path": "../../../../kaggle/processed/train/patient43458/study3/view1_frontal.png", "patient_id": "patient43458", "tooltip": "patient43458 | Pneumothorax: 1.0 | Age: 32"}, {"path": "../../../../kaggle/processed/train/patient31426/study1/view1_frontal.png", "patient_id": "patient31426", "tooltip": "patient31426 | Pneumothorax: 1.0 | Age: 75"}, {"path": "../../../../kaggle/processed/train/patient15802/study2/view1_frontal.png", "patient_id": "patient15802", "tooltip": "patient15802 | Pneumothorax: 0.0 | Age: 40"}, {"path": "../../../../kaggle/processed/train/patient27773/study3/view1_frontal.png", "patient_id": "patient27773", "tooltip": "patient27773 | Pneumothorax: 1.0 | Age: 63"}, {"path": "../../../../kaggle/processed/train/patient05822/study1/view1_frontal.png", "patient_id": "patient05822", "tooltip": "patient05822 | Pneumothorax: 0.0 | Age: 36"}, {"path": "../../../../kaggle/processed/train/patient21763/study1/view1_frontal.png", "patient_id": "patient21763", "tooltip": "patient21763 | Pneumothorax: 1.0 | Age: 45"}, {"path": "../../../../kaggle/processed/train/patient35727/study4/view1_frontal.png", "patient_id": "patient35727", "tooltip": "patient35727 | Pneumothorax: 1.0 | Age: 81"}, {"path": "../../../../kaggle/processed/train/patient06422/study1/view1_frontal.png", "patient_id": "patient06422", "tooltip": "patient06422 | Pneumothorax: 1.0 | Age: 63"}, {"path": "../../../../kaggle/processed/train/patient00467/study4/view1_frontal.png", "patient_id": "patient00467", "tooltip": "patient00467 | Pneumothorax: 1.0 | Age: 23"}, {"path": "../../../../kaggle/processed/train/patient02526/study2/view1_frontal.png", "patient_id": "patient02526", "tooltip": "patient02526 | Pneumothorax: 1.0 | Age: 71"}, {"path": "../../../../kaggle/processed/train/patient36740/study8/view1_frontal.png", "patient_id": "patient36740", "tooltip": "patient36740 | Pneumothorax: 1.0 | Age: 53"}, {"path": "../../../../kaggle/processed/train/patient05610/study2/view1_frontal.png", "patient_id": "patient05610", "tooltip": "patient05610 | Pneumothorax: 0.0 | Age: 46"}, {"path": "../../../../kaggle/processed/train/patient64058/study1/view1_frontal.png", "patient_id": "patient64058", "tooltip": "patient64058 | Pneumothorax: 1.0 | Age: 54"}, {"path": "../../../../kaggle/processed/train/patient07841/study8/view1_frontal.png", "patient_id": "patient07841", "tooltip": "patient07841 | Pneumothorax: 1.0 | Age: 83"}, {"path": "../../../../kaggle/processed/train/patient47964/study6/view1_frontal.png", "patient_id": "patient47964", "tooltip": "patient47964 | Pneumothorax: 1.0 | Age: 69"}]}, "cube4_cluster0": {"distributions": {"Pneumothorax": {"type": "categorical", "counts": {"0.0": 26, "1.0": 24}, "proportions": {"0.0": 0.52, "1.0": 0.48}, "missing": 0}, "Age": {"type": "continuous", "mean": 47.38, "median": 46.5, "std": 17.604419899559314, "min": 19.0, "max": 85.0, "missing": 0, "histogram": [{"bin_start": 19.0, "bin_end": 25.6, "count": 7}, {"bin_start": 25.6, "bin_end": 32.2, "count": 5}, {"bin_start": 32.2, "bin_end": 38.8, "count": 5}, {"bin_start": 38.8, "bin_end": 45.4, "count": 7}, {"bin_start": 45.4, "bin_end": 52.0, "count": 8}, {"bin_start": 52.0, "bin_end": 58.599999999999994, "count": 4}, {"bin_start": 58.599999999999994, "bin_end": 65.19999999999999, "count": 4}, {"bin_start": 65.19999999999999, "bin_end": 71.8, "count": 6}, {"bin_start": 71.8, "bin_end": 78.4, "count": 1}, {"bin_start": 78.4, "bin_end": 85.0, "count": 3}]}}, "images": [{"path": "../../../../kaggle/processed/train/patient35935/study5/view1_frontal.png", "patient_id": "patient35935", "tooltip": "patient35935 | Pneumothorax: 0.0 | Age: 50"}, {"path": "../../../../kaggle/processed/train/patient41151/study1/view1_frontal.png", "patient_id": "patient41151", "tooltip": "patient41151 | Pneumothorax: 0.0 | Age: 85"}, {"path": "../../../../kaggle/processed/train/patient18894/study2/view1_frontal.png", "patient_id": "patient18894", "tooltip": "patient18894 | Pneumothorax: 0.0 | Age: 39"}, {"path": "../../../../kaggle/processed/train/patient54875/study1/view1_frontal.png", "patient_id": "patient54875", "tooltip": "patient54875 | Pneumothorax: 0.0 | Age: 20"}, {"path": "../../../../kaggle/processed/train/patient47951/study2/view1_frontal.png", "patient_id": "patient47951", "tooltip": "patient47951 | Pneumothorax: 0.0 | Age: 32"}, {"path": "../../../../kaggle/processed/train/patient30124/study3/view1_frontal.png", "patient_id": "patient30124", "tooltip": "patient30124 | Pneumothorax: 0.0 | Age: 46"}, {"path": "../../../../kaggle/processed/train/patient51560/study4/view1_frontal.png", "patient_id": "patient51560", "tooltip": "patient51560 | Pneumothorax: 0.0 | Age: 19"}, {"path": "../../../../kaggle/processed/train/patient60847/study1/view1_frontal.png", "patient_id": "patient60847", "tooltip": "patient60847 | Pneumothorax: 0.0 | Age: 69"}, {"path": "../../../../kaggle/processed/train/patient29793/study6/view1_frontal.png", "patient_id": "patient29793", "tooltip": "patient29793 | Pneumothorax: 0.0 | Age: 32"}, {"path": "../../../../kaggle/processed/train/patient14153/study1/view1_frontal.png", "patient_id": "patient14153", "tooltip": "patient14153 | Pneumothorax: 1.0 | Age: 71"}, {"path": "../../../../kaggle/processed/train/patient25974/study1/view1_frontal.png", "patient_id": "patient25974", "tooltip": "patient25974 | Pneumothorax: 1.0 | Age: 29"}, {"path": "../../../../kaggle/processed/train/patient02680/study1/view1_frontal.png", "patient_id": "patient02680", "tooltip": "patient02680 | Pneumothorax: 1.0 | Age: 65"}, {"path": "../../../../kaggle/processed/train/patient09340/study2/view1_frontal.png", "patient_id": "patient09340", "tooltip": "patient09340 | Pneumothorax: 0.0 | Age: 50"}, {"path": "../../../../kaggle/processed/train/patient39400/study5/view1_frontal.png", "patient_id": "patient39400", "tooltip": "patient39400 | Pneumothorax: 1.0 | Age: 20"}, {"path": "../../../../kaggle/processed/train/patient43562/study1/view1_frontal.png", "patient_id": "patient43562", "tooltip": "patient43562 | Pneumothorax: 1.0 | Age: 58"}, {"path": "../../../../kaggle/processed/train/patient49315/study2/view1_frontal.png", "patient_id": "patient49315", "tooltip": "patient49315 | Pneumothorax: 1.0 | Age: 49"}, {"path": "../../../../kaggle/processed/train/patient61768/study1/view1_frontal.png", "patient_id": "patient61768", "tooltip": "patient61768 | Pneumothorax: 0.0 | Age: 59"}, {"path": "../../../../kaggle/processed/train/patient15997/study2/view1_frontal.png", "patient_id": "patient15997", "tooltip": "patient15997 | Pneumothorax: 0.0 | Age: 54"}, {"path": "../../../../kaggle/processed/train/patient11998/study2/view1_frontal.png", "patient_id": "patient11998", "tooltip": "patient11998 | Pneumothorax: 0.0 | Age: 50"}, {"path": "../../../../kaggle/processed/train/patient30127/study2/view1_frontal.png", "patient_id": "patient30127", "tooltip": "patient30127 | Pneumothorax: 1.0 | Age: 56"}, {"path": "../../../../kaggle/processed/train/patient22395/study4/view1_frontal.png", "patient_id": "patient22395", "tooltip": "patient22395 | Pneumothorax: 1.0 | Age: 75"}, {"path": "../../../../kaggle/processed/train/patient13932/study6/view1_frontal.png", "patient_id": "patient13932", "tooltip": "patient13932 | Pneumothorax: 1.0 | Age: 69"}, {"path": "../../../../kaggle/processed/train/patient37101/study2/view1_frontal.png", "patient_id": "patient37101", "tooltip": "patient37101 | Pneumothorax: 1.0 | Age: 34"}, {"path": "../../../../kaggle/processed/train/patient14380/study1/view1_frontal.png", "patient_id": "patient14380", "tooltip": "patient14380 | Pneumothorax: 0.0 | Age: 53"}, {"path": "../../../../kaggle/processed/train/patient04064/study4/view1_frontal.png", "patient_id": "patient04064", "tooltip": "patient04064 | Pneumothorax: 0.0 | Age: 68"}, {"path": "../../../../kaggle/processed/train/patient22087/study3/view1_frontal.png", "patient_id": "patient22087", "tooltip": "patient22087 | Pneumothorax: 0.0 | Age: 38"}, {"path": "../../../../kaggle/processed/train/patient50279/study1/view1_frontal.png", "patient_id": "patient50279", "tooltip": "patient50279 | Pneumothorax: 0.0 | Age: 79"}, {"path": "../../../../kaggle/processed/train/patient42033/study7/view1_frontal.png", "patient_id": "patient42033", "tooltip": "patient42033 | Pneumothorax: 1.0 | Age: 38"}, {"path": "../../../../kaggle/processed/train/patient16579/study7/view1_frontal.png", "patient_id": "patient16579", "tooltip": "patient16579 | Pneumothorax: 0.0 | Age: 38"}, {"path": "../../../../kaggle/processed/train/patient15457/study5/view1_frontal.png", "patient_id": "patient15457", "tooltip": "patient15457 | Pneumothorax: 0.0 | Age: 31"}, {"path": "../../../../kaggle/processed/train/patient56798/study2/view1_frontal.png", "patient_id": "patient56798", "tooltip": "patient56798 | Pneumothorax: 0.0 | Age: 41"}, {"path": "../../../../kaggle/processed/train/patient28943/study3/view1_frontal.png", "patient_id": "patient28943", "tooltip": "patient28943 | Pneumothorax: 1.0 | Age: 31"}, {"path": "../../../../kaggle/processed/train/patient07530/study2/view1_frontal.png", "patient_id": "patient07530", "tooltip": "patient07530 | Pneumothorax: 0.0 | Age: 48"}, {"path": "../../../../kaggle/processed/train/patient26955/study3/view1_frontal.png", "patient_id": "patient26955", "tooltip": "patient26955 | Pneumothorax: 1.0 | Age: 82"}, {"path": "../../../../kaggle/processed/train/patient32371/study4/view1_frontal.png", "patient_id": "patient32371", "tooltip": "patient32371 | Pneumothorax: 0.0 | Age: 21"}, {"path": "../../../../kaggle/processed/train/patient42847/study3/view1_frontal.png", "patient_id": "patient42847", "tooltip": "patient42847 | Pneumothorax: 1.0 | Age: 19"}, {"path": "../../../../kaggle/processed/train/patient06187/study3/view1_frontal.png", "patient_id": "patient06187", "tooltip": "patient06187 | Pneumothorax: 1.0 | Age: 69"}, {"path": "../../../../kaggle/processed/train/patient32070/study2/view1_frontal.png", "patient_id": "patient32070", "tooltip": "patient32070 | Pneumothorax: 1.0 | Age: 69"}, {"path": "../../../../kaggle/processed/train/patient39817/study4/view1_frontal.png", "patient_id": "patient39817", "tooltip": "patient39817 | Pneumothorax: 1.0 | Age: 42"}, {"path": "../../../../kaggle/processed/train/patient46068/study1/view1_frontal.png", "patient_id": "patient46068", "tooltip": "patient46068 | Pneumothorax: 0.0 | Age: 36"}, {"path": "../../../../kaggle/processed/train/patient31146/study5/view1_frontal.png", "patient_id": "patient31146", "tooltip": "patient31146 | Pneumothorax: 1.0 | Age: 51"}, {"path": "../../../../kaggle/processed/train/patient15229/study9/view1_frontal.png", "patient_id": "patient15229", "tooltip": "patient15229 | Pneumothorax: 0.0 | Age: 47"}, {"path": "../../../../kaggle/processed/train/patient43630/study2/view1_frontal.png", "patient_id": "patient43630", "tooltip": "patient43630 | Pneumothorax: 1.0 | Age: 45"}, {"path": "../../../../kaggle/processed/train/patient07799/study5/view1_frontal.png", "patient_id": "patient07799", "tooltip": "patient07799 | Pneumothorax: 1.0 | Age: 59"}, {"path": "../../../../kaggle/processed/train/patient45165/study9/view1_frontal.png", "patient_id": "patient45165", "tooltip": "patient45165 | Pneumothorax: 0.0 | Age: 40"}, {"path": "../../../../kaggle/processed/train/patient13509/study6/view1_frontal.png", "patient_id": "patient13509", "tooltip": "patient13509 | Pneumothorax: 1.0 | Age: 23"}, {"path": "../../../../kaggle/processed/train/patient61673/study2/view1_frontal.png", "patient_id": "patient61673", "tooltip": "patient61673 | Pneumothorax: 1.0 | Age: 40"}, {"path": "../../../../kaggle/processed/train/patient44450/study1/view1_frontal.png", "patient_id": "patient44450", "tooltip": "patient44450 | Pneumothorax: 1.0 | Age: 24"}, {"path": "../../../../kaggle/processed/train/patient22694/study13/view1_frontal.png", "patient_id": "patient22694", "tooltip": "patient22694 | Pneumothorax: 0.0 | Age: 43"}, {"path": "../../../../kaggle/processed/train/patient32500/study28/view1_frontal.png", "patient_id": "patient32500", "tooltip": "patient32500 | Pneumothorax: 1.0 | Age: 63"}]}, "cube6_cluster0": {"distributions": {"Pneumothorax": {"type": "categorical", "counts": {"0.0": 4, "1.0": 1}, "proportions": {"0.0": 0.8, "1.0": 0.2}, "missing": 0}, "Age": {"type": "continuous", "mean": 40.4, "median": 35.0, "std": 11.35957745693034, "min": 30.0, "max": 62.0, "missing": 0, "histogram": [{"bin_start": 30.0, "bin_end": 33.2, "count": 1}, {"bin_start": 33.2, "bin_end": 36.4, "count": 2}, {"bin_start": 36.4, "bin_end": 39.6, "count": 0}, {"bin_start": 39.6, "bin_end": 42.8, "count": 1}, {"bin_start": 42.8, "bin_end": 46.0, "count": 0}, {"bin_start": 46.0, "bin_end": 49.2, "count": 0}, {"bin_start": 49.2, "bin_end": 52.400000000000006, "count": 0}, {"bin_start": 52.400000000000006, "bin_end": 55.6, "count": 0}, {"bin_start": 55.6, "bin_end": 58.8, "count": 0}, {"bin_start": 58.8, "bin_end": 62.0, "count": 1}]}}, "images": [{"path": "../../../../kaggle/processed/train/patient53531/study1/view1_frontal.png", "patient_id": "patient53531", "tooltip": "patient53531 | Pneumothorax: 0.0 | Age: 35"}, {"path": "../../../../kaggle/processed/train/patient19815/study2/view1_frontal.png", "patient_id": "patient19815", "tooltip": "patient19815 | Pneumothorax: 0.0 | Age: 34"}, {"path": "../../../../kaggle/processed/train/patient47681/study1/view1_frontal.png", "patient_id": "patient47681", "tooltip": "patient47681 | Pneumothorax: 0.0 | Age: 41"}, {"path": "../../../../kaggle/processed/train/patient43542/study7/view1_frontal.png", "patient_id": "patient43542", "tooltip": "patient43542 | Pneumothorax: 1.0 | Age: 62"}, {"path": "../../../../kaggle/processed/train/patient13439/study1/view1_frontal.png", "patient_id": "patient13439", "tooltip": "patient13439 | Pneumothorax: 0.0 | Age: 30"}]}, "cube7_cluster0": {"distributions": {"Pneumothorax": {"type": "categorical", "counts": {"0.0": 12, "1.0": 4}, "proportions": {"0.0": 0.75, "1.0": 0.25}, "missing": 0}, "Age": {"type": "continuous", "mean": 46.0, "median": 45.0, "std": 12.742644937374658, "min": 21.0, "max": 73.0, "missing": 0, "histogram": [{"bin_start": 21.0, "bin_end": 26.2, "count": 2}, {"bin_start": 26.2, "bin_end": 31.4, "count": 0}, {"bin_start": 31.4, "bin_end": 36.6, "count": 0}, {"bin_start": 36.6, "bin_end": 41.8, "count": 3}, {"bin_start": 41.8, "bin_end": 47.0, "count": 4}, {"bin_start": 47.0, "bin_end": 52.2, "count": 4}, {"bin_start": 52.2, "bin_end": 57.4, "count": 1}, {"bin_start": 57.4, "bin_end": 62.6, "count": 0}, {"bin_start": 62.6, "bin_end": 67.80000000000001, "count": 0}, {"bin_start": 67.80000000000001, "bin_end": 73.0, "count": 2}]}}, "images": [{"path": "../../../../kaggle/processed/train/patient22961/study2/view1_frontal.png", "patient_id": "patient22961", "tooltip": "patient22961 | Pneumothorax: 1.0 | Age: 46"}, {"path": "../../../../kaggle/processed/train/patient11096/study3/view1_frontal.png", "patient_id": "patient11096", "tooltip": "patient11096 | Pneumothorax: 0.0 | Age: 50"}, {"path": "../../../../kaggle/processed/train/patient58216/study3/view1_frontal.png", "patient_id": "patient58216", "tooltip": "patient58216 | Pneumothorax: 1.0 | Age: 73"}, {"path": "../../../../kaggle/processed/train/patient55293/study1/view1_frontal.png", "patient_id": "patient55293", "tooltip": "patient55293 | Pneumothorax: 1.0 | Age: 50"}, {"path": "../../../../kaggle/processed/train/patient00771/study2/view1_frontal.png", "patient_id": "patient00771", "tooltip": "patient00771 | Pneumothorax: 0.0 | Age: 53"}, {"path": "../../../../kaggle/processed/train/patient06802/study1/view1_frontal.png", "patient_id": "patient06802", "tooltip": "patient06802 | Pneumothorax: 0.0 | Age: 43"}, {"path": "../../../../kaggle/processed/train/patient00312/study2/view1_frontal.png", "patient_id": "patient00312", "tooltip": "patient00312 | Pneumothorax: 0.0 | Age: 48"}, {"path": "../../../../kaggle/processed/train/patient55665/study1/view1_frontal.png", "patient_id": "patient55665", "tooltip": "patient55665 | Pneumothorax: 0.0 | Age: 44"}, {"path": "../../../../kaggle/processed/train/patient55555/study1/view1_frontal.png", "patient_id": "patient55555", "tooltip": "patient55555 | Pneumothorax: 0.0 | Age: 69"}, {"path": "../../../../kaggle/processed/train/patient46342/study3/view1_frontal.png", "patient_id": "patient46342", "tooltip": "patient46342 | Pneumothorax: 0.0 | Age: 43"}, {"path": "../../../../kaggle/processed/train/patient42322/study1/view1_frontal.png", "patient_id": "patient42322", "tooltip": "patient42322 | Pneumothorax: 0.0 | Age: 24"}, {"path": "../../../../kaggle/processed/train/patient18423/study2/view1_frontal.png", "patient_id": "patient18423", "tooltip": "patient18423 | Pneumothorax: 0.0 | Age: 39"}, {"path": "../../../../kaggle/processed/train/patient52559/study1/view1_frontal.png", "patient_id": "patient52559", "tooltip": "patient52559 | Pneumothorax: 0.0 | Age: 41"}, {"path": "../../../../kaggle/processed/train/patient05834/study2/view1_frontal.png", "patient_id": "patient05834", "tooltip": "patient05834 | Pneumothorax: 0.0 | Age: 21"}, {"path": "../../../../kaggle/processed/train/patient07079/study2/view1_frontal.png", "patient_id": "patient07079", "tooltip": "patient07079 | Pneumothorax: 0.0 | Age: 51"}, {"path": "../../../../kaggle/processed/train/patient19340/study6/view1_frontal.png", "patient_id": "patient19340", "tooltip": "patient19340 | Pneumothorax: 1.0 | Age: 41"}]}, "cube8_cluster0": {"distributions": {"Pneumothorax": {"type": "categorical", "counts": {"0.0": 26, "1.0": 13}, "proportions": {"0.0": 0.6666666666666666, "1.0": 0.3333333333333333}, "missing": 0}, "Age": {"type": "continuous", "mean": 37.35897435897436, "median": 38.0, "std": 15.164883827849227, "min": 18.0, "max": 71.0, "missing": 0, "histogram": [{"bin_start": 18.0, "bin_end": 23.3, "count": 10}, {"bin_start": 23.3, "bin_end": 28.6, "count": 5}, {"bin_start": 28.6, "bin_end": 33.9, "count": 2}, {"bin_start": 33.9, "bin_end": 39.2, "count": 5}, {"bin_start": 39.2, "bin_end": 44.5, "count": 4}, {"bin_start": 44.5, "bin_end": 49.8, "count": 2}, {"bin_start": 49.8, "bin_end": 55.1, "count": 6}, {"bin_start": 55.1, "bin_end": 60.4, "count": 2}, {"bin_start": 60.4, "bin_end": 65.69999999999999, "count": 2}, {"bin_start": 65.69999999999999, "bin_end": 71.0, "count": 1}]}}, "images": [{"path": "../../../../kaggle/processed/train/patient11096/study3/view1_frontal.png", "patient_id": "patient11096", "tooltip": "patient11096 | Pneumothorax: 0.0 | Age: 50"}, {"path": "../../../../kaggle/processed/train/patient55430/study4/view1_frontal.png", "patient_id": "patient55430", "tooltip": "patient55430 | Pneumothorax: 1.0 | Age: 52"}, {"path": "../../../../kaggle/processed/train/patient13954/study4/view1_frontal.png", "patient_id": "patient13954", "tooltip": "patient13954 | Pneumothorax: 0.0 | Age: 21"}, {"path": "../../../../kaggle/processed/train/patient20463/study2/view1_frontal.png", "patient_id": "patient20463", "tooltip": "patient20463 | Pneumothorax: 1.0 | Age: 42"}, {"path": "../../../../kaggle/processed/train/patient28095/study4/view1_frontal.png", "patient_id": "patient28095", "tooltip": "patient28095 | Pneumothorax: 0.0 | Age: 24"}, {"path": "../../../../kaggle/processed/train/patient55293/study1/view1_frontal.png", "patient_id": "patient55293", "tooltip": "patient55293 | Pneumothorax: 1.0 | Age: 50"}, {"path": "../../../../kaggle/processed/train/patient04723/study5/view1_frontal.png", "patient_id": "patient04723", "tooltip": "patient04723 | Pneumothorax: 0.0 | Age: 42"}, {"path": "../../../../kaggle/processed/train/patient16901/study2/view1_frontal.png", "patient_id": "patient16901", "tooltip": "patient16901 | Pneumothorax: 0.0 | Age: 19"}, {"path": "../../../../kaggle/processed/train/patient06802/study1/view1_frontal.png", "patient_id": "patient06802", "tooltip": "patient06802 | Pneumothorax: 0.0 | Age: 43"}, {"path": "../../../../kaggle/processed/train/patient00312/study2/view1_frontal.png", "patient_id": "patient00312", "tooltip": "patient00312 | Pneumothorax: 0.0 | Age: 48"}, {"path": "../../../../kaggle/processed/train/patient16478/study3/view1_frontal.png", "patient_id": "patient16478", "tooltip": "patient16478 | Pneumothorax: 1.0 | Age: 19"}, {"path": "../../../../kaggle/processed/train/patient58928/study3/view1_frontal.png", "patient_id": "patient58928", "tooltip": "patient58928 | Pneumothorax: 0.0 | Age: 19"}, {"path": "../../../../kaggle/processed/train/patient56149/study2/view1_frontal.png", "patient_id": "patient56149", "tooltip": "patient56149 | Pneumothorax: 0.0 | Age: 19"}, {"path": "../../../../kaggle/processed/train/patient22926/study2/view1_frontal.png", "patient_id": "patient22926", "tooltip": "patient22926 | Pneumothorax: 1.0 | Age: 35"}, {"path": "../../../../kaggle/processed/train/patient17181/study2/view1_frontal.png", "patient_id": "patient17181", "tooltip": "patient17181 | Pneumothorax: 0.0 | Age: 19"}, {"path": "../../../../kaggle/processed/train/patient48862/study2/view1_frontal.png", "patient_id": "patient48862", "tooltip": "patient48862 | Pneumothorax: 0.0 | Age: 23"}, {"path": "../../../../kaggle/processed/train/patient26939/study1/view1_frontal.png", "patient_id": "patient26939", "tooltip": "patient26939 | Pneumothorax: 0.0 | Age: 57"}, {"path": "../../../../kaggle/processed/train/patient18423/study2/view1_frontal.png", "patient_id": "patient18423", "tooltip": "patient18423 | Pneumothorax: 0.0 | Age: 39"}, {"path": "../../../../kaggle/processed/train/patient10132/study3/view1_frontal.png", "patient_id": "patient10132", "tooltip": "patient10132 | Pneumothorax: 0.0 | Age: 63"}, {"path": "../../../../kaggle/processed/train/patient28323/study2/view1_frontal.png", "patient_id": "patient28323", "tooltip": "patient28323 | Pneumothorax: 0.0 | Age: 46"}, {"path": "../../../../kaggle/processed/train/patient49859/study1/view1_frontal.png", "patient_id": "patient49859", "tooltip": "patient49859 | Pneumothorax: 1.0 | Age: 18"}, {"path": "../../../../kaggle/processed/train/patient46395/study2/view1_frontal.png", "patient_id": "patient46395", "tooltip": "patient46395 | Pneumothorax: 0.0 | Age: 29"}, {"path": "../../../../kaggle/processed/train/patient61248/study1/view1_frontal.png", "patient_id": "patient61248", "tooltip": "patient61248 | Pneumothorax: 0.0 | Age: 24"}, {"path": "../../../../kaggle/processed/train/patient25045/study7/view1_frontal.png", "patient_id": "patient25045", "tooltip": "patient25045 | Pneumothorax: 1.0 | Age: 28"}, {"path": "../../../../kaggle/processed/train/patient30474/study4/view1_frontal.png", "patient_id": "patient30474", "tooltip": "patient30474 | Pneumothorax: 1.0 | Age: 29"}, {"path": "../../../../kaggle/processed/train/patient39395/study3/view1_frontal.png", "patient_id": "patient39395", "tooltip": "patient39395 | Pneumothorax: 0.0 | Age: 38"}, {"path": "../../../../kaggle/processed/train/patient39937/study3/view1_frontal.png", "patient_id": "patient39937", "tooltip": "patient39937 | Pneumothorax: 1.0 | Age: 39"}, {"path": "../../../../kaggle/processed/train/patient43130/study1/view1_frontal.png", "patient_id": "patient43130", "tooltip": "patient43130 | Pneumothorax: 0.0 | Age: 25"}, {"path": "../../../../kaggle/processed/train/patient39684/study3/view1_frontal.png", "patient_id": "patient39684", "tooltip": "patient39684 | Pneumothorax: 0.0 | Age: 26"}, {"path": "../../../../kaggle/processed/train/patient04751/study3/view1_frontal.png", "patient_id": "patient04751", "tooltip": "patient04751 | Pneumothorax: 0.0 | Age: 56"}, {"path": "../../../../kaggle/processed/train/patient19340/study6/view1_frontal.png", "patient_id": "patient19340", "tooltip": "patient19340 | Pneumothorax: 1.0 | Age: 41"}, {"path": "../../../../kaggle/processed/train/patient61345/study1/view1_frontal.png", "patient_id": "patient61345", "tooltip": "patient61345 | Pneumothorax: 0.0 | Age: 18"}, {"path": "../../../../kaggle/processed/train/patient54759/study1/view1_frontal.png", "patient_id": "patient54759", "tooltip": "patient54759 | Pneumothorax: 0.0 | Age: 71"}, {"path": "../../../../kaggle/processed/train/patient38151/study2/view1_frontal.png", "patient_id": "patient38151", "tooltip": "patient38151 | Pneumothorax: 0.0 | Age: 55"}, {"path": "../../../../kaggle/processed/train/patient46921/study4/view1_frontal.png", "patient_id": "patient46921", "tooltip": "patient46921 | Pneumothorax: 0.0 | Age: 55"}, {"path": "../../../../kaggle/processed/train/patient29071/study2/view1_frontal.png", "patient_id": "patient29071", "tooltip": "patient29071 | Pneumothorax: 0.0 | Age: 54"}, {"path": "../../../../kaggle/processed/train/patient28966/study4/view1_frontal.png", "patient_id": "patient28966", "tooltip": "patient28966 | Pneumothorax: 1.0 | Age: 22"}, {"path": "../../../../kaggle/processed/train/patient34999/study6/view1_frontal.png", "patient_id": "patient34999", "tooltip": "patient34999 | Pneumothorax: 1.0 | Age: 35"}, {"path": "../../../../kaggle/processed/train/patient39736/study5/view1_frontal.png", "patient_id": "patient39736", "tooltip": "patient39736 | Pneumothorax: 1.0 | Age: 64"}]}, "cube9_cluster0": {"distributions": {"Pneumothorax": {"type": "categorical", "counts": {"1.0": 25, "0.0": 22}, "proportions": {"1.0": 0.5319148936170213, "0.0": 0.46808510638297873}, "missing": 0}, "Age": {"type": "continuous", "mean": 50.723404255319146, "median": 50.0, "std": 18.97669581765294, "min": 19.0, "max": 87.0, "missing": 0, "histogram": [{"bin_start": 19.0, "bin_end": 25.8, "count": 6}, {"bin_start": 25.8, "bin_end": 32.6, "count": 4}, {"bin_start": 32.6, "bin_end": 39.4, "count": 4}, {"bin_start": 39.4, "bin_end": 46.2, "count": 7}, {"bin_start": 46.2, "bin_end": 53.0, "count": 7}, {"bin_start": 53.0, "bin_end": 59.8, "count": 2}, {"bin_start": 59.8, "bin_end": 66.6, "count": 3}, {"bin_start": 66.6, "bin_end": 73.4, "count": 7}, {"bin_start": 73.4, "bin_end": 80.19999999999999, "count": 5}, {"bin_start": 80.19999999999999, "bin_end": 87.0, "count": 2}]}}, "images": [{"path": "../../../../kaggle/processed/train/patient35742/study1/view1_frontal.png", "patient_id": "patient35742", "tooltip": "patient35742 | Pneumothorax: 0.0 | Age: 80"}, {"path": "../../../../kaggle/processed/train/patient32289/study2/view1_frontal.png", "patient_id": "patient32289", "tooltip": "patient32289 | Pneumothorax: 0.0 | Age: 60"}, {"path": "../../../../kaggle/processed/train/patient61024/study1/view1_frontal.png", "patient_id": "patient61024", "tooltip": "patient61024 | Pneumothorax: 1.0 | Age: 28"}, {"path": "../../../../kaggle/processed/train/patient00048/study1/view1_frontal.png", "patient_id": "patient00048", "tooltip": "patient00048 | Pneumothorax: 1.0 | Age: 45"}, {"path": "../../../../kaggle/processed/train/patient62012/study1/view1_frontal.png", "patient_id": "patient62012", "tooltip": "patient62012 | Pneumothorax: 1.0 | Age: 76"}, {"path": "../../../../kaggle/processed/train/patient58388/study1/view1_frontal.png", "patient_id": "patient58388", "tooltip": "patient58388 | Pneumothorax: 1.0 | Age: 51"}, {"path": "../../../../kaggle/processed/train/patient32273/study1/view1_frontal.png", "patient_id": "patient32273", "tooltip": "patient32273 | Pneumothorax: 0.0 | Age: 53"}, {"path": "../../../../kaggle/processed/train/patient54520/study3/view1_frontal.png", "patient_id": "patient54520", "tooltip": "patient54520 | Pneumothorax: 0.0 | Age: 40"}, {"path": "../../../../kaggle/processed/train/patient02661/study5/view1_frontal.png", "patient_id": "patient02661", "tooltip": "patient02661 | Pneumothorax: 1.0 | Age: 39"}, {"path": "../../../../kaggle/processed/train/patient47951/study2/view1_frontal.png", "patient_id": "patient47951", "tooltip": "patient47951 | Pneumothorax: 0.0 | Age: 32"}, {"path": "../../../../kaggle/processed/train/patient48267/study1/view1_frontal.png", "patient_id": "patient48267", "tooltip": "patient48267 | Pneumothorax: 1.0 | Age: 57"}, {"path": "../../../../kaggle/processed/train/patient60847/study1/view1_frontal.png", "patient_id": "patient60847", "tooltip": "patient60847 | Pneumothorax: 0.0 | Age: 69"}, {"path": "../../../../kaggle/processed/train/patient46788/study3/view1_frontal.png", "patient_id": "patient46788", "tooltip": "patient46788 | Pneumothorax: 1.0 | Age: 42"}, {"path": "../../../../kaggle/processed/train/patient37591/study2/view1_frontal.png", "patient_id": "patient37591", "tooltip": "patient37591 | Pneumothorax: 1.0 | Age: 24"}, {"path": "../../../../kaggle/processed/train/patient03122/study21/view1_frontal.png", "patient_id": "patient03122", "tooltip": "patient03122 | Pneumothorax: 1.0 | Age: 69"}, {"path": "../../../../kaggle/processed/train/patient10076/study4/view1_frontal.png", "patient_id": "patient10076", "tooltip": "patient10076 | Pneumothorax: 1.0 | Age: 65"}, {"path": "../../../../kaggle/processed/train/patient53493/study1/view1_frontal.png", "patient_id": "patient53493", "tooltip": "patient53493 | Pneumothorax: 1.0 | Age: 78"}, {"path": "../../../../kaggle/processed/train/patient41425/study3/view1_frontal.png", "patient_id": "patient41425", "tooltip": "patient41425 | Pneumothorax: 1.0 | Age: 49"}, {"path": "../../../../kaggle/processed/train/patient35910/study1/view1_frontal.png", "patient_id": "patient35910", "tooltip": "patient35910 | Pneumothorax: 0.0 | Age: 72"}, {"path": "../../../../kaggle/processed/train/patient59043/study1/view1_frontal.png", "patient_id": "patient59043", "tooltip": "patient59043 | Pneumothorax: 0.0 | Age: 68"}, {"path": "../../../../kaggle/processed/train/patient01342/study9/view1_frontal.png", "patient_id": "patient01342", "tooltip": "patient01342 | Pneumothorax: 1.0 | Age: 75"}, {"path": "../../../../kaggle/processed/train/patient57963/study1/view1_frontal.png", "patient_id": "patient57963", "tooltip": "patient57963 | Pneumothorax: 1.0 | Age: 50"}, {"path": "../../../../kaggle/processed/train/patient51742/study3/view1_frontal.png", "patient_id": "patient51742", "tooltip": "patient51742 | Pneumothorax: 0.0 | Age: 69"}, {"path": "../../../../kaggle/processed/train/patient34202/study5/view1_frontal.png", "patient_id": "patient34202", "tooltip": "patient34202 | Pneumothorax: 0.0 | Age: 34"}, {"path": "../../../../kaggle/processed/train/patient25311/study5/view1_frontal.png", "patient_id": "patient25311", "tooltip": "patient25311 | Pneumothorax: 0.0 | Age: 42"}, {"path": "../../../../kaggle/processed/train/patient30559/study6/view1_frontal.png", "patient_id": "patient30559", "tooltip": "patient30559 | Pneumothorax: 0.0 | Age: 22"}, {"path": "../../../../kaggle/processed/train/patient48094/study2/view1_frontal.png", "patient_id": "patient48094", "tooltip": "patient48094 | Pneumothorax: 0.0 | Age: 41"}, {"path": "../../../../kaggle/processed/train/patient47770/study7/view1_frontal.png", "patient_id": "patient47770", "tooltip": "patient47770 | Pneumothorax: 1.0 | Age: 69"}, {"path": "../../../../kaggle/processed/train/patient55374/study1/view1_frontal.png", "patient_id": "patient55374", "tooltip": "patient55374 | Pneumothorax: 0.0 | Age: 87"}, {"path": "../../../../kaggle/processed/train/patient40493/study5/view1_frontal.png", "patient_id": "patient40493", "tooltip": "patient40493 | Pneumothorax: 0.0 | Age: 72"}, {"path": "../../../../kaggle/processed/train/patient59490/study7/view1_frontal.png", "patient_id": "patient59490", "tooltip": "patient59490 | Pneumothorax: 0.0 | Age: 86"}, {"path": "../../../../kaggle/processed/train/patient16579/study7/view1_frontal.png", "patient_id": "patient16579", "tooltip": "patient16579 | Pneumothorax: 0.0 | Age: 38"}, {"path": "../../../../kaggle/processed/train/patient17258/study1/view1_frontal.png", "patient_id": "patient17258", "tooltip": "patient17258 | Pneumothorax: 1.0 | Age: 50"}, {"path": "../../../../kaggle/processed/train/patient60915/study1/view1_frontal.png", "patient_id": "patient60915", "tooltip": "patient60915 | Pneumothorax: 0.0 | Age: 34"}, {"path": "../../../../kaggle/processed/train/patient36377/study3/view1_frontal.png", "patient_id": "patient36377", "tooltip": "patient36377 | Pneumothorax: 1.0 | Age: 30"}, {"path": "../../../../kaggle/processed/train/patient51838/study2/view1_frontal.png", "patient_id": "patient51838", "tooltip": "patient51838 | Pneumothorax: 0.0 | Age: 28"}, {"path": "../../../../kaggle/processed/train/patient25968/study2/view1_frontal.png", "patient_id": "patient25968", "tooltip": "patient25968 | Pneumothorax: 1.0 | Age: 52"}, {"path": "../../../../kaggle/processed/train/patient42847/study3/view1_frontal.png", "patient_id": "patient42847", "tooltip": "patient42847 | Pneumothorax: 1.0 | Age: 19"}, {"path": "../../../../kaggle/processed/train/patient40203/study3/view1_frontal.png", "patient_id": "patient40203", "tooltip": "patient40203 | Pneumothorax: 1.0 | Age: 48"}, {"path": "../../../../kaggle/processed/train/patient47972/study2/view1_frontal.png", "patient_id": "patient47972", "tooltip": "patient47972 | Pneumothorax: 1.0 | Age: 61"}, {"path": "../../../../kaggle/processed/train/patient32650/study2/view1_frontal.png", "patient_id": "patient32650", "tooltip": "patient32650 | Pneumothorax: 0.0 | Age: 51"}, {"path": "../../../../kaggle/processed/train/patient38796/study4/view1_frontal.png", "patient_id": "patient38796", "tooltip": "patient38796 | Pneumothorax: 1.0 | Age: 74"}, {"path": "../../../../kaggle/processed/train/patient39817/study4/view1_frontal.png", "patient_id": "patient39817", "tooltip": "patient39817 | Pneumothorax: 1.0 | Age: 42"}, {"path": "../../../../kaggle/processed/train/patient37806/study3/view1_frontal.png", "patient_id": "patient37806", "tooltip": "patient37806 | Pneumothorax: 0.0 | Age: 22"}, {"path": "../../../../kaggle/processed/train/patient25762/study10/view1_frontal.png", "patient_id": "patient25762", "tooltip": "patient25762 | Pneumothorax: 1.0 | Age: 24"}, {"path": "../../../../kaggle/processed/train/patient44450/study1/view1_frontal.png", "patient_id": "patient44450", "tooltip": "patient44450 | Pneumothorax: 1.0 | Age: 24"}, {"path": "../../../../kaggle/processed/train/patient22694/study13/view1_frontal.png", "patient_id": "patient22694", "tooltip": "patient22694 | Pneumothorax: 0.0 | Age: 43"}]}, "cube10_cluster0": {"distributions": {"Pneumothorax": {"type": "categorical", "counts": {"1.0": 102, "0.0": 95}, "proportions": {"1.0": 0.5177664974619289, "0.0": 0.48223350253807107}, "missing": 0}, "Age": {"type": "continuous", "mean": 59.08121827411168, "median": 62.0, "std": 17.5555247508364, "min": 20.0, "max": 90.0, "missing": 0, "histogram": [{"bin_start": 20.0, "bin_end": 27.0, "count": 15}, {"bin_start": 27.0, "bin_end": 34.0, "count": 7}, {"bin_start": 34.0, "bin_end": 41.0, "count": 11}, {"bin_start": 41.0, "bin_end": 48.0, "count": 16}, {"bin_start": 48.0, "bin_end": 55.0, "count": 24}, {"bin_start": 55.0, "bin_end": 62.0, "count": 21}, {"bin_start": 62.0, "bin_end": 69.0, "count": 35}, {"bin_start": 69.0, "bin_end": 76.0, "count": 31}, {"bin_start": 76.0, "bin_end": 83.0, "count": 25}, {"bin_start": 83.0, "bin_end": 90.0, "count": 12}]}}, "images": [{"path": "../../../../kaggle/processed/train/patient18455/study3/view1_frontal.png", "patient_id": "patient18455", "tooltip": "patient18455 | Pneumothorax: 1.0 | Age: 71"}, {"path": "../../../../kaggle/processed/train/patient04702/study4/view1_frontal.png", "patient_id": "patient04702", "tooltip": "patient04702 | Pneumothorax: 0.0 | Age: 68"}, {"path": "../../../../kaggle/processed/train/patient30638/study2/view1_frontal.png", "patient_id": "patient30638", "tooltip": "patient30638 | Pneumothorax: 1.0 | Age: 71"}, {"path": "../../../../kaggle/processed/train/patient58655/study1/view1_frontal.png", "patient_id": "patient58655", "tooltip": "patient58655 | Pneumothorax: 1.0 | Age: 54"}, {"path": "../../../../kaggle/processed/train/patient34162/study2/view1_frontal.png", "patient_id": "patient34162", "tooltip": "patient34162 | Pneumothorax: 0.0 | Age: 41"}, {"path": "../../../../kaggle/processed/train/patient54603/study2/view1_frontal.png", "patient_id": "patient54603", "tooltip": "patient54603 | Pneumothorax: 1.0 | Age: 58"}, {"path": "../../../../kaggle/processed/train/patient33799/study3/view1_frontal.png", "patient_id": "patient33799", "tooltip": "patient33799 | Pneumothorax: 0.0 | Age: 44"}, {"path": "../../../../kaggle/processed/train/patient37203/study5/view1_frontal.png", "patient_id": "patient37203", "tooltip": "patient37203 | Pneumothorax: 1.0 | Age: 40"}, {"path": "../../../../kaggle/processed/train/patient58504/study1/view1_frontal.png", "patient_id": "patient58504", "tooltip": "patient58504 | Pneumothorax: 1.0 | Age: 48"}, {"path": "../../../../kaggle/processed/train/patient32158/study5/view1_frontal.png", "patient_id": "patient32158", "tooltip": "patient32158 | Pneumothorax: 0.0 | Age: 26"}, {"path": "../../../../kaggle/processed/train/patient12295/study1/view1_frontal.png", "patient_id": "patient12295", "tooltip": "patient12295 | Pneumothorax: 0.0 | Age: 63"}, {"path": "../../../../kaggle/processed/train/patient01383/study1/view1_frontal.png", "patient_id": "patient01383", "tooltip": "patient01383 | Pneumothorax: 1.0 | Age: 73"}, {"path": "../../../../kaggle/processed/train/patient07945/study4/view1_frontal.png", "patient_id": "patient07945", "tooltip": "patient07945 | Pneumothorax: 1.0 | Age: 54"}, {"path": "../../../../kaggle/processed/train/patient39792/study6/view1_frontal.png", "patient_id": "patient39792", "tooltip": "patient39792 | Pneumothorax: 0.0 | Age: 31"}, {"path": "../../../../kaggle/processed/train/patient48896/study1/view1_frontal.png", "patient_id": "patient48896", "tooltip": "patient48896 | Pneumothorax: 1.0 | Age: 70"}, {"path": "../../../../kaggle/processed/train/patient42501/study2/view1_frontal.png", "patient_id": "patient42501", "tooltip": "patient42501 | Pneumothorax: 0.0 | Age: 61"}, {"path": "../../../../kaggle/processed/train/patient36043/study1/view1_frontal.png", "patient_id": "patient36043", "tooltip": "patient36043 | Pneumothorax: 0.0 | Age: 72"}, {"path": "../../../../kaggle/processed/train/patient50842/study3/view1_frontal.png", "patient_id": "patient50842", "tooltip": "patient50842 | Pneumothorax: 1.0 | Age: 78"}, {"path": "../../../../kaggle/processed/train/patient38218/study3/view1_frontal.png", "patient_id": "patient38218", "tooltip": "patient38218 | Pneumothorax: 0.0 | Age: 62"}, {"path": "../../../../kaggle/processed/train/patient35013/study3/view1_frontal.png", "patient_id": "patient35013", "tooltip": "patient35013 | Pneumothorax: 1.0 | Age: 25"}, {"path": "../../../../kaggle/processed/train/patient57144/study1/view1_frontal.png", "patient_id": "patient57144", "tooltip": "patient57144 | Pneumothorax: 1.0 | Age: 50"}, {"path": "../../../../kaggle/processed/train/patient10755/study4/view1_frontal.png", "patient_id": "patient10755", "tooltip": "patient10755 | Pneumothorax: 1.0 | Age: 43"}, {"path": "../../../../kaggle/processed/train/patient20738/study14/view1_frontal.png", "patient_id": "patient20738", "tooltip": "patient20738 | Pneumothorax: 1.0 | Age: 47"}, {"path": "../../../../kaggle/processed/train/patient42337/study3/view1_frontal.png", "patient_id": "patient42337", "tooltip": "patient42337 | Pneumothorax: 1.0 | Age: 25"}, {"path": "../../../../kaggle/processed/train/patient02049/study4/view1_frontal.png", "patient_id": "patient02049", "tooltip": "patient02049 | Pneumothorax: 1.0 | Age: 58"}, {"path": "../../../../kaggle/processed/train/patient03669/study2/view1_frontal.png", "patient_id": "patient03669", "tooltip": "patient03669 | Pneumothorax: 1.0 | Age: 59"}, {"path": "../../../../kaggle/processed/train/patient40863/study1/view1_frontal.png", "patient_id": "patient40863", "tooltip": "patient40863 | Pneumothorax: 0.0 | Age: 56"}, {"path": "../../../../kaggle/processed/train/patient08524/study5/view1_frontal.png", "patient_id": "patient08524", "tooltip": "patient08524 | Pneumothorax: 1.0 | Age: 61"}, {"path": "../../../../kaggle/processed/train/patient49558/study1/view1_frontal.png", "patient_id": "patient49558", "tooltip": "patient49558 | Pneumothorax: 0.0 | Age: 65"}, {"path": "../../../../kaggle/processed/train/patient13850/study3/view1_frontal.png", "patient_id": "patient13850", "tooltip": "patient13850 | Pneumothorax: 0.0 | Age: 82"}, {"path": "../../../../kaggle/processed/train/patient16463/study2/view1_frontal.png", "patient_id": "patient16463", "tooltip": "patient16463 | Pneumothorax: 1.0 | Age: 55"}, {"path": "../../../../kaggle/processed/train/patient30323/study31/view1_frontal.png", "patient_id": "patient30323", "tooltip": "patient30323 | Pneumothorax: 1.0 | Age: 65"}, {"path": "../../../../kaggle/processed/train/patient31579/study5/view1_frontal.png", "patient_id": "patient31579", "tooltip": "patient31579 | Pneumothorax: 1.0 | Age: 70"}, {"path": "../../../../kaggle/processed/train/patient57987/study4/view1_frontal.png", "patient_id": "patient57987", "tooltip": "patient57987 | Pneumothorax: 0.0 | Age: 36"}, {"path": "../../../../kaggle/processed/train/patient39846/study2/view1_frontal.png", "patient_id": "patient39846", "tooltip": "patient39846 | Pneumothorax: 1.0 | Age: 69"}, {"path": "../../../../kaggle/processed/train/patient03922/study7/view1_frontal.png", "patient_id": "patient03922", "tooltip": "patient03922 | Pneumothorax: 0.0 | Age: 71"}, {"path": "../../../../kaggle/processed/train/patient40140/study3/view1_frontal.png", "patient_id": "patient40140", "tooltip": "patient40140 | Pneumothorax: 1.0 | Age: 63"}, {"path": "../../../../kaggle/processed/train/patient07003/study6/view1_frontal.png", "patient_id": "patient07003", "tooltip": "patient07003 | Pneumothorax: 0.0 | Age: 50"}, {"path": "../../../../kaggle/processed/train/patient63097/study1/view1_frontal.png", "patient_id": "patient63097", "tooltip": "patient63097 | Pneumothorax: 0.0 | Age: 26"}, {"path": "../../../../kaggle/processed/train/patient08549/study13/view1_frontal.png", "patient_id": "patient08549", "tooltip": "patient08549 | Pneumothorax: 1.0 | Age: 68"}, {"path": "../../../../kaggle/processed/train/patient23212/study4/view1_frontal.png", "patient_id": "patient23212", "tooltip": "patient23212 | Pneumothorax: 0.0 | Age: 50"}, {"path": "../../../../kaggle/processed/train/patient16697/study3/view1_frontal.png", "patient_id": "patient16697", "tooltip": "patient16697 | Pneumothorax: 1.0 | Age: 72"}, {"path": "../../../../kaggle/processed/train/patient34974/study1/view1_frontal.png", "patient_id": "patient34974", "tooltip": "patient34974 | Pneumothorax: 1.0 | Age: 68"}, {"path": "../../../../kaggle/processed/train/patient45193/study2/view1_frontal.png", "patient_id": "patient45193", "tooltip": "patient45193 | Pneumothorax: 0.0 | Age: 60"}, {"path": "../../../../kaggle/processed/train/patient19853/study4/view1_frontal.png", "patient_id": "patient19853", "tooltip": "patient19853 | Pneumothorax: 0.0 | Age: 50"}, {"path": "../../../../kaggle/processed/train/patient52203/study1/view1_frontal.png", "patient_id": "patient52203", "tooltip": "patient52203 | Pneumothorax: 1.0 | Age: 73"}, {"path": "../../../../kaggle/processed/train/patient39595/study3/view1_frontal.png", "patient_id": "patient39595", "tooltip": "patient39595 | Pneumothorax: 0.0 | Age: 78"}, {"path": "../../../../kaggle/processed/train/patient57438/study1/view1_frontal.png", "patient_id": "patient57438", "tooltip": "patient57438 | Pneumothorax: 0.0 | Age: 86"}, {"path": "../../../../kaggle/processed/train/patient15839/study1/view1_frontal.png", "patient_id": "patient15839", "tooltip": "patient15839 | Pneumothorax: 0.0 | Age: 81"}, {"path": "../../../../kaggle/processed/train/patient04659/study2/view1_frontal.png", "patient_id": "patient04659", "tooltip": "patient04659 | Pneumothorax: 1.0 | Age: 73"}, {"path": "../../../../kaggle/processed/train/patient04397/study3/view1_frontal.png", "patient_id": "patient04397", "tooltip": "patient04397 | Pneumothorax: 1.0 | Age: 76"}, {"path": "../../../../kaggle/processed/train/patient15507/study1/view1_frontal.png", "patient_id": "patient15507", "tooltip": "patient15507 | Pneumothorax: 1.0 | Age: 26"}, {"path": "../../../../kaggle/processed/train/patient57662/study3/view1_frontal.png", "patient_id": "patient57662", "tooltip": "patient57662 | Pneumothorax: 1.0 | Age: 45"}, {"path": "../../../../kaggle/processed/train/patient43813/study3/view1_frontal.png", "patient_id": "patient43813", "tooltip": "patient43813 | Pneumothorax: 0.0 | Age: 49"}, {"path": "../../../../kaggle/processed/train/patient30447/study1/view1_frontal.png", "patient_id": "patient30447", "tooltip": "patient30447 | Pneumothorax: 0.0 | Age: 57"}, {"path": "../../../../kaggle/processed/train/patient42279/study5/view1_frontal.png", "patient_id": "patient42279", "tooltip": "patient42279 | Pneumothorax: 1.0 | Age: 21"}, {"path": "../../../../kaggle/processed/train/patient21324/study10/view1_frontal.png", "patient_id": "patient21324", "tooltip": "patient21324 | Pneumothorax: 1.0 | Age: 67"}, {"path": "../../../../kaggle/processed/train/patient43458/study3/view1_frontal.png", "patient_id": "patient43458", "tooltip": "patient43458 | Pneumothorax: 1.0 | Age: 32"}, {"path": "../../../../kaggle/processed/train/patient53799/study2/view1_frontal.png", "patient_id": "patient53799", "tooltip": "patient53799 | Pneumothorax: 1.0 | Age: 81"}, {"path": "../../../../kaggle/processed/train/patient31426/study1/view1_frontal.png", "patient_id": "patient31426", "tooltip": "patient31426 | Pneumothorax: 1.0 | Age: 75"}, {"path": "../../../../kaggle/processed/train/patient15802/study2/view1_frontal.png", "patient_id": "patient15802", "tooltip": "patient15802 | Pneumothorax: 0.0 | Age: 40"}, {"path": "../../../../kaggle/processed/train/patient33623/study2/view1_frontal.png", "patient_id": "patient33623", "tooltip": "patient33623 | Pneumothorax: 1.0 | Age: 48"}, {"path": "../../../../kaggle/processed/train/patient27773/study3/view1_frontal.png", "patient_id": "patient27773", "tooltip": "patient27773 | Pneumothorax: 1.0 | Age: 63"}, {"path": "../../../../kaggle/processed/train/patient12713/study12/view1_frontal.png", "patient_id": "patient12713", "tooltip": "patient12713 | Pneumothorax: 0.0 | Age: 61"}, {"path": "../../../../kaggle/processed/train/patient35263/study4/view1_frontal.png", "patient_id": "patient35263", "tooltip": "patient35263 | Pneumothorax: 1.0 | Age: 51"}, {"path": "../../../../kaggle/processed/train/patient48785/study3/view1_frontal.png", "patient_id": "patient48785", "tooltip": "patient48785 | Pneumothorax: 1.0 | Age: 27"}, {"path": "../../../../kaggle/processed/train/patient26474/study1/view1_frontal.png", "patient_id": "patient26474", "tooltip": "patient26474 | Pneumothorax: 0.0 | Age: 87"}, {"path": "../../../../kaggle/processed/train/patient41770/study3/view1_frontal.png", "patient_id": "patient41770", "tooltip": "patient41770 | Pneumothorax: 1.0 | Age: 42"}, {"path": "../../../../kaggle/processed/train/patient42593/study1/view1_frontal.png", "patient_id": "patient42593", "tooltip": "patient42593 | Pneumothorax: 1.0 | Age: 43"}, {"path": "../../../../kaggle/processed/train/patient38141/study4/view1_frontal.png", "patient_id": "patient38141", "tooltip": "patient38141 | Pneumothorax: 1.0 | Age: 78"}, {"path": "../../../../kaggle/processed/train/patient32327/study1/view1_frontal.png", "patient_id": "patient32327", "tooltip": "patient32327 | Pneumothorax: 0.0 | Age: 80"}, {"path": "../../../../kaggle/processed/train/patient42657/study3/view1_frontal.png", "patient_id": "patient42657", "tooltip": "patient42657 | Pneumothorax: 0.0 | Age: 63"}, {"path": "../../../../kaggle/processed/train/patient28910/study5/view1_frontal.png", "patient_id": "patient28910", "tooltip": "patient28910 | Pneumothorax: 1.0 | Age: 42"}, {"path": "../../../../kaggle/processed/train/patient34615/study27/view1_frontal.png", "patient_id": "patient34615", "tooltip": "patient34615 | Pneumothorax: 0.0 | Age: 62"}, {"path": "../../../../kaggle/processed/train/patient46529/study5/view1_frontal.png", "patient_id": "patient46529", "tooltip": "patient46529 | Pneumothorax: 0.0 | Age: 85"}, {"path": "../../../../kaggle/processed/train/patient05822/study1/view1_frontal.png", "patient_id": "patient05822", "tooltip": "patient05822 | Pneumothorax: 0.0 | Age: 36"}, {"path": "../../../../kaggle/processed/train/patient20602/study1/view1_frontal.png", "patient_id": "patient20602", "tooltip": "patient20602 | Pneumothorax: 0.0 | Age: 54"}, {"path": "../../../../kaggle/processed/train/patient52617/study1/view1_frontal.png", "patient_id": "patient52617", "tooltip": "patient52617 | Pneumothorax: 0.0 | Age: 63"}, {"path": "../../../../kaggle/processed/train/patient08870/study7/view1_frontal.png", "patient_id": "patient08870", "tooltip": "patient08870 | Pneumothorax: 1.0 | Age: 35"}, {"path": "../../../../kaggle/processed/train/patient48065/study1/view1_frontal.png", "patient_id": "patient48065", "tooltip": "patient48065 | Pneumothorax: 0.0 | Age: 59"}, {"path": "../../../../kaggle/processed/train/patient01069/study6/view1_frontal.png", "patient_id": "patient01069", "tooltip": "patient01069 | Pneumothorax: 1.0 | Age: 76"}, {"path": "../../../../kaggle/processed/train/patient42999/study3/view1_frontal.png", "patient_id": "patient42999", "tooltip": "patient42999 | Pneumothorax: 1.0 | Age: 65"}, {"path": "../../../../kaggle/processed/train/patient23675/study8/view1_frontal.png", "patient_id": "patient23675", "tooltip": "patient23675 | Pneumothorax: 0.0 | Age: 51"}, {"path": "../../../../kaggle/processed/train/patient22730/study4/view1_frontal.png", "patient_id": "patient22730", "tooltip": "patient22730 | Pneumothorax: 0.0 | Age: 38"}, {"path": "../../../../kaggle/processed/train/patient28797/study5/view1_frontal.png", "patient_id": "patient28797", "tooltip": "patient28797 | Pneumothorax: 1.0 | Age: 75"}, {"path": "../../../../kaggle/processed/train/patient01595/study18/view1_frontal.png", "patient_id": "patient01595", "tooltip": "patient01595 | Pneumothorax: 0.0 | Age: 71"}, {"path": "../../../../kaggle/processed/train/patient46906/study1/view1_frontal.png", "patient_id": "patient46906", "tooltip": "patient46906 | Pneumothorax: 0.0 | Age: 38"}, {"path": "../../../../kaggle/processed/train/patient14837/study3/view1_frontal.png", "patient_id": "patient14837", "tooltip": "patient14837 | Pneumothorax: 1.0 | Age: 71"}, {"path": "../../../../kaggle/processed/train/patient39428/study4/view1_frontal.png", "patient_id": "patient39428", "tooltip": "patient39428 | Pneumothorax: 0.0 | Age: 74"}, {"path": "../../../../kaggle/processed/train/patient58005/study1/view1_frontal.png", "patient_id": "patient58005", "tooltip": "patient58005 | Pneumothorax: 1.0 | Age: 57"}, {"path": "../../../../kaggle/processed/train/patient37476/study5/view1_frontal.png", "patient_id": "patient37476", "tooltip": "patient37476 | Pneumothorax: 1.0 | Age: 73"}, {"path": "../../../../kaggle/processed/train/patient43078/study3/view1_frontal.png", "patient_id": "patient43078", "tooltip": "patient43078 | Pneumothorax: 1.0 | Age: 90"}, {"path": "../../../../kaggle/processed/train/patient36298/study12/view1_frontal.png", "patient_id": "patient36298", "tooltip": "patient36298 | Pneumothorax: 0.0 | Age: 50"}, {"path": "../../../../kaggle/processed/train/patient21763/study1/view1_frontal.png", "patient_id": "patient21763", "tooltip": "patient21763 | Pneumothorax: 1.0 | Age: 45"}, {"path": "../../../../kaggle/processed/train/patient63878/study1/view1_frontal.png", "patient_id": "patient63878", "tooltip": "patient63878 | Pneumothorax: 0.0 | Age: 41"}, {"path": "../../../../kaggle/processed/train/patient42937/study3/view1_frontal.png", "patient_id": "patient42937", "tooltip": "patient42937 | Pneumothorax: 0.0 | Age: 68"}, {"path": "../../../../kaggle/processed/train/patient14511/study3/view1_frontal.png", "patient_id": "patient14511", "tooltip": "patient14511 | Pneumothorax: 1.0 | Age: 21"}, {"path": "../../../../kaggle/processed/train/patient21792/study3/view1_frontal.png", "patient_id": "patient21792", "tooltip": "patient21792 | Pneumothorax: 1.0 | Age: 77"}, {"path": "../../../../kaggle/processed/train/patient17699/study2/view1_frontal.png", "patient_id": "patient17699", "tooltip": "patient17699 | Pneumothorax: 0.0 | Age: 55"}, {"path": "../../../../kaggle/processed/train/patient31194/study2/view1_frontal.png", "patient_id": "patient31194", "tooltip": "patient31194 | Pneumothorax: 1.0 | Age: 69"}, {"path": "../../../../kaggle/processed/train/patient10081/study4/view1_frontal.png", "patient_id": "patient10081", "tooltip": "patient10081 | Pneumothorax: 1.0 | Age: 26"}, {"path": "../../../../kaggle/processed/train/patient35727/study4/view1_frontal.png", "patient_id": "patient35727", "tooltip": "patient35727 | Pneumothorax: 1.0 | Age: 81"}, {"path": "../../../../kaggle/processed/train/patient38771/study9/view1_frontal.png", "patient_id": "patient38771", "tooltip": "patient38771 | Pneumothorax: 1.0 | Age: 66"}, {"path": "../../../../kaggle/processed/train/patient37991/study5/view1_frontal.png", "patient_id": "patient37991", "tooltip": "patient37991 | Pneumothorax: 1.0 | Age: 73"}, {"path": "../../../../kaggle/processed/train/patient54845/study5/view1_frontal.png", "patient_id": "patient54845", "tooltip": "patient54845 | Pneumothorax: 1.0 | Age: 73"}, {"path": "../../../../kaggle/processed/train/patient47342/study3/view1_frontal.png", "patient_id": "patient47342", "tooltip": "patient47342 | Pneumothorax: 0.0 | Age: 74"}, {"path": "../../../../kaggle/processed/train/patient47111/study1/view1_frontal.png", "patient_id": "patient47111", "tooltip": "patient47111 | Pneumothorax: 0.0 | Age: 81"}, {"path": "../../../../kaggle/processed/train/patient46106/study6/view1_frontal.png", "patient_id": "patient46106", "tooltip": "patient46106 | Pneumothorax: 0.0 | Age: 82"}, {"path": "../../../../kaggle/processed/train/patient33954/study7/view1_frontal.png", "patient_id": "patient33954", "tooltip": "patient33954 | Pneumothorax: 1.0 | Age: 66"}, {"path": "../../../../kaggle/processed/train/patient13288/study4/view1_frontal.png", "patient_id": "patient13288", "tooltip": "patient13288 | Pneumothorax: 1.0 | Age: 37"}, {"path": "../../../../kaggle/processed/train/patient19530/study3/view1_frontal.png", "patient_id": "patient19530", "tooltip": "patient19530 | Pneumothorax: 0.0 | Age: 66"}, {"path": "../../../../kaggle/processed/train/patient45667/study1/view1_frontal.png", "patient_id": "patient45667", "tooltip": "patient45667 | Pneumothorax: 0.0 | Age: 62"}, {"path": "../../../../kaggle/processed/train/patient37392/study1/view1_frontal.png", "patient_id": "patient37392", "tooltip": "patient37392 | Pneumothorax: 0.0 | Age: 80"}, {"path": "../../../../kaggle/processed/train/patient38866/study2/view1_frontal.png", "patient_id": "patient38866", "tooltip": "patient38866 | Pneumothorax: 1.0 | Age: 86"}, {"path": "../../../../kaggle/processed/train/patient41965/study1/view1_frontal.png", "patient_id": "patient41965", "tooltip": "patient41965 | Pneumothorax: 1.0 | Age: 36"}, {"path": "../../../../kaggle/processed/train/patient19962/study1/view1_frontal.png", "patient_id": "patient19962", "tooltip": "patient19962 | Pneumothorax: 0.0 | Age: 29"}, {"path": "../../../../kaggle/processed/train/patient36697/study1/view1_frontal.png", "patient_id": "patient36697", "tooltip": "patient36697 | Pneumothorax: 0.0 | Age: 77"}, {"path": "../../../../kaggle/processed/train/patient42481/study7/view1_frontal.png", "patient_id": "patient42481", "tooltip": "patient42481 | Pneumothorax: 0.0 | Age: 73"}, {"path": "../../../../kaggle/processed/train/patient34016/study2/view1_frontal.png", "patient_id": "patient34016", "tooltip": "patient34016 | Pneumothorax: 0.0 | Age: 53"}, {"path": "../../../../kaggle/processed/train/patient49381/study2/view1_frontal.png", "patient_id": "patient49381", "tooltip": "patient49381 | Pneumothorax: 0.0 | Age: 66"}, {"path": "../../../../kaggle/processed/train/patient19264/study1/view1_frontal.png", "patient_id": "patient19264", "tooltip": "patient19264 | Pneumothorax: 0.0 | Age: 42"}, {"path": "../../../../kaggle/processed/train/patient49079/study4/view1_frontal.png", "patient_id": "patient49079", "tooltip": "patient49079 | Pneumothorax: 0.0 | Age: 28"}, {"path": "../../../../kaggle/processed/train/patient19863/study3/view1_frontal.png", "patient_id": "patient19863", "tooltip": "patient19863 | Pneumothorax: 1.0 | Age: 51"}, {"path": "../../../../kaggle/processed/train/patient06714/study11/view1_frontal.png", "patient_id": "patient06714", "tooltip": "patient06714 | Pneumothorax: 0.0 | Age: 90"}, {"path": "../../../../kaggle/processed/train/patient39035/study3/view1_frontal.png", "patient_id": "patient39035", "tooltip": "patient39035 | Pneumothorax: 1.0 | Age: 65"}, {"path": "../../../../kaggle/processed/train/patient12907/study8/view1_frontal.png", "patient_id": "patient12907", "tooltip": "patient12907 | Pneumothorax: 1.0 | Age: 70"}, {"path": "../../../../kaggle/processed/train/patient02159/study3/view1_frontal.png", "patient_id": "patient02159", "tooltip": "patient02159 | Pneumothorax: 1.0 | Age: 55"}, {"path": "../../../../kaggle/processed/train/patient05628/study3/view1_frontal.png", "patient_id": "patient05628", "tooltip": "patient05628 | Pneumothorax: 1.0 | Age: 47"}, {"path": "../../../../kaggle/processed/train/patient25824/study3/view1_frontal.png", "patient_id": "patient25824", "tooltip": "patient25824 | Pneumothorax: 0.0 | Age: 65"}, {"path": "../../../../kaggle/processed/train/patient21361/study1/view1_frontal.png", "patient_id": "patient21361", "tooltip": "patient21361 | Pneumothorax: 0.0 | Age: 60"}, {"path": "../../../../kaggle/processed/train/patient47707/study1/view1_frontal.png", "patient_id": "patient47707", "tooltip": "patient47707 | Pneumothorax: 0.0 | Age: 67"}, {"path": "../../../../kaggle/processed/train/patient42131/study1/view1_frontal.png", "patient_id": "patient42131", "tooltip": "patient42131 | Pneumothorax: 0.0 | Age: 76"}, {"path": "../../../../kaggle/processed/train/patient06422/study1/view1_frontal.png", "patient_id": "patient06422", "tooltip": "patient06422 | Pneumothorax: 1.0 | Age: 63"}, {"path": "../../../../kaggle/processed/train/patient46673/study1/view1_frontal.png", "patient_id": "patient46673", "tooltip": "patient46673 | Pneumothorax: 0.0 | Age: 58"}, {"path": "../../../../kaggle/processed/train/patient49282/study1/view1_frontal.png", "patient_id": "patient49282", "tooltip": "patient49282 | Pneumothorax: 1.0 | Age: 86"}, {"path": "../../../../kaggle/processed/train/patient00467/study4/view1_frontal.png", "patient_id": "patient00467", "tooltip": "patient00467 | Pneumothorax: 1.0 | Age: 23"}, {"path": "../../../../kaggle/processed/train/patient55285/study3/view1_frontal.png", "patient_id": "patient55285", "tooltip": "patient55285 | Pneumothorax: 0.0 | Age: 78"}, {"path": "../../../../kaggle/processed/train/patient32595/study2/view1_frontal.png", "patient_id": "patient32595", "tooltip": "patient32595 | Pneumothorax: 1.0 | Age: 52"}, {"path": "../../../../kaggle/processed/train/patient30858/study1/view1_frontal.png", "patient_id": "patient30858", "tooltip": "patient30858 | Pneumothorax: 0.0 | Age: 82"}, {"path": "../../../../kaggle/processed/train/patient55111/study1/view1_frontal.png", "patient_id": "patient55111", "tooltip": "patient55111 | Pneumothorax: 0.0 | Age: 66"}, {"path": "../../../../kaggle/processed/train/patient04462/study4/view1_frontal.png", "patient_id": "patient04462", "tooltip": "patient04462 | Pneumothorax: 0.0 | Age: 58"}, {"path": "../../../../kaggle/processed/train/patient46703/study4/view1_frontal.png", "patient_id": "patient46703", "tooltip": "patient46703 | Pneumothorax: 1.0 | Age: 83"}, {"path": "../../../../kaggle/processed/train/patient34634/study6/view1_frontal.png", "patient_id": "patient34634", "tooltip": "patient34634 | Pneumothorax: 1.0 | Age: 62"}, {"path": "../../../../kaggle/processed/train/patient37006/study6/view1_frontal.png", "patient_id": "patient37006", "tooltip": "patient37006 | Pneumothorax: 0.0 | Age: 25"}, {"path": "../../../../kaggle/processed/train/patient39481/study3/view1_frontal.png", "patient_id": "patient39481", "tooltip": "patient39481 | Pneumothorax: 0.0 | Age: 40"}, {"path": "../../../../kaggle/processed/train/patient24713/study10/view1_frontal.png", "patient_id": "patient24713", "tooltip": "patient24713 | Pneumothorax: 1.0 | Age: 65"}, {"path": "../../../../kaggle/processed/train/patient51688/study1/view1_frontal.png", "patient_id": "patient51688", "tooltip": "patient51688 | Pneumothorax: 0.0 | Age: 39"}, {"path": "../../../../kaggle/processed/train/patient20504/study5/view1_frontal.png", "patient_id": "patient20504", "tooltip": "patient20504 | Pneumothorax: 1.0 | Age: 55"}, {"path": "../../../../kaggle/processed/train/patient09229/study1/view1_frontal.png", "patient_id": "patient09229", "tooltip": "patient09229 | Pneumothorax: 0.0 | Age: 74"}, {"path": "../../../../kaggle/processed/train/patient19933/study8/view1_frontal.png", "patient_id": "patient19933", "tooltip": "patient19933 | Pneumothorax: 1.0 | Age: 65"}, {"path": "../../../../kaggle/processed/train/patient58616/study1/view1_frontal.png", "patient_id": "patient58616", "tooltip": "patient58616 | Pneumothorax: 0.0 | Age: 74"}, {"path": "../../../../kaggle/processed/train/patient01344/study2/view1_frontal.png", "patient_id": "patient01344", "tooltip": "patient01344 | Pneumothorax: 1.0 | Age: 62"}, {"path": "../../../../kaggle/processed/train/patient02526/study2/view1_frontal.png", "patient_id": "patient02526", "tooltip": "patient02526 | Pneumothorax: 1.0 | Age: 71"}, {"path": "../../../../kaggle/processed/train/patient23303/study2/view1_frontal.png", "patient_id": "patient23303", "tooltip": "patient23303 | Pneumothorax: 1.0 | Age: 75"}, {"path": "../../../../kaggle/processed/train/patient56593/study1/view1_frontal.png", "patient_id": "patient56593", "tooltip": "patient56593 | Pneumothorax: 0.0 | Age: 50"}, {"path": "../../../../kaggle/processed/train/patient52925/study1/view1_frontal.png", "patient_id": "patient52925", "tooltip": "patient52925 | Pneumothorax: 0.0 | Age: 48"}, {"path": "../../../../kaggle/processed/train/patient35000/study7/view1_frontal.png", "patient_id": "patient35000", "tooltip": "patient35000 | Pneumothorax: 0.0 | Age: 89"}, {"path": "../../../../kaggle/processed/train/patient32338/study4/view1_frontal.png", "patient_id": "patient32338", "tooltip": "patient32338 | Pneumothorax: 0.0 | Age: 61"}, {"path": "../../../../kaggle/processed/train/patient56406/study1/view1_frontal.png", "patient_id": "patient56406", "tooltip": "patient56406 | Pneumothorax: 0.0 | Age: 56"}, {"path": "../../../../kaggle/processed/train/patient24261/study2/view1_frontal.png", "patient_id": "patient24261", "tooltip": "patient24261 | Pneumothorax: 0.0 | Age: 70"}, {"path": "../../../../kaggle/processed/train/patient32955/study3/view1_frontal.png", "patient_id": "patient32955", "tooltip": "patient32955 | Pneumothorax: 0.0 | Age: 54"}, {"path": "../../../../kaggle/processed/train/patient29435/study8/view1_frontal.png", "patient_id": "patient29435", "tooltip": "patient29435 | Pneumothorax: 0.0 | Age: 76"}, {"path": "../../../../kaggle/processed/train/patient41669/study1/view1_frontal.png", "patient_id": "patient41669", "tooltip": "patient41669 | Pneumothorax: 0.0 | Age: 65"}, {"path": "../../../../kaggle/processed/train/patient36740/study8/view1_frontal.png", "patient_id": "patient36740", "tooltip": "patient36740 | Pneumothorax: 1.0 | Age: 53"}, {"path": "../../../../kaggle/processed/train/patient00204/study16/view1_frontal.png", "patient_id": "patient00204", "tooltip": "patient00204 | Pneumothorax: 0.0 | Age: 64"}, {"path": "../../../../kaggle/processed/train/patient07445/study10/view1_frontal.png", "patient_id": "patient07445", "tooltip": "patient07445 | Pneumothorax: 1.0 | Age: 77"}, {"path": "../../../../kaggle/processed/train/patient11710/study6/view1_frontal.png", "patient_id": "patient11710", "tooltip": "patient11710 | Pneumothorax: 1.0 | Age: 68"}, {"path": "../../../../kaggle/processed/train/patient05610/study2/view1_frontal.png", "patient_id": "patient05610", "tooltip": "patient05610 | Pneumothorax: 0.0 | Age: 46"}, {"path": "../../../../kaggle/processed/train/patient13863/study2/view1_frontal.png", "patient_id": "patient13863", "tooltip": "patient13863 | Pneumothorax: 1.0 | Age: 20"}, {"path": "../../../../kaggle/processed/train/patient64058/study1/view1_frontal.png", "patient_id": "patient64058", "tooltip": "patient64058 | Pneumothorax: 1.0 | Age: 54"}, {"path": "../../../../kaggle/processed/train/patient35548/study8/view1_frontal.png", "patient_id": "patient35548", "tooltip": "patient35548 | Pneumothorax: 0.0 | Age: 52"}, {"path": "../../../../kaggle/processed/train/patient42185/study4/view1_frontal.png", "patient_id": "patient42185", "tooltip": "patient42185 | Pneumothorax: 0.0 | Age: 80"}, {"path": "../../../../kaggle/processed/train/patient25293/study8/view1_frontal.png", "patient_id": "patient25293", "tooltip": "patient25293 | Pneumothorax: 1.0 | Age: 26"}, {"path": "../../../../kaggle/processed/train/patient19929/study4/view1_frontal.png", "patient_id": "patient19929", "tooltip": "patient19929 | Pneumothorax: 1.0 | Age: 81"}, {"path": "../../../../kaggle/processed/train/patient41274/study1/view1_frontal.png", "patient_id": "patient41274", "tooltip": "patient41274 | Pneumothorax: 1.0 | Age: 48"}, {"path": "../../../../kaggle/processed/train/patient59239/study1/view1_frontal.png", "patient_id": "patient59239", "tooltip": "patient59239 | Pneumothorax: 1.0 | Age: 46"}, {"path": "../../../../kaggle/processed/train/patient35707/study4/view1_frontal.png", "patient_id": "patient35707", "tooltip": "patient35707 | Pneumothorax: 1.0 | Age: 71"}, {"path": "../../../../kaggle/processed/train/patient07841/study8/view1_frontal.png", "patient_id": "patient07841", "tooltip": "patient07841 | Pneumothorax: 1.0 | Age: 83"}, {"path": "../../../../kaggle/processed/train/patient07513/study5/view1_frontal.png", "patient_id": "patient07513", "tooltip": "patient07513 | Pneumothorax: 1.0 | Age: 76"}, {"path": "../../../../kaggle/processed/train/patient07145/study3/view1_frontal.png", "patient_id": "patient07145", "tooltip": "patient07145 | Pneumothorax: 1.0 | Age: 47"}, {"path": "../../../../kaggle/processed/train/patient03765/study3/view1_frontal.png", "patient_id": "patient03765", "tooltip": "patient03765 | Pneumothorax: 0.0 | Age: 78"}, {"path": "../../../../kaggle/processed/train/patient24160/study3/view1_frontal.png", "patient_id": "patient24160", "tooltip": "patient24160 | Pneumothorax: 0.0 | Age: 77"}, {"path": "../../../../kaggle/processed/train/patient38659/study3/view1_frontal.png", "patient_id": "patient38659", "tooltip": "patient38659 | Pneumothorax: 1.0 | Age: 73"}, {"path": "../../../../kaggle/processed/train/patient29782/study6/view1_frontal.png", "patient_id": "patient29782", "tooltip": "patient29782 | Pneumothorax: 0.0 | Age: 58"}, {"path": "../../../../kaggle/processed/train/patient49421/study2/view1_frontal.png", "patient_id": "patient49421", "tooltip": "patient49421 | Pneumothorax: 0.0 | Age: 68"}, {"path": "../../../../kaggle/processed/train/patient55131/study1/view1_frontal.png", "patient_id": "patient55131", "tooltip": "patient55131 | Pneumothorax: 1.0 | Age: 24"}, {"path": "../../../../kaggle/processed/train/patient36631/study4/view1_frontal.png", "patient_id": "patient36631", "tooltip": "patient36631 | Pneumothorax: 0.0 | Age: 63"}, {"path": "../../../../kaggle/processed/train/patient19578/study2/view1_frontal.png", "patient_id": "patient19578", "tooltip": "patient19578 | Pneumothorax: 0.0 | Age: 27"}, {"path": "../../../../kaggle/processed/train/patient22828/study3/view1_frontal.png", "patient_id": "patient22828", "tooltip": "patient22828 | Pneumothorax: 0.0 | Age: 90"}, {"path": "../../../../kaggle/processed/train/patient14621/study5/view1_frontal.png", "patient_id": "patient14621", "tooltip": "patient14621 | Pneumothorax: 1.0 | Age: 64"}, {"path": "../../../../kaggle/processed/train/patient47964/study6/view1_frontal.png", "patient_id": "patient47964", "tooltip": "patient47964 | Pneumothorax: 1.0 | Age: 69"}, {"path": "../../../../kaggle/processed/train/patient42938/study2/view1_frontal.png", "patient_id": "patient42938", "tooltip": "patient42938 | Pneumothorax: 0.0 | Age: 33"}, {"path": "../../../../kaggle/processed/train/patient17445/study3/view1_frontal.png", "patient_id": "patient17445", "tooltip": "patient17445 | Pneumothorax: 1.0 | Age: 49"}, {"path": "../../../../kaggle/processed/train/patient64522/study1/view1_frontal.png", "patient_id": "patient64522", "tooltip": "patient64522 | Pneumothorax: 0.0 | Age: 21"}, {"path": "../../../../kaggle/processed/train/patient10501/study7/view1_frontal.png", "patient_id": "patient10501", "tooltip": "patient10501 | Pneumothorax: 1.0 | Age: 83"}, {"path": "../../../../kaggle/processed/train/patient15318/study15/view1_frontal.png", "patient_id": "patient15318", "tooltip": "patient15318 | Pneumothorax: 1.0 | Age: 25"}, {"path": "../../../../kaggle/processed/train/patient58474/study1/view1_frontal.png", "patient_id": "patient58474", "tooltip": "patient58474 | Pneumothorax: 0.0 | Age: 44"}]}};
+const GALLERY_BATCH_SIZE = 48;
+// Mapper v2 cluster-detail extensions: field distributions + image gallery + lightbox.
+// Wraps kmapper's own window.set_focus_node (defined in kmapper.js, loaded before this
+// script) rather than replacing it, and appends new sections into the existing
+// #tooltip_content_focus_node panel. Expects `clusterDetailsExtra` (per-node payload,
+// keyed by the same node "name" kmapper itself uses) and `GALLERY_BATCH_SIZE` to already
+// be declared in the same <script> tag before this code runs.
+
+(function () {
+  const galleryState = {};
+  let lightboxImages = [];
+  let lightboxIndex = 0;
+
+  function ensureExtraSections() {
+    const detailsEl = document.querySelector("#tooltip_content_focus_node .details");
+    if (!detailsEl || detailsEl.querySelector(".cluster-details-extra")) return;
+
+    const wrapper = document.createElement("div");
+    wrapper.className = "cluster-details-extra";
+    wrapper.innerHTML =
+      "<hr><br/>" +
+      "<h3>Field Distributions</h3>" +
+      '<div class="field-distributions"></div>' +
+      "<hr><br/>" +
+      "<h3>Image Gallery</h3>" +
+      '<div class="image-gallery"></div>';
+    detailsEl.appendChild(wrapper);
+
+    if (!document.querySelector(".cluster-lightbox-overlay")) {
+      const lb = document.createElement("div");
+      lb.className = "cluster-lightbox-overlay";
+      lb.hidden = true;
+      lb.innerHTML =
+        '<span class="cluster-lightbox-close">&times;</span>' +
+        '<span class="cluster-lightbox-nav cluster-lightbox-prev">&#8249;</span>' +
+        '<span class="cluster-lightbox-nav cluster-lightbox-next">&#8250;</span>' +
+        '<div class="cluster-lightbox-content">' +
+        '<img src="" alt="">' +
+        '<div class="cluster-lightbox-info"></div>' +
+        "</div>";
+      document.body.appendChild(lb);
+
+      lb.querySelector(".cluster-lightbox-close").addEventListener("click", closeLightbox);
+      lb.addEventListener("click", function (evt) {
+        if (evt.target === lb) closeLightbox();
+      });
+      lb.querySelector(".cluster-lightbox-prev").addEventListener("click", function () {
+        navigateLightbox(-1);
+      });
+      lb.querySelector(".cluster-lightbox-next").addEventListener("click", function () {
+        navigateLightbox(1);
+      });
+      document.addEventListener("keydown", function (evt) {
+        if (lb.hidden) return;
+        if (evt.key === "Escape") closeLightbox();
+        if (evt.key === "ArrowLeft") navigateLightbox(-1);
+        if (evt.key === "ArrowRight") navigateLightbox(1);
+      });
+    }
+  }
+
+  function openLightbox(images, index) {
+    lightboxImages = images;
+    lightboxIndex = index;
+    renderLightbox();
+    document.querySelector(".cluster-lightbox-overlay").hidden = false;
+  }
+
+  function closeLightbox() {
+    const overlay = document.querySelector(".cluster-lightbox-overlay");
+    if (overlay) overlay.hidden = true;
+  }
+
+  function navigateLightbox(delta) {
+    if (!lightboxImages.length) return;
+    lightboxIndex = (lightboxIndex + delta + lightboxImages.length) % lightboxImages.length;
+    renderLightbox();
+  }
+
+  function renderLightbox() {
+    const img = lightboxImages[lightboxIndex];
+    const overlay = document.querySelector(".cluster-lightbox-overlay");
+    overlay.querySelector("img").src = img.path;
+    overlay.querySelector(".cluster-lightbox-info").textContent =
+      img.tooltip + " (" + (lightboxIndex + 1) + " / " + lightboxImages.length + ")";
+  }
+
+  function renderDistributions(container, distributions) {
+    container.innerHTML = "";
+    Object.keys(distributions).forEach(function (field) {
+      const dist = distributions[field];
+      const block = document.createElement("div");
+      block.className = "field-distribution";
+
+      const nameEl = document.createElement("div");
+      nameEl.className = "field-name";
+      nameEl.textContent = field;
+      block.appendChild(nameEl);
+
+      if (dist.type === "categorical") {
+        const counts = Object.values(dist.counts).concat([1]);
+        const maxCount = Math.max.apply(null, counts);
+        Object.keys(dist.counts).forEach(function (value) {
+          const count = dist.counts[value];
+          const pct = dist.proportions[value] * 100;
+          const row = document.createElement("div");
+          row.className = "dist-bar-row";
+          row.innerHTML =
+            '<div class="dist-bar-label" title="' + value + '">' + value + "</div>" +
+            '<div class="dist-bar-track"><div class="dist-bar-fill" style="width:' +
+            (count / maxCount) * 100 +
+            '%"></div></div>' +
+            '<div class="dist-bar-value">' + count + " (" + pct.toFixed(0) + "%)</div>";
+          block.appendChild(row);
+        });
+        if (dist.missing) {
+          const missingEl = document.createElement("div");
+          missingEl.className = "field-stats";
+          missingEl.textContent = dist.missing + " missing";
+          block.appendChild(missingEl);
+        }
+      } else {
+        const statsEl = document.createElement("div");
+        statsEl.className = "field-stats";
+        if (dist.mean !== null) {
+          statsEl.textContent =
+            "mean " + dist.mean.toFixed(2) +
+            ", median " + dist.median.toFixed(2) +
+            ", std " + dist.std.toFixed(2) +
+            ", range [" + dist.min.toFixed(2) + ", " + dist.max.toFixed(2) + "]";
+        } else {
+          statsEl.textContent = "no data";
+        }
+        block.appendChild(statsEl);
+
+        const binCounts = dist.histogram.map(function (b) {
+          return b.count;
+        });
+        const maxCount = Math.max.apply(null, binCounts.concat([1]));
+        dist.histogram.forEach(function (bin) {
+          const row = document.createElement("div");
+          row.className = "dist-bar-row";
+          const label = bin.bin_start.toFixed(1) + "-" + bin.bin_end.toFixed(1);
+          row.innerHTML =
+            '<div class="dist-bar-label" title="' + label + '">' + label + "</div>" +
+            '<div class="dist-bar-track"><div class="dist-bar-fill" style="width:' +
+            (bin.count / maxCount) * 100 +
+            '%"></div></div>' +
+            '<div class="dist-bar-value">' + bin.count + "</div>";
+          block.appendChild(row);
+        });
+      }
+
+      container.appendChild(block);
+    });
+  }
+
+  function renderGalleryBatch(container, images, nodeId) {
+    const state = galleryState[nodeId];
+    const grid = container.querySelector(".image-gallery-grid");
+    const start = state.rendered;
+    const end = Math.min(images.length, start + GALLERY_BATCH_SIZE);
+
+    for (let i = start; i < end; i++) {
+      const img = images[i];
+      const el = document.createElement("img");
+      el.className = "image-gallery-thumb";
+      el.src = img.path;
+      el.title = img.tooltip;
+      el.loading = "lazy";
+      el.addEventListener(
+        "click",
+        (function (idx) {
+          return function () {
+            openLightbox(images, idx);
+          };
+        })(i)
+      );
+      grid.appendChild(el);
+    }
+    state.rendered = end;
+
+    const existingBtn = container.querySelector(".image-gallery-loadmore");
+    if (existingBtn) existingBtn.remove();
+    if (state.rendered < images.length) {
+      const btn = document.createElement("button");
+      btn.className = "image-gallery-loadmore";
+      btn.textContent =
+        "Load " + Math.min(GALLERY_BATCH_SIZE, images.length - state.rendered) +
+        " more (" + (images.length - state.rendered) + " remaining)";
+      btn.addEventListener("click", function () {
+        renderGalleryBatch(container, images, nodeId);
+      });
+      container.appendChild(btn);
+    }
+  }
+
+  function renderGallery(container, images, nodeId) {
+    if (!images.length) {
+      container.innerHTML = '<div class="image-gallery-empty">No images available for this cluster.</div>';
+      return;
+    }
+    container.innerHTML = '<div class="image-gallery-grid"></div>';
+    galleryState[nodeId] = { rendered: 0 };
+    renderGalleryBatch(container, images, nodeId);
+  }
+
+  function renderClusterExtras(nodeId, data) {
+    ensureExtraSections();
+    const distContainer = document.querySelector("#tooltip_content_focus_node .field-distributions");
+    const galleryContainer = document.querySelector("#tooltip_content_focus_node .image-gallery");
+    if (distContainer) renderDistributions(distContainer, data.distributions);
+    if (galleryContainer) renderGallery(galleryContainer, data.images, nodeId);
+  }
+
+  const originalSetFocusNode = window.set_focus_node;
+  window.set_focus_node = function (d) {
+    originalSetFocusNode(d);
+    if (d && typeof clusterDetailsExtra !== "undefined" && clusterDetailsExtra[d.name]) {
+      renderClusterExtras(d.name, clusterDetailsExtra[d.name]);
+    }
+  };
+})();
+
+</script>
+</body>
+
+</html>

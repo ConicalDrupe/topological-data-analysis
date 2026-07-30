@@ -8,6 +8,7 @@ dependencies = [
     "numpy",
     "scikit-learn",
     "umap-learn",
+    "scipy",
 ]
 
 [build-system]

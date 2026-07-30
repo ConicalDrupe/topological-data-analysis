@@ -1,4 +1,4 @@
-# Experiment 2 — Mapper Graph (v1, v2, v2.5)
+# Experiment 2 — Mapper Graph (v1, v2, v2.5, v3)
 
 ## Goal
 
@@ -236,6 +236,122 @@ Outputs: `Mapper/results/v2.5/graphs/medgemma_train_mapper_umap.html`,
 - `build_cover`'s `"uniform"`-only structure is now the intended integration point for
   G-Mapper (SPEC.md's deferred v3 item) — not implemented here, just structured for it.
 
+## v3 — G-Mapper Cover Optimization
+
+### Goal
+
+Replace the uniform `kmapper.Cover` with an adaptive, gaussian-means-style cover
+(G-Mapper, https://github.com/MRC-Mapper/G-Mapper) that concentrates finer cover
+resolution where the lens distribution is non-normal, per SPEC.md Section 6's deferred
+v3 item. Produce three G-Mapper-covered graphs (PCA/t-SNE/UMAP lenses), directly
+comparable to the existing v2.5 uniform-cover baseline (54/64/69 nodes).
+
+### Implementation
+
+G-Mapper's reference repo is not pip-installable and its own graph-builder bypasses
+kmapper entirely (different graph data structure), so `ad_test` and `gm_split` were
+**reimplemented** (not vendored) in the new `mapper.gmapper` module, near-identical to
+the reference source (fetched directly from
+`https://raw.githubusercontent.com/MRC-Mapper/G-Mapper/main/mapper_gmean_cover.py`) —
+only the DFS split-search method is implemented (BFS/randomized just change which
+failing interval is split first, no clear benefit at this dataset size). `GMapperCover`
+satisfies kmapper's duck-typed `Cover` contract (`.fit`, `.transform`, `.n_cubes`,
+`.perc_overlap`) directly, without inheriting `kmapper.Cover` — its `transform_single`
+assumes one fixed radius per axis shared by every cube, which cannot represent
+G-Mapper's irregular per-interval widths.
+
+**2D lens generalization**: G-Mapper's published algorithm only covers a 1-D lens; our
+lenses are 2-D. Resolved (per user direction) as: run G-Mapper independently per lens
+axis, then take the Cartesian product of the two axes' intervals as the cover's cubes —
+the same independent-per-axis-then-product generalization kmapper's own `CubicalCover`
+uses for uniform covers. **Known limitation**: axis-independent splitting cannot detect
+joint bimodality invisible in both marginal distributions — a two-cluster structure
+that only appears as a diagonal/X-shape in the 2D lens would be invisible to this cover,
+same as it would be to kmapper's own uniform `CubicalCover`.
+
+`mapper.graph.build_cover` gained a `"gmapper"` branch (`COVER_CHOICES = ["uniform",
+"gmapper"]`); `build_graph`/`GraphResult` gained passthrough kwargs and a `cover_info`
+field so the log reports *realized* per-axis interval counts, not just the CLI knobs
+that produced them. `build_mapper_graph_v2.py` gained `--ad-threshold`, `--g-overlap`,
+`--gmapper-max-intervals-per-axis`, `--gmapper-iterations` flags.
+
+### Parameters
+
+- `g_overlap=0.1`, `iterations=10` — match G-Mapper's own paper defaults verbatim.
+- `max_intervals_per_axis=10` (10×10=100 max product cubes) — **deliberately capped
+  below G-Mapper's own paper default of 20** (20×20=400 cubes), chosen for
+  proportionality to this 460-point dataset and to keep the gmapper-vs-uniform
+  comparison apples-to-apples against the existing `n_cubes=10` uniform baseline (a
+  10×10 grid). Confirmed by user (not an oversight).
+- `ad_threshold=0.5` — **deviates from G-Mapper's own paper default of 10.0.** A
+  diagnostic sweep (mirroring v1's DBSCAN `eps` tuning) was required: at
+  `ad_threshold=10.0` (the CLI's still-documented default, matching the paper), the
+  Anderson-Darling statistic for every lens axis on this dataset (PCA: 0.70/0.43,
+  t-SNE: 3.00/1.83, UMAP: 4.98/7.12) falls well below the threshold, so **no interval
+  ever splits for any of the 3 lenses** — every run collapses to a single 1×1 cube,
+  reproducing the same 1-node/0-edge degenerate graph as running no cover at all. A
+  threshold sweep (0.3/0.4/0.5/0.7) against the real pipeline found `ad_threshold=0.5`
+  to be the largest value that keeps all 3 lenses non-degenerate; `0.7` already
+  collapses PCA back to 1×1. Same `eps=3.5, min_samples=5` DBSCAN as all prior runs.
+
+### Results
+
+| Lens | Intervals per axis | Product cubes | Realized nodes | Realized edges | DBSCAN noise / largest cluster |
+|------|--------------------|----------------|-----------------|-----------------|--------------------------------|
+| PCA (v2.5 uniform baseline) | n/a (uniform 10×10) | 100 | 54 | 162 | 16.3% / 83.7% |
+| t-SNE (v2.5 uniform baseline) | n/a (uniform 10×10) | 100 | 69 | 189 | 16.3% / 83.7% |
+| UMAP (v2.5 uniform baseline) | n/a (uniform 10×10) | 100 | 64 | 181 | 16.3% / 83.7% |
+| PCA (v3 gmapper) | [11, 1] | 11 | 8 | 5 | 16.3% / 83.7% |
+| t-SNE (v3 gmapper) | [11, 11] | 121 | 18 | 12 | 16.3% / 83.7% |
+| UMAP (v3 gmapper) | [11, 11] | 121 | 18 | 10 | 16.3% / 83.7% |
+
+(Interval counts of 11, not 10, reflect the DFS loop's "split, then check cap" order —
+it breaks *after* exceeding `max_intervals_per_axis=10`, so the reported count can be
+one over the cap.) DBSCAN diagnostics are identical to the uniform baseline for every
+lens (expected — computed on the whole dataset before any cover is applied, so it is
+cover-independent; this was used as a cross-cover invariant check during
+implementation).
+
+### Observations
+
+- **PCA's lens is close to genuinely unimodal/normal on this dataset.** Its axis-0 AD
+  statistic (0.70) is the lowest of any lens/axis measured, and even at the tuned
+  `ad_threshold=0.5`, axis 1 never splits at all ([11, 1] — only axis 0 subdivides).
+  This is a real, informative finding, not a tuning failure: it directly answers part
+  of v2.5's open "does either non-linear lens reveal more structure than PCA?"
+  question — by this adaptive-cover measure, no, PCA's projection is the smoothest/
+  least-structured of the three lenses.
+- **Both t-SNE and UMAP saturate at the `max_intervals_per_axis=10` cap on both axes**
+  ([11, 11] each) at `ad_threshold=0.5` — meaning the cap, not the AD test, is what
+  stopped further splitting for these two lenses. The cap is actively binding here;
+  a follow-up with a higher cap (e.g. 15-20) might reveal genuinely finer non-linear
+  lens structure that this run left unexplored.
+- **G-Mapper's graphs are substantially smaller than the uniform-cover baseline**
+  (8-18 nodes vs. 54-69) despite similar or larger product-cube counts (11-121 vs.
+  100) — consistent with the Cartesian-product design's known
+  empty/near-empty-corner-cube risk: G-Mapper's `g_overlap=0.1` is much tighter than
+  uniform's `perc_overlap=0.5`, and axis-independent interval placement concentrates
+  resolution along dense marginal regions without regard to the *joint* 2D density,
+  so many product cells end up sparse or empty and are skipped by kmapper's
+  `min_cluster_samples` check. This is the expected, documented tradeoff of the
+  independent-per-axis approach, not a bug.
+- Node coloring (mean Pneumothorax) and cluster-detail viewer (distributions + image
+  gallery) render as expected — no code changes were needed in `cluster_details.py`,
+  confirming the v2 viewer generalizes to any upstream cover without modification.
+
+### Next Steps
+
+- User to visually compare the 3 gmapper graphs against their v2.5 uniform-cover
+  counterparts — does the adaptively-placed, non-uniform cover produce a more
+  spatially coherent Pneumothorax gradient, or does the smaller node count lose
+  resolution that mattered?
+- Consider a higher `--gmapper-max-intervals-per-axis` (e.g. 15-20) for t-SNE/UMAP
+  specifically, now that both are confirmed to be saturating the current cap of 10.
+- Consider a true joint-2D (not axis-independent) adaptive cover as a future
+  iteration, to address the documented empty-corner-cube / joint-density-blindness
+  limitation — no such algorithm exists in G-Mapper's own reference repo, so this
+  would require new design work, not a port.
+
 ## Run Log
 
 Raw per-invocation diagnostics, auto-appended by
@@ -320,6 +436,60 @@ Raw per-invocation diagnostics, auto-appended by
 - Image kind: processed, gallery batch size: 48
 - Output: Mapper/results/v2.5/graphs/medgemma_train_mapper_tsne.html
 - Mapper graph: 69 nodes, 189 edges
+- DBSCAN degeneracy check (whole-dataset diagnostic fit): 16.3% unclustered
+  (label == -1), largest single cluster holds 83.7% of points
+- Not degenerate by the >=90% noise / >=90% single-cluster threshold.
+- Images skipped (unresolvable path): 0
+
+## Run 2026-07-30T21:56:13.602384+00:00 (v2 — enhanced cluster viewer)
+
+- Dataset: backend=medgemma, split=train, 460 rows,
+  embedding_dim=1152
+- Lens: pca (n_components=2, random_state=42) on raw embeddings
+- Cover: kind=gmapper, GMapperCover(ad_threshold=0.5, g_overlap=0.1, max_intervals_per_axis=10, iterations=10) — resulting intervals per axis: [11, 1] (11 product cubes)
+- Clustering: sklearn.cluster.DBSCAN(eps=3.5, min_samples=5),
+  fit on original 1152-d embeddings (not lens-space)
+- Node coloring: mean Pneumothorax value among cluster members (0-1 scale)
+- Cluster-detail fields: Pneumothorax, Age
+- Image kind: processed, gallery batch size: 48
+- Output: Mapper/results/v3/graphs/medgemma_train_mapper_pca.html
+- Mapper graph: 8 nodes, 5 edges
+- DBSCAN degeneracy check (whole-dataset diagnostic fit): 16.3% unclustered
+  (label == -1), largest single cluster holds 83.7% of points
+- Not degenerate by the >=90% noise / >=90% single-cluster threshold.
+- Images skipped (unresolvable path): 0
+
+## Run 2026-07-30T21:56:24.262853+00:00 (v2 — enhanced cluster viewer)
+
+- Dataset: backend=medgemma, split=train, 460 rows,
+  embedding_dim=1152
+- Lens: tsne (n_components=2, random_state=42) on raw embeddings
+- Cover: kind=gmapper, GMapperCover(ad_threshold=0.5, g_overlap=0.1, max_intervals_per_axis=10, iterations=10) — resulting intervals per axis: [11, 11] (121 product cubes)
+- Clustering: sklearn.cluster.DBSCAN(eps=3.5, min_samples=5),
+  fit on original 1152-d embeddings (not lens-space)
+- Node coloring: mean Pneumothorax value among cluster members (0-1 scale)
+- Cluster-detail fields: Pneumothorax, Age
+- Image kind: processed, gallery batch size: 48
+- Output: Mapper/results/v3/graphs/medgemma_train_mapper_tsne.html
+- Mapper graph: 18 nodes, 12 edges
+- DBSCAN degeneracy check (whole-dataset diagnostic fit): 16.3% unclustered
+  (label == -1), largest single cluster holds 83.7% of points
+- Not degenerate by the >=90% noise / >=90% single-cluster threshold.
+- Images skipped (unresolvable path): 0
+
+## Run 2026-07-30T21:57:01.695992+00:00 (v2 — enhanced cluster viewer)
+
+- Dataset: backend=medgemma, split=train, 460 rows,
+  embedding_dim=1152
+- Lens: umap (n_components=2, random_state=42) on raw embeddings
+- Cover: kind=gmapper, GMapperCover(ad_threshold=0.5, g_overlap=0.1, max_intervals_per_axis=10, iterations=10) — resulting intervals per axis: [11, 11] (121 product cubes)
+- Clustering: sklearn.cluster.DBSCAN(eps=3.5, min_samples=5),
+  fit on original 1152-d embeddings (not lens-space)
+- Node coloring: mean Pneumothorax value among cluster members (0-1 scale)
+- Cluster-detail fields: Pneumothorax, Age
+- Image kind: processed, gallery batch size: 48
+- Output: Mapper/results/v3/graphs/medgemma_train_mapper_umap.html
+- Mapper graph: 18 nodes, 10 edges
 - DBSCAN degeneracy check (whole-dataset diagnostic fit): 16.3% unclustered
   (label == -1), largest single cluster holds 83.7% of points
 - Not degenerate by the >=90% noise / >=90% single-cluster threshold.

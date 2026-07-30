@@ -39,6 +39,10 @@ class MapperV2Config:
     perc_overlap: float
     lens: str
     cover_kind: str
+    ad_threshold: float
+    g_overlap: float
+    gmapper_max_intervals_per_axis: int
+    gmapper_iterations: int
     detail_fields: list[str]
     image_kind: str
     gallery_batch_size: int
@@ -56,6 +60,32 @@ def parse_args() -> MapperV2Config:
     parser.add_argument("--perc-overlap", type=float, default=0.5)
     parser.add_argument("--lens", default="pca", choices=LENS_CHOICES)
     parser.add_argument("--cover-kind", default="uniform", choices=COVER_CHOICES)
+    parser.add_argument(
+        "--ad-threshold",
+        type=float,
+        default=10.0,
+        help="G-Mapper cover only: Anderson-Darling statistic threshold above which an interval is split (G-Mapper's own reference default)",
+    )
+    parser.add_argument(
+        "--g-overlap",
+        type=float,
+        default=0.1,
+        help="G-Mapper cover only: overlap fraction between a split interval's two children (G-Mapper's own reference default)",
+    )
+    parser.add_argument(
+        "--gmapper-max-intervals-per-axis",
+        type=int,
+        default=10,
+        help="G-Mapper cover only: cap on intervals per lens axis. Deliberately 10, not G-Mapper's own paper default of 20 "
+        "(20x20=400 product cubes is disproportionate for this 460-point dataset) -- keeps the max product-cube count (100) "
+        "comparable to the existing uniform cover's n_cubes=10 baseline.",
+    )
+    parser.add_argument(
+        "--gmapper-iterations",
+        type=int,
+        default=10,
+        help="G-Mapper cover only: max DFS split iterations (G-Mapper's own reference default)",
+    )
     parser.add_argument(
         "--detail-fields",
         default="Pneumothorax,Age",
@@ -83,6 +113,10 @@ def parse_args() -> MapperV2Config:
         perc_overlap=args.perc_overlap,
         lens=args.lens,
         cover_kind=args.cover_kind,
+        ad_threshold=args.ad_threshold,
+        g_overlap=args.g_overlap,
+        gmapper_max_intervals_per_axis=args.gmapper_max_intervals_per_axis,
+        gmapper_iterations=args.gmapper_iterations,
         detail_fields=[f.strip() for f in args.detail_fields.split(",") if f.strip()],
         image_kind=args.image_kind,
         gallery_batch_size=args.gallery_batch_size,
@@ -98,10 +132,16 @@ def main() -> None:
     df = load_embeddings(backend=config.backend, split=config.split)
     print(f"Loaded {len(df)} rows, embedding_dim={df['embedding'].iloc[0].shape[0]}")
 
+    if config.cover_kind == "gmapper":
+        cover_desc = (
+            f"kind=gmapper, ad_threshold={config.ad_threshold}, g_overlap={config.g_overlap}, "
+            f"max_intervals_per_axis={config.gmapper_max_intervals_per_axis}, iterations={config.gmapper_iterations}"
+        )
+    else:
+        cover_desc = f"kind={config.cover_kind}, n_cubes={config.n_cubes}, perc_overlap={config.perc_overlap}"
     print(
         f"Building graph: {config.lens} lens, DBSCAN(eps={config.eps}, min_samples={config.min_samples}) "
-        "on original embeddings (NOT lens-space), Cover("
-        f"kind={config.cover_kind}, n_cubes={config.n_cubes}, perc_overlap={config.perc_overlap}) ..."
+        f"on original embeddings (NOT lens-space), Cover({cover_desc}) ..."
     )
     result = build_graph(
         df,
@@ -111,6 +151,10 @@ def main() -> None:
         config.perc_overlap,
         lens=config.lens,
         cover_kind=config.cover_kind,
+        ad_threshold=config.ad_threshold,
+        g_overlap=config.g_overlap,
+        gmapper_max_intervals_per_axis=config.gmapper_max_intervals_per_axis,
+        gmapper_iterations=config.gmapper_iterations,
     )
 
     print(
@@ -181,13 +225,25 @@ def _append_log_entry(config: MapperV2Config, df, result, html_written: bool, n_
     else:
         degeneracy_note = "Not degenerate by the >=90% noise / >=90% single-cluster threshold."
 
+    if result.cover_info["kind"] == "gmapper":
+        ci = result.cover_info
+        cover_line = (
+            f"- Cover: kind=gmapper, GMapperCover(ad_threshold={ci['ad_threshold']}, "
+            f"g_overlap={ci['g_overlap']}, max_intervals_per_axis={ci['max_intervals_per_axis']}, "
+            f"iterations={ci['iterations']}) — resulting intervals per axis: "
+            f"{ci['intervals_per_axis']} ({ci['n_cubes_product']} product cubes)"
+        )
+    else:
+        ci = result.cover_info
+        cover_line = f"- Cover: kind=uniform, kmapper.Cover(n_cubes={ci['n_cubes']}, perc_overlap={ci['perc_overlap']})"
+
     entry = f"""
 ## Run {timestamp} (v2 — enhanced cluster viewer)
 
 - Dataset: backend={config.backend}, split={config.split}, {len(df)} rows,
   embedding_dim={df["embedding"].iloc[0].shape[0]}
 - Lens: {config.lens} (n_components=2, random_state={RANDOM_STATE}) on raw embeddings
-- Cover: kind={config.cover_kind}, kmapper.Cover(n_cubes={config.n_cubes}, perc_overlap={config.perc_overlap})
+{cover_line}
 - Clustering: sklearn.cluster.DBSCAN(eps={config.eps}, min_samples={config.min_samples}),
   fit on original {df["embedding"].iloc[0].shape[0]}-d embeddings (not lens-space)
 - Node coloring: mean Pneumothorax value among cluster members (0-1 scale)
