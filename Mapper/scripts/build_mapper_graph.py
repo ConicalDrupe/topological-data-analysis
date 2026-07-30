@@ -1,7 +1,9 @@
 """Build a basic Mapper graph on MedGemma embeddings and render it as static HTML.
 
-Lens: PCA(n_components=2) on the raw 1152-d embedding vectors, fixed random_state.
-Cover: kmapper.Cover(n_cubes=10, perc_overlap=0.5) — kmapper's canonical defaults.
+Lens: pluggable (PCA/t-SNE/UMAP, --lens flag), fixed random_state. Defaults to PCA.
+Cover: pluggable (--cover-kind flag; only "uniform" — kmapper's own Cover — is
+implemented today, kept separate so a future G-Mapper-optimized cover can be added as
+a new kind without changing this script). Default kmapper.Cover(n_cubes=10, perc_overlap=0.5).
 Clustering: sklearn.cluster.DBSCAN, run on the ORIGINAL 1152-d embedding vectors
 (not the 2D lens projection). This is intentional: the correct Mapper algorithm
 clusters the pullback cover in the original feature space, not in lens-space —
@@ -12,7 +14,7 @@ See mapper.graph.build_graph for the shared lens/cover/cluster/degeneracy-check 
 
 Example:
     uv run python Mapper/scripts/build_mapper_graph.py \\
-        --backend medgemma --split train --eps 0.5 --min-samples 5
+        --backend medgemma --split train --eps 0.5 --min-samples 5 --lens umap
 """
 
 from __future__ import annotations
@@ -25,7 +27,7 @@ from pathlib import Path
 import kmapper as km
 
 from mapper.data import REPO_ROOT, load_embeddings
-from mapper.graph import RANDOM_STATE, build_graph
+from mapper.graph import COVER_CHOICES, LENS_CHOICES, RANDOM_STATE, build_graph
 
 
 @dataclass
@@ -36,6 +38,8 @@ class MapperConfig:
     min_samples: int
     n_cubes: int
     perc_overlap: float
+    lens: str
+    cover_kind: str
     output_html: Path
     log_path: Path
 
@@ -57,6 +61,8 @@ def parse_args() -> MapperConfig:
     )
     parser.add_argument("--n-cubes", type=int, default=10)
     parser.add_argument("--perc-overlap", type=float, default=0.5)
+    parser.add_argument("--lens", default="pca", choices=LENS_CHOICES)
+    parser.add_argument("--cover-kind", default="uniform", choices=COVER_CHOICES)
     parser.add_argument(
         "--output-html",
         type=Path,
@@ -75,6 +81,8 @@ def parse_args() -> MapperConfig:
         min_samples=args.min_samples,
         n_cubes=args.n_cubes,
         perc_overlap=args.perc_overlap,
+        lens=args.lens,
+        cover_kind=args.cover_kind,
         output_html=args.output_html,
         log_path=args.log_path,
     )
@@ -88,11 +96,19 @@ def main() -> None:
     print(f"Loaded {len(df)} rows, embedding_dim={df['embedding'].iloc[0].shape[0]}")
 
     print(
-        f"Building graph: PCA(2) lens, DBSCAN(eps={config.eps}, min_samples={config.min_samples}) "
+        f"Building graph: {config.lens} lens, DBSCAN(eps={config.eps}, min_samples={config.min_samples}) "
         "on original embeddings (NOT lens-space), Cover("
-        f"n_cubes={config.n_cubes}, perc_overlap={config.perc_overlap}) ..."
+        f"kind={config.cover_kind}, n_cubes={config.n_cubes}, perc_overlap={config.perc_overlap}) ..."
     )
-    result = build_graph(df, config.eps, config.min_samples, config.n_cubes, config.perc_overlap)
+    result = build_graph(
+        df,
+        config.eps,
+        config.min_samples,
+        config.n_cubes,
+        config.perc_overlap,
+        lens=config.lens,
+        cover_kind=config.cover_kind,
+    )
 
     print(
         f"DBSCAN diagnostic (whole-dataset fit): {result.frac_noise:.1%} noise, "
@@ -123,11 +139,11 @@ def main() -> None:
             color_values=df["Pneumothorax"].to_numpy(),
             color_function_name="Pneumothorax (mean)",
             path_html=str(config.output_html),
-            title=f"MedGemma {config.split} embeddings — Mapper graph",
+            title=f"MedGemma {config.split} embeddings — Mapper graph ({config.lens})",
             X=result.X,
             X_names=[f"emb_{i:04d}" for i in range(result.X.shape[1])],
             lens=result.lens,
-            lens_names=["PCA-1", "PCA-2"],
+            lens_names=[f"{config.lens.upper()}-1", f"{config.lens.upper()}-2"],
             custom_tooltips=df["patient_id"].to_numpy(),
         )
         html_written = True
@@ -158,8 +174,8 @@ def _append_log_entry(config: MapperConfig, df, result, html_written: bool) -> N
 
 - Dataset: backend={config.backend}, split={config.split}, {len(df)} rows,
   embedding_dim={df["embedding"].iloc[0].shape[0]}
-- Lens: PCA(n_components=2, random_state={RANDOM_STATE}) on raw embeddings
-- Cover: kmapper.Cover(n_cubes={config.n_cubes}, perc_overlap={config.perc_overlap})
+- Lens: {config.lens} (n_components=2, random_state={RANDOM_STATE}) on raw embeddings
+- Cover: kind={config.cover_kind}, kmapper.Cover(n_cubes={config.n_cubes}, perc_overlap={config.perc_overlap})
 - Clustering: sklearn.cluster.DBSCAN(eps={config.eps}, min_samples={config.min_samples}),
   fit on original {df["embedding"].iloc[0].shape[0]}-d embeddings (not lens-space)
 - Node coloring: mean Pneumothorax value among cluster members (0-1 scale)

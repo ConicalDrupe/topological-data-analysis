@@ -26,7 +26,7 @@ import kmapper as km
 
 from mapper.cluster_details import build_cluster_details_payload, inject_cluster_details
 from mapper.data import REPO_ROOT, load_embeddings
-from mapper.graph import RANDOM_STATE, build_graph
+from mapper.graph import COVER_CHOICES, LENS_CHOICES, RANDOM_STATE, build_graph
 
 
 @dataclass
@@ -37,6 +37,8 @@ class MapperV2Config:
     min_samples: int
     n_cubes: int
     perc_overlap: float
+    lens: str
+    cover_kind: str
     detail_fields: list[str]
     image_kind: str
     gallery_batch_size: int
@@ -52,6 +54,8 @@ def parse_args() -> MapperV2Config:
     parser.add_argument("--min-samples", type=int, default=5, help="DBSCAN min_samples (sklearn default)")
     parser.add_argument("--n-cubes", type=int, default=10)
     parser.add_argument("--perc-overlap", type=float, default=0.5)
+    parser.add_argument("--lens", default="pca", choices=LENS_CHOICES)
+    parser.add_argument("--cover-kind", default="uniform", choices=COVER_CHOICES)
     parser.add_argument(
         "--detail-fields",
         default="Pneumothorax,Age",
@@ -77,6 +81,8 @@ def parse_args() -> MapperV2Config:
         min_samples=args.min_samples,
         n_cubes=args.n_cubes,
         perc_overlap=args.perc_overlap,
+        lens=args.lens,
+        cover_kind=args.cover_kind,
         detail_fields=[f.strip() for f in args.detail_fields.split(",") if f.strip()],
         image_kind=args.image_kind,
         gallery_batch_size=args.gallery_batch_size,
@@ -93,11 +99,19 @@ def main() -> None:
     print(f"Loaded {len(df)} rows, embedding_dim={df['embedding'].iloc[0].shape[0]}")
 
     print(
-        f"Building graph: PCA(2) lens, DBSCAN(eps={config.eps}, min_samples={config.min_samples}) "
+        f"Building graph: {config.lens} lens, DBSCAN(eps={config.eps}, min_samples={config.min_samples}) "
         "on original embeddings (NOT lens-space), Cover("
-        f"n_cubes={config.n_cubes}, perc_overlap={config.perc_overlap}) ..."
+        f"kind={config.cover_kind}, n_cubes={config.n_cubes}, perc_overlap={config.perc_overlap}) ..."
     )
-    result = build_graph(df, config.eps, config.min_samples, config.n_cubes, config.perc_overlap)
+    result = build_graph(
+        df,
+        config.eps,
+        config.min_samples,
+        config.n_cubes,
+        config.perc_overlap,
+        lens=config.lens,
+        cover_kind=config.cover_kind,
+    )
 
     print(
         f"DBSCAN diagnostic (whole-dataset fit): {result.frac_noise:.1%} noise, "
@@ -126,12 +140,12 @@ def main() -> None:
         color_values=df["Pneumothorax"].to_numpy(),
         color_function_name="Pneumothorax (mean)",
         path_html=str(config.output_html),
-        title=f"MedGemma {config.split} embeddings — Mapper graph (v2)",
+        title=f"MedGemma {config.split} embeddings — Mapper graph (v2, {config.lens})",
         save_file=False,
         X=result.X,
         X_names=[f"emb_{i:04d}" for i in range(result.X.shape[1])],
         lens=result.lens,
-        lens_names=["PCA-1", "PCA-2"],
+        lens_names=[f"{config.lens.upper()}-1", f"{config.lens.upper()}-2"],
         custom_tooltips=df["patient_id"].to_numpy(),
     )
 
@@ -172,8 +186,8 @@ def _append_log_entry(config: MapperV2Config, df, result, html_written: bool, n_
 
 - Dataset: backend={config.backend}, split={config.split}, {len(df)} rows,
   embedding_dim={df["embedding"].iloc[0].shape[0]}
-- Lens: PCA(n_components=2, random_state={RANDOM_STATE}) on raw embeddings
-- Cover: kmapper.Cover(n_cubes={config.n_cubes}, perc_overlap={config.perc_overlap})
+- Lens: {config.lens} (n_components=2, random_state={RANDOM_STATE}) on raw embeddings
+- Cover: kind={config.cover_kind}, kmapper.Cover(n_cubes={config.n_cubes}, perc_overlap={config.perc_overlap})
 - Clustering: sklearn.cluster.DBSCAN(eps={config.eps}, min_samples={config.min_samples}),
   fit on original {df["embedding"].iloc[0].shape[0]}-d embeddings (not lens-space)
 - Node coloring: mean Pneumothorax value among cluster members (0-1 scale)

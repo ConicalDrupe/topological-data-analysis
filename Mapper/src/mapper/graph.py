@@ -1,8 +1,9 @@
 """Shared Mapper-graph construction: lens + cover + clustering + degeneracy check.
 
-Used by both `scripts/build_mapper_graph.py` (v1, basic graph) and
-`scripts/build_mapper_graph_v2.py` (v2, enhanced cluster-detail viewer) so the
-lens/cover/clustering parameters and degeneracy diagnostic stay identical across both.
+Used by `scripts/build_mapper_graph.py` (v1, basic graph), `scripts/build_mapper_graph_v2.py`
+(v2, enhanced cluster-detail viewer), and v2.5's UMAP/t-SNE lens comparison runs, so the
+cover/clustering/degeneracy diagnostic logic stays identical across all of them — only the
+lens choice differs.
 
 Clustering is intentionally run on the ORIGINAL embedding vectors, not the 2D lens
 projection — the correct Mapper algorithm clusters the pullback cover in the original
@@ -17,10 +18,12 @@ import kmapper as km
 import numpy as np
 import pandas as pd
 from sklearn.cluster import DBSCAN
-from sklearn.decomposition import PCA
 
 RANDOM_STATE = 42
 DEGENERACY_THRESHOLD = 0.90
+
+LENS_CHOICES = ["pca", "tsne", "umap"]
+COVER_CHOICES = ["uniform"]
 
 
 @dataclass
@@ -35,18 +38,48 @@ class GraphResult:
     degenerate: bool
 
 
+def build_lens(name: str, random_state: int = RANDOM_STATE):
+    """Returns a fit_transform-able projection object for kmapper's `projection=` arg."""
+    if name == "pca":
+        from sklearn.decomposition import PCA
+
+        return PCA(n_components=2, random_state=random_state)
+    if name == "tsne":
+        from sklearn.manifold import TSNE
+
+        return TSNE(n_components=2, random_state=random_state)
+    if name == "umap":
+        from umap import UMAP
+
+        return UMAP(n_components=2, random_state=random_state)
+    raise ValueError(f"Unknown lens {name!r}, expected one of {LENS_CHOICES}")
+
+
+def build_cover(kind: str, n_cubes: int, perc_overlap: float) -> km.Cover:
+    """
+    Factory for the Mapper cover, kept separate from build_graph so a future G-Mapper-
+    optimized cover (SPEC.md's deferred v3 item) can be added as a new `kind` branch here
+    without changing build_graph's signature or call sites.
+    """
+    if kind == "uniform":
+        return km.Cover(n_cubes=n_cubes, perc_overlap=perc_overlap)
+    raise ValueError(f"Unknown cover kind {kind!r}, expected one of {COVER_CHOICES}")
+
+
 def build_graph(
     df: pd.DataFrame,
     eps: float,
     min_samples: int,
     n_cubes: int,
     perc_overlap: float,
+    lens: str = "pca",
+    cover_kind: str = "uniform",
     verbose: int = 1,
 ) -> GraphResult:
     X = np.stack(df["embedding"].to_numpy())
 
     mapper = km.KeplerMapper(verbose=verbose)
-    lens = mapper.fit_transform(X, projection=PCA(n_components=2, random_state=RANDOM_STATE))
+    lens_projection = mapper.fit_transform(X, projection=build_lens(lens))
 
     clusterer = DBSCAN(eps=eps, min_samples=min_samples)
 
@@ -58,15 +91,15 @@ def build_graph(
     frac_largest_cluster = float(counts.max() / len(labels_full)) if len(counts) else 0.0
     degenerate = frac_noise >= DEGENERACY_THRESHOLD or frac_largest_cluster >= DEGENERACY_THRESHOLD
 
-    cover = km.Cover(n_cubes=n_cubes, perc_overlap=perc_overlap)
-    graph = mapper.map(lens, X, clusterer=clusterer, cover=cover)
+    cover = build_cover(cover_kind, n_cubes, perc_overlap)
+    graph = mapper.map(lens_projection, X, clusterer=clusterer, cover=cover)
 
     n_nodes = len(graph["nodes"])
     n_edges = sum(len(v) for v in graph["links"].values())
 
     return GraphResult(
         X=X,
-        lens=lens,
+        lens=lens_projection,
         graph=graph,
         n_nodes=n_nodes,
         n_edges=n_edges,

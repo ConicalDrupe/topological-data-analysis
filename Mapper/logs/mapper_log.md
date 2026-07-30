@@ -1,4 +1,4 @@
-# Experiment 2 — Mapper Graph (v1, v2)
+# Experiment 2 — Mapper Graph (v1, v2, v2.5)
 
 ## Goal
 
@@ -182,6 +182,60 @@ both work. No console or page errors during any of this.
   both v1 and v2 graphs need network access to render at all — worth a real fix
   (vendoring a correct d3@6.1.1 build) if offline use ever becomes a requirement.
 
+## v2.5 — Pluggable Lens/Cover + UMAP vs. t-SNE Comparison
+
+### Goal
+
+Make the lens and cover pluggable (in preparation for a future G-Mapper-optimized cover,
+SPEC.md's deferred v3 item) rather than hardcoding PCA/`kmapper.Cover`, then generate two
+more v2-viewer graphs on the same medgemma/train embeddings and tuned `eps=3.5` — one
+with a UMAP lens, one with t-SNE — as a direct comparison against the existing PCA graph.
+
+### Implementation
+
+- `mapper.graph.build_lens(name, random_state)`: factory returning a `fit_transform`-able
+  projection object for kmapper's `projection=` argument — `"pca"` (default,
+  unchanged), `"tsne"` (`sklearn.manifold.TSNE`), `"umap"` (`umap.UMAP`, new dependency
+  `umap-learn` added to `Mapper/pyproject.toml`).
+- `mapper.graph.build_cover(kind, n_cubes, perc_overlap)`: factory currently only
+  implementing `"uniform"` (kmapper's own `Cover`) but kept as a separate function
+  specifically so a `"gmapper"` branch can be added later without changing
+  `build_graph`'s signature or either script's call sites.
+- `--lens` (`pca`/`tsne`/`umap`) and `--cover-kind` (`uniform`) CLI flags added to both
+  `build_mapper_graph.py` and `build_mapper_graph_v2.py`. Default behavior for both
+  scripts is unchanged (`pca`, `uniform`) — verified via a regression run of v1 with no
+  new flags, reproducing the same 54 nodes/162 edges as before this change.
+
+### Results
+
+Same dataset (medgemma/train, 460 rows), same `eps=3.5, min_samples=5`,
+`n_cubes=10, perc_overlap=0.5`, same `--detail-fields Pneumothorax,Age` — only the lens
+differs:
+
+| Lens | Nodes | Edges | DBSCAN noise / largest cluster |
+|------|-------|-------|--------------------------------|
+| PCA (v2 baseline) | 54 | 162 | 16.3% / 83.7% |
+| UMAP | 64 | 181 | 16.3% / 83.7% |
+| t-SNE | 69 | 189 | 16.3% / 83.7% |
+
+DBSCAN diagnostics are identical across all three (expected — clustering runs on the
+original 1152-d embeddings, not the lens projection, so the lens choice cannot affect
+it). The node/edge counts differ because the lens changes which points share a cover
+cube, which changes the pullback partition kmapper clusters within. Both UMAP and t-SNE
+produced a **finer** graph (more nodes/edges) than PCA here. Both outputs verified with
+the same headless-browser check used for v2 (node click → distributions + gallery render
+correctly, no console/page errors) — spot-checked on the UMAP output.
+
+Outputs: `Mapper/results/v2.5/graphs/medgemma_train_mapper_umap.html`,
+`Mapper/results/v2.5/graphs/medgemma_train_mapper_tsne.html`.
+
+### Next Steps
+
+- User to visually compare the three graphs (PCA v2, UMAP, t-SNE) — does either
+  non-linear lens reveal a more spatially coherent Pneumothorax gradient than PCA's?
+- `build_cover`'s `"uniform"`-only structure is now the intended integration point for
+  G-Mapper (SPEC.md's deferred v3 item) — not implemented here, just structured for it.
+
 ## Run Log
 
 Raw per-invocation diagnostics, auto-appended by
@@ -230,6 +284,42 @@ Raw per-invocation diagnostics, auto-appended by
 - Image kind: processed, gallery batch size: 48
 - Output: /home/boon/Projects/topological-data-analysis/Mapper/results/v2/graphs/medgemma_train_mapper.html
 - Mapper graph: 54 nodes, 162 edges
+- DBSCAN degeneracy check (whole-dataset diagnostic fit): 16.3% unclustered
+  (label == -1), largest single cluster holds 83.7% of points
+- Not degenerate by the >=90% noise / >=90% single-cluster threshold.
+- Images skipped (unresolvable path): 0
+
+## Run 2026-07-30T21:17:44.864097+00:00 (v2 — enhanced cluster viewer)
+
+- Dataset: backend=medgemma, split=train, 460 rows,
+  embedding_dim=1152
+- Lens: umap (n_components=2, random_state=42) on raw embeddings
+- Cover: kind=uniform, kmapper.Cover(n_cubes=10, perc_overlap=0.5)
+- Clustering: sklearn.cluster.DBSCAN(eps=3.5, min_samples=5),
+  fit on original 1152-d embeddings (not lens-space)
+- Node coloring: mean Pneumothorax value among cluster members (0-1 scale)
+- Cluster-detail fields: Pneumothorax, Age
+- Image kind: processed, gallery batch size: 48
+- Output: Mapper/results/v2.5/graphs/medgemma_train_mapper_umap.html
+- Mapper graph: 64 nodes, 181 edges
+- DBSCAN degeneracy check (whole-dataset diagnostic fit): 16.3% unclustered
+  (label == -1), largest single cluster holds 83.7% of points
+- Not degenerate by the >=90% noise / >=90% single-cluster threshold.
+- Images skipped (unresolvable path): 0
+
+## Run 2026-07-30T21:17:58.913401+00:00 (v2 — enhanced cluster viewer)
+
+- Dataset: backend=medgemma, split=train, 460 rows,
+  embedding_dim=1152
+- Lens: tsne (n_components=2, random_state=42) on raw embeddings
+- Cover: kind=uniform, kmapper.Cover(n_cubes=10, perc_overlap=0.5)
+- Clustering: sklearn.cluster.DBSCAN(eps=3.5, min_samples=5),
+  fit on original 1152-d embeddings (not lens-space)
+- Node coloring: mean Pneumothorax value among cluster members (0-1 scale)
+- Cluster-detail fields: Pneumothorax, Age
+- Image kind: processed, gallery batch size: 48
+- Output: Mapper/results/v2.5/graphs/medgemma_train_mapper_tsne.html
+- Mapper graph: 69 nodes, 189 edges
 - DBSCAN degeneracy check (whole-dataset diagnostic fit): 16.3% unclustered
   (label == -1), largest single cluster holds 83.7% of points
 - Not degenerate by the >=90% noise / >=90% single-cluster threshold.
