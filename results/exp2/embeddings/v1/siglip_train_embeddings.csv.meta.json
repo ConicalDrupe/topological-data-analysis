@@ -1,0 +1,9 @@
+{
+  "backend": "siglip",
+  "model_id": "google/siglip-so400m-patch14-384",
+  "vision_attr": "vision_model",
+  "pooling": "pooler",
+  "embedding_dim": 1152,
+  "key_column": "Path",
+  "generated_at": "2026-07-30T00:12:10.719741+00:00"
+}

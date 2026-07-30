@@ -6,9 +6,31 @@ CheXpert-style manifest (e.g. `topological-data-analysis/data/exp1/preprocessing
 
 ## Setup
 
+This package is part of the single top-level `topological-data-analysis` uv project —
+there is no separate environment here anymore. From the repo root:
+
 ```bash
 uv sync
 ```
+
+installs `gemma_embeddings` (this package) alongside the rest of the repo's
+dependencies into one shared `.venv`. `torch`/`torchvision` are pinned to the
+CUDA 12.6 wheel index in the root `pyproject.toml` (see `[tool.uv.index]` /
+`[tool.uv.sources]`), matching a driver reporting `CUDA Version: 12.6`.
+
+Fastest way to run against this repo's pneumothorax cohort — use the wrapper script
+instead of calling the module directly:
+
+```bash
+uv run python GenerateEmbeddings/scripts/run_pneumothorax_embeddings.py \
+    --backend siglip --split test
+```
+
+It fills in `--input-csv`/`--image-root`/`--output-csv` for
+`data/exp1/v2_corrected_cohort/pneumothorax_{train,test}_split.csv` and writes to
+`results/exp2/embeddings/v1/`. Run `--split both` (the default) to do train+test in one
+go, or pass extra flags (`--device`, `--batch-size`, `--resume`, ...) through — see below
+for what's available.
 
 Auth, per `--backend`:
 
@@ -23,6 +45,10 @@ Start with `--backend siglip` to confirm the pipeline runs end-to-end before dea
 gated access.
 
 ## Generate embeddings
+
+For an arbitrary manifest CSV (not this repo's pneumothorax split — use
+`scripts/run_pneumothorax_embeddings.py` for that, above), call the module directly from
+the repo root:
 
 ```bash
 uv run python -m gemma_embeddings.generate_embeddings \
@@ -79,12 +105,12 @@ embeddings = pd.read_csv("results/embeddings.csv")
 merged = cohort.merge(embeddings, on="Path", how="left")
 ```
 
-Before wiring that into an experiment, sanity-check the join:
+Before wiring that into an experiment, sanity-check the join (run from the repo root):
 
 ```bash
-uv run python scripts/validate_join.py \
-    --manifest-csv /path/to/preprocessing_sample.csv \
-    --embeddings-csv results/embeddings.csv
+uv run python GenerateEmbeddings/scripts/validate_join.py \
+    --manifest-csv data/exp1/v2_corrected_cohort/pneumothorax_test_split.csv \
+    --embeddings-csv results/exp2/embeddings/v1/siglip_test_embeddings.csv
 ```
 
 Reports matched-row count and prints any unmatched `Path` values.

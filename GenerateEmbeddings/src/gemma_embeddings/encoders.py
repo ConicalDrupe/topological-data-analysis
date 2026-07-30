@@ -39,10 +39,16 @@ class BackendPreset:
 BACKEND_PRESETS: dict[str, BackendPreset] = {
     "siglip": BackendPreset(
         model_id="google/siglip-so400m-patch14-384",
-        vision_attr="",
+        vision_attr="vision_model",
         pooling="pooler",
         requires_auth=False,
-        notes="Ungated. Use this to smoke-test the pipeline before dealing with MedGemma auth.",
+        notes=(
+            "Ungated. AutoModel resolves this checkpoint to the combined SiglipModel "
+            "(image+text), not a vision-only model, so vision_attr must drill into its "
+            "`vision_model` submodule (a SiglipVisionModel) to get pixel_values-only "
+            "forward + a flat hidden_size on its config. Use this to smoke-test the "
+            "pipeline before dealing with MedGemma auth."
+        ),
     ),
     "medgemma": BackendPreset(
         model_id="google/medgemma-4b-it",
