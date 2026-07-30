@@ -782,3 +782,6 @@ files, every `Path` value in both is prefixed `train/` (no `valid/` rows), every
 - Neither new script supports resuming a partially-completed run (unlike
   `GenerateEmbeddings`'s `--resume` flag) — acceptable at this dataset size, but worth
   adding if `kaggle/processed/` is ever regenerated over a much larger cohort.
+- Companion vision-model embeddings (SigLIP/RAD-DINO/MedGemma) for this processed
+  dataset now live at `data/embeddings/processed/` — see `logs/exp2_embeddings_log.md`
+  Experiment 008.

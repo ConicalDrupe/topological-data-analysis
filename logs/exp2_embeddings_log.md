@@ -1,7 +1,13 @@
 # Experiment 2 Embeddings Log
 
-- **Current experiment:** Experiment 007 (embedding generation) — done for all three
-  backends (SigLIP, RAD-DINO, MedGemma), both splits.
+- **Current experiment:** Experiment 008 (embeddings from the processed/CLAHE dataset,
+  below) — done for all three backends, both splits. Experiment 007 (raw-image
+  embeddings) is complete and unchanged; both sets of embeddings now exist side by side.
+
+---
+
+# Experiment 007
+
 - **Preprocessing pipeline:** none — raw images loaded via PIL, resized/normalized by
   each backend's own `AutoImageProcessor` (no CLAHE/ROI-crop from the Experiment 1
   pipeline applied here).
@@ -69,3 +75,61 @@
   validated at 100% `Path` join match via `scripts/validate_join.py`. All three backends
   planned for Experiment 2 are now available. Next: the actual topology-of-embedding-
   space analysis (persistent homology / Mapper on these pooled vectors).
+
+---
+
+# Experiment 008
+
+- **Goal:** generate embeddings for the *processed* pneumothorax dataset (PSPNet
+  lung-mask crop + conservative CLAHE, 224x224 PNG, `kaggle/processed/` — see
+  `logs/exp1_log.md` Experiment 007), so the planned topology-of-embedding-space
+  analysis can compare raw-image embeddings (Experiment 007, above) against
+  processed-image embeddings.
+- **Preprocessing pipeline:** PSPNet lung-mask crop (`margin_frac=0.05`,
+  `threshold=0.5`) → direct resize to 224x224 → CLAHE (`clip_limit=0.002`,
+  `kernel_size=16`) → 8-bit PNG. Full detail/rationale in `logs/exp1_log.md` Experiment
+  007, not reproduced here. Each backend's own `AutoImageProcessor` still applies its
+  own resize/normalize on top of the already-224x224 PNG, exactly as it did for the raw
+  images in Experiment 007 above — no special-casing was needed for the smaller input
+  size.
+- **Dataset version:** new `data/embeddings/processed/processed_manifest_{train,test}.csv`
+  (460/115 rows), built by merging `data/exp1/v2_corrected_cohort/
+  pneumothorax_{train,test}_split.csv` with `results/exp1/preprocessing/v1/manifest.csv`'s
+  `output_path`/`cohort_split` columns on `Path`==`path` — verified 100% match (460/460,
+  115/115 rows), preserving the exact same patient-level 80/20 split used everywhere else
+  in this project (`tda_chexpr.split.stratified_split`, `random_state=42`); no new split
+  was computed. Images are resolved from `kaggle/processed/` via the manifest's
+  `output_path` column (the raw `Path` column's `.jpg` values don't exist under
+  `kaggle/processed/`, only the `.png` outputs do).
+- **Model versions:** unchanged from Experiment 007 above (same three presets/
+  checkpoints/pooling strategies) — see that entry for full detail.
+- **Random seed:** n/a, same reasoning as Experiment 007.
+- **Feature extraction method:** new
+  `GenerateEmbeddings/scripts/run_processed_pneumothorax_embeddings.py`. Mirrors
+  `run_pneumothorax_embeddings.py`'s subprocess-per-(backend,split) pattern, but points
+  `--image-root` at `kaggle/processed/`, passes `--key-column output_path` explicitly,
+  and runs all three backends automatically per split in one invocation (rather than one
+  backend per invocation). Each backend's bare `[output_path, emb_*]` output is first
+  written to a staging directory (`data/embeddings/processed/_raw/`), then enriched with
+  label columns (`raw_path`, `patient_id`, `Pneumothorax`, `cohort_split`, `Sex`, `Age`,
+  `comorbidity_count`, `is_clean_negative`) via a post-hoc merge on `output_path` before
+  writing the final CSV — staging avoids a real hazard where enriching in place would
+  corrupt a later `--resume` run (`EmbeddingCsvWriter` appends bare rows under whatever
+  header is already there). Unlike Experiment 007's output, these CSVs are
+  denormalized/labeled directly — no separate join against the split CSVs is needed
+  downstream.
+- **Parameters:** same defaults as Experiment 007 (`--batch-size 16`, `--dtype
+  bfloat16`, `--device cuda`, GPU: RTX 3090) plus `--key-column output_path`.
+- **Evaluation metric:** none yet, same as Experiment 007.
+- **Current status:** `data/embeddings/processed/` has
+  `{siglip,rad-dino,medgemma}_{train,test}_embeddings.csv` + `.meta.json` sidecars (each
+  `.meta.json` additionally records `label_columns_from`, pointing at the
+  `processed_manifest_{split}.csv` used), plus the staged bare outputs under `_raw/` and
+  the two `processed_manifest_{train,test}.csv` input manifests. All 6
+  (backend × split) combinations verified: row counts match 460/115 exactly, 100%
+  `output_path` join match via `scripts/validate_join.py`, and spot-checked embedding
+  sanity (0 NaNs, 0 zero-norm rows, 0 duplicate rows, healthy per-row variance:
+  SigLIP row-norms 20.3–23.5, RAD-DINO 5.2–21.8, MedGemma 46.3–52.3) across all three
+  backends. Next: decide whether the planned topology-of-embedding-space analysis should
+  run against the raw-image embeddings (Experiment 007), the processed-image embeddings
+  (this experiment), or both compared side by side.

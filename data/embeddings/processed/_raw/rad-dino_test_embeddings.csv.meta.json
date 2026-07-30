@@ -1,0 +1,9 @@
+{
+  "backend": "rad-dino",
+  "model_id": "microsoft/rad-dino",
+  "vision_attr": "",
+  "pooling": "mean_patch",
+  "embedding_dim": 768,
+  "key_column": "output_path",
+  "generated_at": "2026-07-30T03:31:24.651490+00:00"
+}

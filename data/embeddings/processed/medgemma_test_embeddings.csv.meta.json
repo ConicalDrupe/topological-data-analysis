@@ -1,0 +1,10 @@
+{
+  "backend": "medgemma",
+  "model_id": "google/medgemma-4b-it",
+  "vision_attr": "vision_tower",
+  "pooling": "mean_patch",
+  "embedding_dim": 1152,
+  "key_column": "output_path",
+  "generated_at": "2026-07-30T03:33:07.971756+00:00",
+  "label_columns_from": "data/embeddings/processed/processed_manifest_test.csv"
+}
